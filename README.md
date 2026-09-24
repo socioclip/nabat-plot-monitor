@@ -13,4 +13,4 @@ Live: https://nabat-plot-monitor.vercel.app
 - **Method & limits** — scoring rules and what the measurements cannot tell you.
 
 ## Deploying
-The repo is connected to Vercel: every push to `main` deploys to production automatically.
+The repo is connected to Vercel (project `nabat-plot-monitor`): every push to `main` deploys to production automatically. To change the site, edit `index.html` on GitHub (pencil icon) and commit.
