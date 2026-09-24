@@ -1,4 +1,4 @@
-# Nabat Monitor
+# Sarfaraz Plant Monitor
 
 Field-triage dashboard for **mangrove restoration plots** (Jubail Mangrove Park, Abu Dhabi) and **irrigated farm crops** (date palm, greenhouse vegetables, fodder).
 

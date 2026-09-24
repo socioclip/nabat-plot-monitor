@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nabat Monitor — Mangroves & Crops</title>
+<title>Sarfaraz Plant Monitor — Mangroves & Crops</title>
 <meta name="description" content="Field triage dashboard for mangrove restoration plots at Jubail and irrigated farm crops. Illustrative, simulated data.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%20%3Cdefs%3E%20%3ClinearGradient%20id%3D%22nbg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fae63%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2317503a%22/%3E%20%3C/linearGradient%3E%20%3C/defs%3E%20%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%229%22%20fill%3D%22url%28%23nbg%29%22/%3E%20%3Cpath%20d%3D%22M4.5%2024.2c1.9%200%201.9-1.3%203.8-1.3s1.9%201.3%203.8%201.3%201.9-1.3%203.8-1.3%201.9%201.3%203.8%201.3%201.9-1.3%203.8-1.3%201.9%201.3%203.8%201.3%22%20fill%3D%22none%22%20stroke%3D%22%23a8e0ec%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%20%3Cpath%20d%3D%22M16%2020.5V12.2%22/%3E%20%3Cpath%20d%3D%22M16%2016.6c-2.3%201.1-4%203-4.8%205.7%22/%3E%20%3Cpath%20d%3D%22M16%2016.6c2.3%201.1%204%203%204.8%205.7%22/%3E%20%3Cpath%20d%3D%22M16%2018.6c-.9%201-1.4%202.2-1.6%203.6%22/%3E%20%3Cpath%20d%3D%22M16%2018.6c.9%201%201.4%202.2%201.6%203.6%22/%3E%20%3C/g%3E%20%3Cpath%20d%3D%22M16%2012.4c-.9-3.4-3.5-5.2-7-5%20.2%203.5%202.9%205.5%207%205Z%22%20fill%3D%22%23fff%22/%3E%20%3Cpath%20d%3D%22M16%2011.4c.6-3.6%203.2-5.6%206.8-5.6%200%203.5-2.7%205.8-6.8%205.6Z%22%20fill%3D%22%23d6f1c2%22/%3E%20%3Ccircle%20cx%3D%2225.3%22%20cy%3D%2225.3%22%20r%3D%222.6%22%20fill%3D%22%23E0A03C%22%20stroke%3D%22%2317503a%22%20stroke-width%3D%221.2%22/%3E%20%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -173,7 +173,7 @@ footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:v
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#mangroves" aria-label="Nabat Monitor home">
+    <a class="brand" href="#mangroves" aria-label="Sarfaraz Plant Monitor home">
       <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
   <defs>
     <linearGradient id="nbg-h" x1="0" y1="0" x2="1" y2="1">
@@ -193,7 +193,7 @@ footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:v
   <path d="M16 11.4c.6-3.6 3.2-5.6 6.8-5.6 0 3.5-2.7 5.8-6.8 5.6Z" fill="#d6f1c2"/>
   <circle cx="25.3" cy="25.3" r="2.6" fill="#E0A03C" stroke="#17503a" stroke-width="1.2"/>
 </svg>
-      <span class="wm"><b>Nabat</b> <span>Monitor</span></span><small lang="ar" dir="rtl">نبات</small>
+      <span class="wm"><b>Sarfaraz</b> <span>Plant Monitor</span></span><small lang="ar" dir="rtl">نبات</small>
     </a>
     <nav class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" data-tab="mangroves">Mangrove plots</button>
@@ -523,7 +523,7 @@ function renderM(){
   const F=[['all','All'],['crit','Needs visit'],['warn','Watch'],['good','On track'],['ref','Reference']];
   $('#m-filters').innerHTML=F.map(f=>`<button class="chip" data-f="${f[0]}" aria-pressed="${f[0]==='all'}">${f[1]}</button>`).join('');
   $('#m-filters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;mFilter=b.dataset.f;$('#m-filters').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));renderM()});
-  $('#m-csv').addEventListener('click',()=>{const rows=[['plot','location','area_ha','planted','date','index','low_confidence']];for(const p of PLOTS)for(const o of p.obs)if(o)rows.push([p.id,p.name,p.ha,p.planted?p.planted.toISOString().slice(0,10):'natural',o.d.toISOString().slice(0,10),o.v.toFixed(3),o.low?1:0]);download('nabat_mangrove_plots_SIMULATED.csv',rows)});
+  $('#m-csv').addEventListener('click',()=>{const rows=[['plot','location','area_ha','planted','date','index','low_confidence']];for(const p of PLOTS)for(const o of p.obs)if(o)rows.push([p.id,p.name,p.ha,p.planted?p.planted.toISOString().slice(0,10):'natural',o.d.toISOString().slice(0,10),o.v.toFixed(3),o.low?1:0]);download('sarfaraz_plant_monitor_mangrove_plots_SIMULATED.csv',rows)});
 })();
 
 /* =====================================================================
@@ -650,7 +650,7 @@ function renderC(){if(!cSel)cSel=[...FIELDS].sort((a,b)=>({crit:0,warn:1,good:2}
   const F=[['all','All'],['palm','Date palm'],['gh','Greenhouse'],['fodder','Fodder']];
   $('#c-filters').innerHTML=F.map(f=>`<button class="chip" data-f="${f[0]}" aria-pressed="${f[0]==='all'}">${f[1]}</button>`).join('');
   $('#c-filters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;cFilter=b.dataset.f;$('#c-filters').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));cTable()});
-  $('#c-csv').addEventListener('click',()=>{const rows=[['field','crop','variety','area_ha','week','canopy_index','soil_moisture_pct','etc_mm','delivered_mm','heat_hours','pest_count']];for(const f of FIELDS)for(const w of f.w)rows.push([f.id,CROP[f.crop].label,f.variety,f.ha,w.d.toISOString().slice(0,10),w.ndvi,w.sm,w.etc,w.deliv,w.heat,w.pest]);download('nabat_farm_fields_SIMULATED.csv',rows)});
+  $('#c-csv').addEventListener('click',()=>{const rows=[['field','crop','variety','area_ha','week','canopy_index','soil_moisture_pct','etc_mm','delivered_mm','heat_hours','pest_count']];for(const f of FIELDS)for(const w of f.w)rows.push([f.id,CROP[f.crop].label,f.variety,f.ha,w.d.toISOString().slice(0,10),w.ndvi,w.sm,w.etc,w.deliv,w.heat,w.pest]);download('sarfaraz_plant_monitor_farm_fields_SIMULATED.csv',rows)});
 })();
 
 /* ---------- tabs, theme ---------- */
