@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nabat Monitor — Mangroves & Crops</title>
+<meta name="description" content="Field triage dashboard for mangrove restoration plots at Jubail and irrigated farm crops. Illustrative, simulated data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A1618;--panel:#0F2124;--panel-2:#132A2C;--line:#1F3B3A;--line-2:#2A4a48;
+  --ink:#E6EDE9;--ink-2:#A9BDBA;--ink-3:#7B9794;
+  --accent:#E0A03C;--accent-bg:rgba(224,160,60,.08);--accent-line:#6d5125;
+  --good:#0ca30c;--warn:#fab219;--crit:#d03b3b;--ref:#8FA6A4;
+  --water:#123840;--flat:#172623;
+  --s0:#1d2f2a;--s1:#264a37;--s2:#2f6a41;--s3:#4b8f4c;--s4:#78b35b;--s5:#b3d98a;
+  --band:rgba(143,166,164,.16);--grid:rgba(143,166,164,.14);
+  --shadow:0 1px 0 rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.18);
+  --sans:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F4F6F3;--panel:#FFFFFF;--panel-2:#F0F3EF;--line:#DDE3DD;--line-2:#C9D2CA;
+    --ink:#122220;--ink-2:#46605C;--ink-3:#6C8480;
+    --accent:#9a6414;--accent-bg:rgba(224,160,60,.10);--accent-line:#e2c28c;
+    --ref:#6C8480;--water:#cfe3e6;--flat:#e7e3d6;
+    --s0:#e9eee2;--s1:#cfe1bf;--s2:#a9cf8f;--s3:#77b060;--s4:#468a3c;--s5:#1f6027;
+    --band:rgba(70,96,92,.12);--grid:rgba(70,96,92,.14);
+    --shadow:0 1px 0 rgba(0,0,0,.03),0 6px 20px rgba(20,40,30,.06);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F4F6F3;--panel:#FFFFFF;--panel-2:#F0F3EF;--line:#DDE3DD;--line-2:#C9D2CA;
+  --ink:#122220;--ink-2:#46605C;--ink-3:#6C8480;
+  --accent:#9a6414;--accent-bg:rgba(224,160,60,.10);--accent-line:#e2c28c;
+  --ref:#6C8480;--water:#cfe3e6;--flat:#e7e3d6;
+  --s0:#e9eee2;--s1:#cfe1bf;--s2:#a9cf8f;--s3:#77b060;--s4:#468a3c;--s5:#1f6027;
+  --band:rgba(70,96,92,.12);--grid:rgba(70,96,92,.14);
+  --shadow:0 1px 0 rgba(0,0,0,.03),0 6px 20px rgba(20,40,30,.06);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px 64px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink-3)}
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:18px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;font-size:17px;text-decoration:none}
+.brand small{font-weight:400;color:var(--ink-3);font-size:13px}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;margin-left:auto}
+.tab{appearance:none;border:0;background:transparent;color:var(--ink-2);font:500 14px var(--sans);padding:7px 14px;border-radius:7px;cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--panel-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2)}
+.iconbtn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);width:36px;height:36px;border-radius:9px;cursor:pointer;display:grid;place-items:center}
+.iconbtn:hover{color:var(--ink)}
+button:focus-visible,.plot:focus-visible,.field:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* hero */
+.hero{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end;margin:26px 0 14px}
+.hero h1{font-size:28px;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px;font-weight:600}
+.hero h1 span{color:var(--ink-3);font-weight:400}
+.hero p{margin:0;color:var(--ink-2);max-width:62ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;font:500 13.5px var(--sans);color:var(--ink);background:var(--panel);border:1px solid var(--line-2);border-radius:8px;padding:8px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{background:var(--panel-2)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--accent-bg);border:1px solid var(--accent-line);border-radius:10px;padding:10px 14px;font-size:13.5px;color:var(--ink-2);margin-bottom:18px}
+.notice b{color:var(--accent)}
+/* grid & cards */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.kpi .v{font:600 26px/1.1 var(--sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--ink-3);font-size:12.5px;margin-top:4px}
+.kpi .d{font-size:12px;margin-top:6px;color:var(--ink-2)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 0;flex-wrap:wrap}
+.card-h h2{font-size:15px;margin:0;font-weight:600}
+.card-h p{margin:2px 0 0;font-size:12.5px;color:var(--ink-3)}
+.card-b{padding:12px 16px 16px}
+.grid-2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.grid-2b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+@media (max-width:900px){.grid-2,.grid-2b{grid-template-columns:1fr}.tabs{margin-left:0;width:100%}.tab{flex:1}}
+/* status pill */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:2px 9px 2px 7px;border-radius:999px;border:1px solid var(--line-2);white-space:nowrap;color:var(--ink)}
+.pill i{width:14px;height:14px;display:inline-grid;place-items:center;font-style:normal;font-size:10px;font-weight:700;border-radius:50%;color:#fff}
+.pill.good i{background:var(--good)}.pill.warn i{background:var(--warn);color:#2a1d00}.pill.crit i{background:var(--crit)}.pill.ref i{background:var(--ref)}
+/* map */
+.mapwrap{position:relative}
+svg{display:block}
+#map,#farm{width:100%;height:auto;border-radius:10px}
+.plot,.field{cursor:pointer;stroke:var(--bg);stroke-width:1.5;transition:stroke .12s}
+.plot:hover,.field:hover{stroke:var(--ink);stroke-width:2}
+.plot.sel,.field.sel{stroke:var(--ink);stroke-width:2.75}
+.lbl{font:500 10.5px var(--mono);pointer-events:none;stroke:none}
+.legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--ink-3);margin-top:10px}
+.ramp{display:flex;height:10px;border-radius:3px;overflow:hidden;width:180px}
+.ramp span{flex:1}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw b{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* timeline */
+.timeline{display:flex;align-items:center;gap:12px;margin-top:12px}
+.timeline input[type=range]{flex:1;accent-color:var(--accent)}
+.timeline .date{font:500 13px var(--mono);min-width:76px;text-align:right}
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);text-align:left;font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{white-space:nowrap;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;font-variant-numeric:tabular-nums}
+.tbl tr{cursor:pointer}
+.tbl tbody tr:hover td{background:var(--panel-2)}
+.tbl tr.sel td{background:var(--panel-2);box-shadow:inset 0 1px 0 var(--line-2),inset 0 -1px 0 var(--line-2)}
+.tbl tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.num{text-align:right}
+.tbl-scroll{overflow-x:auto}
+.neg{color:var(--ink)}.id{font:500 13px var(--mono)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{appearance:none;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);font:500 12.5px var(--sans);padding:4px 10px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+/* detail */
+.detail h3{margin:0;font-size:18px;letter-spacing:-.01em}
+.detail .sub{color:var(--ink-3);font-size:13px;margin:2px 0 10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.stat{background:var(--panel-2);border-radius:9px;padding:8px 10px}
+.stat .v{font:600 17px var(--sans);font-variant-numeric:tabular-nums}
+.stat .l{font-size:11.5px;color:var(--ink-3)}
+.verdict{font-size:13.5px;color:var(--ink-2);margin:10px 0 0}
+.chart{position:relative}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line-2);border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:var(--shadow);white-space:nowrap;opacity:0;transition:opacity .08s;z-index:5}
+.tip b{font-weight:600}
+.tip .r{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.tip .k{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.axis text{font:11px var(--mono);fill:var(--ink-3)}
+.gridline{stroke:var(--grid)}
+/* queue */
+.queue{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.queue li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel)}
+.queue li:hover{background:var(--panel-2)}
+.queue .t{font-weight:600;font-size:13.5px}
+.queue .r{font-size:12.5px;color:var(--ink-2)}
+.queue .a{font-size:12.5px;color:var(--ink);margin-top:3px}
+.queue .a:before{content:"→ ";color:var(--accent)}
+/* weather */
+.wx{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wx div{background:var(--panel-2);border-radius:9px;padding:8px 6px;text-align:center}
+.wx .d{font-size:11.5px;color:var(--ink-3)}
+.wx .t{font:600 16px var(--sans)}
+.wx .e{font:11.5px var(--mono);color:var(--ink-2)}
+.wx .hot{box-shadow:inset 0 -3px 0 var(--crit)}
+@media (max-width:640px){.wx{grid-template-columns:repeat(4,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:23px}.queue li{grid-template-columns:1fr}.queue li>span:last-child{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .v{font-size:22px}.tabs{order:3}#theme{margin-left:auto}.tab{padding:7px 6px;font-size:13px}}
+/* method */
+.prose{max-width:74ch}
+.prose h2{font-size:20px;letter-spacing:-.01em;margin:28px 0 8px}
+.prose h3{font-size:15px;margin:20px 0 6px}
+.prose p,.prose li{color:var(--ink-2)}
+.prose li{margin:6px 0}
+.prose b{color:var(--ink)}
+.rule{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#mangroves" aria-label="Nabat Monitor home">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--s3)"/><path d="M13 20V11M13 13c-3.5 0-5.5-2-6-5 3.5 0 5.5 2 6 5Zm0 1.5c3.2 0 5.3-1.8 6-4.8-3.2 0-5.3 1.8-6 4.8Z" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Nabat Monitor <small>field triage</small>
+    </a>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="mangroves">Mangrove plots</button>
+      <button class="tab" role="tab" data-tab="crops">Farm crops</button>
+      <button class="tab" role="tab" data-tab="method">Method &amp; limits</button>
+    </nav>
+    <button class="iconbtn" id="theme" aria-label="Toggle light/dark theme" title="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm0 1.5v10a5 5 0 0 1 0-10Z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice" role="note" style="margin-top:18px">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M8 1 15 14H1L8 1Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 6v3.5M8 11.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <div><b>Illustrative data.</b> Every value on this page is simulated to demonstrate the interface and the scoring method. Nothing is derived from real satellite imagery, sensors or farm records. See <a href="#method">Method &amp; limits</a>.</div>
+  </div>
+
+  <!-- ============ MANGROVES ============ -->
+  <section id="tab-mangroves" data-panel="mangroves">
+    <div class="hero">
+      <div>
+        <h1>Jubail Mangrove Park <span>· Abu Dhabi</span></h1>
+        <p>Canopy greenness in each planted plot, benchmarked against plots of the same age, so the field team knows where to walk first.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="m-csv"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Plot data (CSV)</button>
+      </div>
+    </div>
+    <div class="kpis" id="m-kpis"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><div><h2>Site map</h2><p>Colour shows the vegetation index at the selected date. Click a plot for detail.</p></div></div>
+        <div class="card-b">
+          <div class="mapwrap"><svg id="map" viewBox="0 0 640 400" role="img" aria-label="Map of monitored plots"></svg><div class="tip" id="map-tip"></div></div>
+          <div class="legend">
+            <span>Index</span><span class="mono">0.05</span><div class="ramp"><span style="background:var(--s0)"></span><span style="background:var(--s1)"></span><span style="background:var(--s2)"></span><span style="background:var(--s3)"></span><span style="background:var(--s4)"></span><span style="background:var(--s5)"></span></div><span class="mono">0.60</span>
+            <span class="sw" style="margin-left:auto"><b style="background:var(--crit)"></b>flag = needs a field visit</span>
+          </div>
+          <div class="timeline">
+            <button class="btn" id="m-play" aria-label="Play through time">▶ Play</button>
+            <input type="range" id="m-time" min="0" max="0" value="0" aria-label="Observation date">
+            <span class="date" id="m-date"></span>
+          </div>
+          <div class="muted" id="m-obsnote" style="font-size:12.5px;margin-top:6px"></div>
+        </div>
+      </div>
+      <div class="card detail" id="m-detail"></div>
+    </div>
+    <div class="card">
+      <div class="card-h">
+        <div><h2>Plots, ranked by shortfall against the cohort</h2><p>Cohort = median of other planted plots at the same age.</p></div>
+        <div class="filters" id="m-filters"></div>
+      </div>
+      <div class="card-b tbl-scroll"><table class="tbl" id="m-table"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ CROPS ============ -->
+  <section id="tab-crops" data-panel="crops" hidden>
+    <div class="hero">
+      <div>
+        <h1>Al Ain demonstration farm <span>· crop monitoring</span></h1>
+        <p>Date palms, greenhouse vegetables and irrigated fodder. Each field is checked weekly on canopy vigour, root-zone moisture, water delivered against crop demand, heat stress and pest traps.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="c-csv"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Field data (CSV)</button>
+      </div>
+    </div>
+    <div class="kpis" id="c-kpis"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><div><h2>Action queue</h2><p>What to do this week, most urgent first.</p></div></div>
+        <div class="card-b"><ul class="queue" id="c-queue"></ul></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h2>Farm layout</h2><p>Coloured by status this week. Click a field.</p></div></div>
+        <div class="card-b">
+          <div class="mapwrap"><svg id="farm" viewBox="0 0 520 330" role="img" aria-label="Farm field layout"></svg><div class="tip" id="farm-tip"></div></div>
+          <div class="legend"><span class="sw"><b style="background:var(--crit)"></b>Needs action</span><span class="sw"><b style="background:var(--warn)"></b>Watch</span><span class="sw"><b style="background:var(--good)"></b>On track</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2b">
+      <div class="card detail" id="c-detail"></div>
+      <div class="card">
+        <div class="card-h"><div><h2 id="c-chart2-title">Root-zone moisture</h2><p id="c-chart2-sub"></p></div></div>
+        <div class="card-b"><div class="chart" id="c-chart2"></div>
+          <div class="card-h" style="padding:14px 0 0"><div><h2>Water delivered vs crop demand</h2><p>Weekly irrigation as % of estimated crop water use (ETc).</p></div></div>
+          <div class="chart" id="c-chart3" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-h"><div><h2>All fields</h2><p>Latest weekly reading.</p></div><div class="filters" id="c-filters"></div></div>
+      <div class="card-b tbl-scroll"><table class="tbl" id="c-table"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div><h2>7-day outlook</h2><p>Max air temperature and reference evapotranspiration (ET₀). Red underline = heat-stress day (≥ 43 °C).</p></div></div>
+      <div class="card-b"><div class="wx" id="c-wx"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ METHOD ============ -->
+  <section id="tab-method" data-panel="method" hidden>
+    <div class="prose">
+      <h2>How a mangrove plot gets scored</h2>
+      <p>Each plot is compared against the <b>median of every other planted plot at the same number of months since planting</b>, rather than against a fixed threshold. A plot planted three months ago should look like bare mud; a fixed cut-off would flag it and waste a site visit. Benchmarking against its own cohort separates plots that are behind from plots that are simply young.</p>
+      <div class="rule"><span class="pill crit"><i>!</i>Needs a field visit</span><span>More than 0.08 below the cohort median, once the plot is at least six months old.</span>
+      <span class="pill warn"><i>~</i>Watch</span><span>Shortfall over 0.03, or a six-observation trend falling faster than 0.03 index units per year.</span>
+      <span class="pill good"><i>✓</i>On track</span><span>Neither of the above.</span></div>
+      <p>The trend threshold sits above zero deliberately: a plot whose canopy has closed has a flat trend, and flagging on the sign alone would send a team out to look at noise. Trends are least-squares fits over the trailing six observations, with low-confidence observations dropped first.</p>
+      <h3>What this measurement cannot resolve</h3>
+      <ul>
+        <li><b>Tide state at acquisition.</b> A plot imaged at high water reads low because standing water absorbs near-infrared. Uncorrected observations are drawn hollow and excluded from trends.</li>
+        <li><b>Mixed pixels in young plantings.</b> At 10 m resolution a first-year plot is mostly substrate; the index cannot separate 40% from 70% survival in year one.</li>
+        <li><b>Saturation in mature canopy.</b> Above about 0.6 the index stops discriminating between canopy densities.</li>
+        <li><b>Other photosynthetic cover.</b> Algal mats and seagrass raise the index with no mangrove present.</li>
+        <li><b>The benchmark is relative.</b> A site where every plot failed equally would show no flags at all.</li>
+      </ul>
+      <h2>How a crop field gets scored</h2>
+      <p>Each field is scored weekly against expectations for <b>its own crop and growth stage</b>, not a single farm-wide number. The status is the worst of five checks:</p>
+      <div class="rule">
+        <span class="pill crit"><i>!</i>Needs action</span><span>Root-zone moisture below the crop's lower limit for two consecutive readings; canopy index more than 0.10 below the stage expectation; or a pest trap count at or above its action threshold.</span>
+        <span class="pill warn"><i>~</i>Watch</span><span>Canopy index 0.05–0.10 below expectation; water delivered under 85% of crop demand for the week; more than 20 heat-stress hours in the week; or a trap count above half its threshold.</span>
+        <span class="pill good"><i>✓</i>On track</span><span>None of the above.</span>
+      </div>
+      <h3>Inputs and their limits</h3>
+      <ul>
+        <li><b>Canopy index</b> — for open fields a satellite vegetation index; for greenhouses an in-house camera index. Palms read lower than fodder at full health because of the sparse canopy and bare soil between trees, which is why each crop has its own expectation curve.</li>
+        <li><b>Root-zone moisture</b> — volumetric water content from one probe per field. A single probe can sit in a wet or dry spot of a drip line; treat one odd reading as a prompt to check the probe before changing irrigation.</li>
+        <li><b>Crop demand (ETc)</b> — ET₀ from the weather station times a crop coefficient for the stage. Coefficients are textbook values and are not calibrated to this farm.</li>
+        <li><b>Pest traps</b> — red palm weevil pheromone traps (palms), yellow sticky cards for whitefly (greenhouses), fall armyworm pheromone traps (fodder). Counts are a proxy for pressure, not infestation.</li>
+        <li><b>Yield outlook</b> — a simple index of accumulated vigour against the season target; it is a direction, not a forecast.</li>
+      </ul>
+      <h3>What would be needed before real decisions rest on this</h3>
+      <p>Ground-truthed survival counts and species-specific allometry for the mangroves; for the farm, calibrated probes, crop coefficients fitted to local water-balance data, and scouting records to validate trap thresholds. This is a triage layer — it tells a team where to walk. It is not a substitute for walking.</p>
+    </div>
+  </section>
+
+  <footer>Prototype built to explore the problem space, using public method references and simulated observations throughout. Not affiliated with any organisation named on this page.</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+/* ---------- utilities ---------- */
+const $=s=>document.querySelector(s);
+const el=(tag,attrs={},html)=>{const e=document.createElementNS(/^(svg|g|path|rect|line|circle|text|polygon|polyline)$/.test(tag)?'http://www.w3.org/2000/svg':'http://www.w3.org/1999/xhtml',tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(html!=null)e.innerHTML=html;return e};
+function rng(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20260924);
+const gauss=()=>{let u=0,v=0;while(!u)u=R();while(!v)v=R();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtM=d=>MON[d.getMonth()]+' '+d.getFullYear();
+const fmtD=d=>d.getDate()+' '+MON[d.getMonth()];
+const f2=v=>v==null||isNaN(v)?'—':v.toFixed(2);
+const sgn=v=>v==null||isNaN(v)?'—':(v>=0?'+':'−')+Math.abs(v).toFixed(2);
+const median=a=>{if(!a.length)return null;const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
+function slope(pts){if(pts.length<3)return null;const n=pts.length,mx=pts.reduce((s,p)=>s+p[0],0)/n,my=pts.reduce((s,p)=>s+p[1],0)/n;let a=0,b=0;for(const p of pts){a+=(p[0]-mx)*(p[1]-my);b+=(p[0]-mx)**2}return b?a/b:0}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const STATUS={crit:{i:'!',t:'Needs a field visit'},warn:{i:'~',t:'Watch'},good:{i:'✓',t:'On track'},ref:{i:'•',t:'Reference stand'}};
+const pill=(k,label)=>`<span class="pill ${k}"><i aria-hidden="true">${STATUS[k].i}</i>${label||STATUS[k].t}</span>`;
+function download(name,rows){const csv=rows.map(r=>r.map(v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function seqColor(v){const steps=['--s0','--s1','--s2','--s3','--s4','--s5'];const t=clamp((v-0.05)/(0.60-0.05),0,.9999);return `var(${steps[Math.floor(t*6)]})`}
+
+/* ---------- line chart with hover ---------- */
+function lineChart(host,o){
+  host.innerHTML='';
+  const W=o.w||560,H=o.h||220,m={l:40,r:26,t:10,b:26};
+  const xs=o.series.flatMap(s=>s.pts.map(p=>+p.x)).concat((o.band||[]).map(b=>+b.x));
+  const x0=o.xMin!=null?+o.xMin:Math.min(...xs),x1=o.xMax!=null?+o.xMax:Math.max(...xs);
+  const X=v=>m.l+(+v-x0)/(x1-x0||1)*(W-m.l-m.r), Y=v=>m.t+(1-(v-o.yMin)/(o.yMax-o.yMin))*(H-m.t-m.b);
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',role:'img','aria-label':o.label||'chart'});
+  const g=el('g',{class:'axis'});svg.appendChild(g);
+  for(const t of o.yTicks){g.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),class:'gridline'}));g.appendChild(el('text',{x:m.l-6,y:Y(t)+4,'text-anchor':'end'},o.yFmt?o.yFmt(t):t))}
+  for(const t of o.xTicks){g.appendChild(el('text',{x:X(t.x),y:H-8,'text-anchor':'middle'},t.label))}
+  if(o.band&&o.band.length){const up=o.band.map(b=>`${X(b.x)},${Y(b.hi)}`),dn=[...o.band].reverse().map(b=>`${X(b.x)},${Y(b.lo)}`);svg.appendChild(el('polygon',{points:up.concat(dn).join(' '),fill:'var(--band)'}))}
+  if(o.refLine!=null){svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:Y(o.refLine),y2:Y(o.refLine),stroke:'var(--ink-3)','stroke-dasharray':'3 3'}))}
+  for(const v of (o.vlines||[])){svg.appendChild(el('line',{x1:X(v.x),x2:X(v.x),y1:m.t,y2:H-m.b,stroke:'var(--ink-3)','stroke-dasharray':'2 3'}));svg.appendChild(el('text',{x:X(v.x)+4,y:m.t+10,class:'axis',fill:'var(--ink-3)','font-size':'11'},v.label))}
+  for(const s of o.series){
+    const good=s.pts.filter(p=>!p.low);
+    if(s.bars){for(const p of s.pts){const y=Y(Math.max(o.yMin,p.y));svg.appendChild(el('rect',{x:X(p.x)-s.bw/2,y:Math.min(y,Y(o.yMin)),width:s.bw,height:Math.abs(Y(o.yMin)-y),rx:2,fill:p.color||s.color}))}continue}
+    if(good.length>1)svg.appendChild(el('path',{d:good.map((p,i)=>(i?'L':'M')+X(p.x).toFixed(1)+','+Y(p.y).toFixed(1)).join(''),fill:'none',stroke:s.color,'stroke-width':2,'stroke-dasharray':s.dash||'','stroke-linejoin':'round','stroke-linecap':'round'}));
+    if(s.dots)for(const p of s.pts){svg.appendChild(el('circle',{cx:X(p.x),cy:Y(p.y),r:p.low?3.5:3,fill:p.low?'var(--panel)':s.color,stroke:p.low?'var(--ink-3)':'var(--panel)','stroke-width':p.low?1.5:1.5}))}
+  }
+  const cross=el('line',{y1:m.t,y2:H-m.b,stroke:'var(--ink-3)',opacity:0});svg.appendChild(cross);
+  const hit=el('rect',{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:'transparent'});svg.appendChild(hit);
+  host.appendChild(svg);
+  const tip=el('div',{class:'tip'});host.appendChild(tip);
+  const keys=[...new Set(o.series.flatMap(s=>s.pts.map(p=>+p.x)))].sort((a,b)=>a-b);
+  function show(ev){const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)*W/r.width;let best=keys[0],bd=1e9;for(const k of keys){const d=Math.abs(X(k)-px);if(d<bd){bd=d;best=k}}cross.setAttribute('x1',X(best));cross.setAttribute('x2',X(best));cross.setAttribute('opacity',.6);
+    const rows=o.series.map(s=>{const p=s.pts.find(q=>+q.x===best);return p?`<div class="r"><span class="k"><svg width="10" height="10"><rect width="10" height="10" rx="2" fill="${p.color||s.color}"/></svg>${s.name}</span><b>${o.yFmt?o.yFmt(p.y):f2(p.y)}${p.low?' <span class="muted">(low conf.)</span>':''}</b></div>`:''}).join('');
+    const b=(o.band||[]).find(q=>+q.x===best);
+    tip.innerHTML=`<div class="muted" style="margin-bottom:3px">${o.xFmt(new Date(best))}</div>${rows}${b?`<div class="r"><span class="k">${o.bandName||'range'}</span><span>${o.yFmt?o.yFmt(b.lo):f2(b.lo)}–${o.yFmt?o.yFmt(b.hi):f2(b.hi)}</span></div>`:''}`;
+    const tx=X(best)/W*r.width;tip.style.left=Math.min(r.width-tip.offsetWidth-4,Math.max(4,tx+12))+'px';tip.style.top='6px';tip.style.opacity=1}
+  hit.addEventListener('pointermove',show);hit.addEventListener('pointerleave',()=>{tip.style.opacity=0;cross.setAttribute('opacity',0)});
+}
+function spark(vals,w=90,h=22,color='var(--ink-2)'){const v=vals.filter(x=>x!=null);if(v.length<2)return'';const mn=Math.min(...v),mx=Math.max(...v);const pts=vals.map((y,i)=>y==null?null:[i/(vals.length-1)*(w-4)+2,h-3-(y-mn)/((mx-mn)||1)*(h-6)]).filter(Boolean);const last=pts[pts.length-1];return `<svg width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="2.5" fill="${color}"/></svg>`}
+
+/* =====================================================================
+   MANGROVES
+   ===================================================================== */
+const START=new Date(2023,0,15),END=new Date(2026,7,15);
+const DATES=[];for(let d=new Date(START);d<=END;d=new Date(d.getFullYear(),d.getMonth()+1,15))DATES.push(d);
+const monthsBetween=(a,b)=>(b.getFullYear()-a.getFullYear())*12+b.getMonth()-a.getMonth();
+const PLOTS=[
+ {id:'JBL-01',name:'Channel south, natural',planted:null,ha:4.6,poly:'40,250 150,232 170,320 60,345'},
+ {id:'JBL-02',name:'Channel south, upper',planted:new Date(2023,1,1),ha:3.4,poly:'150,232 250,215 268,300 170,320',k:1.0},
+ {id:'JBL-03',name:'Channel south, mid',planted:new Date(2023,1,1),ha:3.1,poly:'250,215 345,205 360,292 268,300',k:1.03},
+ {id:'JBL-04',name:'Causeway east',planted:new Date(2023,7,1),ha:3.7,poly:'345,205 440,200 455,285 360,292',k:0.8},
+ {id:'JBL-05',name:'Lagoon edge',planted:new Date(2023,7,1),ha:3.3,poly:'440,200 540,205 560,290 455,285',k:1.0},
+ {id:'JBL-06',name:'Lagoon inner',planted:new Date(2024,2,1),ha:3.0,poly:'455,285 560,290 585,370 470,372',k:0.55},
+ {id:'JBL-07',name:'Causeway south',planted:new Date(2024,2,1),ha:3.6,poly:'360,292 455,285 470,372 372,375',k:1.02},
+ {id:'JBL-08',name:'Channel north, natural',planted:null,ha:5.2,poly:'40,40 160,30 175,118 55,135'},
+ {id:'JBL-09',name:'Channel north, lower',planted:new Date(2023,1,1),ha:3.9,poly:'160,30 270,28 282,110 175,118',k:0.95,decline:20},
+ {id:'JBL-10',name:'Channel north, mid',planted:new Date(2023,7,1),ha:3.4,poly:'270,28 380,32 388,112 282,110',k:1.0},
+ {id:'JBL-11',name:'North bank, east',planted:new Date(2024,2,1),ha:3.2,poly:'380,32 490,40 495,118 388,112',k:0.86},
+ {id:'JBL-12',name:'North bank, far east',planted:new Date(2024,8,1),ha:3.4,poly:'490,40 600,52 600,125 495,118',k:1.0},
+];
+const curve=a=>a<0?0.07:0.08+0.40*(1-Math.exp(-a/15));
+for(const p of PLOTS){
+  p.obs=DATES.map((d,i)=>{
+    const low=R()<0.13;
+    let v;
+    if(!p.planted){v=0.55+0.02*Math.sin(i/2.3)+gauss()*0.012}
+    else{const a=monthsBetween(p.planted,d);if(a<0)return null;v=0.08+(curve(a)-0.08)*p.k;if(p.decline&&a>p.decline)v-=(a-p.decline)*0.012;v+=gauss()*0.014}
+    if(low)v-=0.06+R()*0.05;
+    return {d,v:clamp(v,0.04,0.66),low};
+  });
+}
+function scoreAt(ti){
+  const d=DATES[ti];
+  const planted=PLOTS.filter(p=>p.planted);
+  return PLOTS.map(p=>{
+    const hist=p.obs.slice(0,ti+1).filter(Boolean);
+    const usable=hist.filter(o=>!o.low);
+    const cur=p.obs[ti];
+    const val=usable.length?usable[usable.length-1].v:null;
+    const age=p.planted?monthsBetween(p.planted,d):null;
+    const last6=usable.slice(-6).map(o=>[o.d/(365.25*864e5),o.v]);
+    const tr=slope(last6);
+    let coh=null,short=null,status='ref';
+    if(p.planted&&age!=null&&age>=0){
+      const peers=planted.filter(q=>q!==p).map(q=>{const idx=DATES.findIndex(dd=>q.planted&&monthsBetween(q.planted,dd)===age);if(idx<0||idx>ti)return null;const o=q.obs[idx];return o&&!o.low?o.v:null}).filter(v=>v!=null);
+      coh=peers.length>=2?median(peers):null;
+      short=coh!=null&&val!=null?val-coh:null;
+      status='good';
+      if(age>=6&&short!=null&&short<-0.08)status='crit';
+      else if((short!=null&&short<-0.03)||(tr!=null&&tr<-0.03))status='warn';
+    }
+    return {p,val,age,coh,short,tr,status,curLow:cur?cur.low:false};
+  });
+}
+let mTi=DATES.length-1,mSel='JBL-09',mFilter='all',mTimer=null;
+function renderMap(sc){
+  const svg=$('#map');svg.innerHTML='';
+  svg.appendChild(el('rect',{x:0,y:0,width:640,height:400,fill:'var(--flat)'}));
+  svg.appendChild(el('path',{d:'M0,178 C120,150 220,190 320,168 S520,150 640,172 L640,196 C520,176 430,200 320,194 S120,178 0,204 Z',fill:'var(--water)'}));
+  svg.appendChild(el('text',{x:318,y:186,'text-anchor':'middle',class:'lbl',fill:'var(--ink-3)','font-style':'italic'},'tidal channel'));
+  const tip=$('#map-tip');
+  for(const s of sc){
+    const poly=el('polygon',{points:s.p.poly,fill:s.val==null?'var(--flat)':seqColor(s.val),class:'plot'+(s.p.id===mSel?' sel':''),tabindex:0,role:'button','aria-label':`${s.p.id}, index ${f2(s.val)}, ${STATUS[s.status].t}`});
+    if(s.val==null)poly.setAttribute('stroke-dasharray','4 3');
+    poly.addEventListener('click',()=>{mSel=s.p.id;renderM()});
+    poly.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();mSel=s.p.id;renderM()}});
+    poly.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();tip.innerHTML=`<b>${s.p.id}</b> · ${s.p.name}<div class="r"><span class="k">Index</span><b>${f2(s.val)}</b></div><div class="r"><span class="k">vs cohort</span><b>${sgn(s.short)}</b></div><div style="margin-top:4px">${pill(s.status)}</div>`;tip.style.left=Math.min(r.width-tip.offsetWidth-6,e.clientX-r.left+14)+'px';tip.style.top=Math.max(4,e.clientY-r.top-10)+'px';tip.style.opacity=1});
+    poly.addEventListener('pointerleave',()=>tip.style.opacity=0);
+    svg.appendChild(poly);
+    const pts=s.p.poly.split(' ').map(q=>q.split(',').map(Number));const cx=pts.reduce((a,q)=>a+q[0],0)/pts.length,cy=pts.reduce((a,q)=>a+q[1],0)/pts.length;
+    const light=s.val!=null&&s.val>0.36;
+    svg.appendChild(el('text',{x:cx,y:cy+4,'text-anchor':'middle',class:'lbl',fill:document.documentElement.dataset.resolved==='light'?(light?'#fff':'#1b2b27'):(light?'#0b1a12':'#e6ede9')},s.p.id.slice(4)));
+    if(s.status==='crit'){svg.appendChild(el('circle',{cx:cx+18,cy:cy-14,r:7,fill:'var(--crit)',stroke:'var(--bg)','stroke-width':1.5}));svg.appendChild(el('text',{x:cx+18,y:cy-10.5,'text-anchor':'middle',fill:'#fff','font-size':'10','font-weight':'700'},'!'))}
+  }
+}
+function renderMKpis(sc){
+  const planted=sc.filter(s=>s.p.planted&&s.val!=null);
+  const crit=sc.filter(s=>s.status==='crit').length,warn=sc.filter(s=>s.status==='warn').length;
+  const ha=PLOTS.reduce((a,p)=>a+p.ha,0);
+  $('#m-kpis').innerHTML=[
+    [PLOTS.length,'plots monitored',`${PLOTS.filter(p=>!p.planted).length} natural reference stands`],
+    [crit,'need a field visit',crit?pill('crit','flagged'):pill('good','none flagged')],
+    [warn,'to watch','shortfall or falling trend'],
+    [f2(median(planted.map(s=>s.val))),'median index, planted',`reference stands ≈ ${f2(median(sc.filter(s=>!s.p.planted).map(s=>s.val)))}`],
+    [ha.toFixed(1),'hectares monitored',`as of ${fmtM(DATES[mTi])}`]
+  ].map(k=>`<div class="kpi"><div class="v">${k[0]}</div><div class="l">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+}
+function renderMTable(sc){
+  const order={crit:0,warn:1,good:2,ref:3};
+  const rows=sc.filter(s=>mFilter==='all'||s.status===mFilter).sort((a,b)=>order[a.status]-order[b.status]||(a.short??9)-(b.short??9));
+  $('#m-table').innerHTML=`<thead><tr><th>Plot</th><th>Location</th><th>Planted</th><th class="num">Index</th><th class="num">vs cohort</th><th class="num">Trend / yr</th><th>Last 12 obs</th><th>Status</th></tr></thead><tbody>${rows.map(s=>{
+    const hist=s.p.obs.slice(Math.max(0,mTi-11),mTi+1).map(o=>o&&!o.low?o.v:null);
+    return `<tr data-id="${s.p.id}" class="${s.p.id===mSel?'sel':''}"><td class="id">${s.p.id}</td><td>${s.p.name}</td><td>${s.p.planted?fmtM(s.p.planted):'<span class="muted">natural</span>'}</td><td class="num">${f2(s.val)}</td><td class="num">${s.p.planted?sgn(s.short):'—'}</td><td class="num">${sgn(s.tr)}</td><td>${spark(hist,90,22,s.status==='crit'?'var(--crit)':'var(--ink-2)')}</td><td>${pill(s.status)}</td></tr>`}).join('')}</tbody>`;
+  $('#m-table').querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{mSel=tr.dataset.id;renderM()}));
+}
+function renderMDetail(sc){
+  const s=sc.find(x=>x.p.id===mSel),p=s.p;
+  const pts=p.obs.slice(0,mTi+1).filter(Boolean).map(o=>({x:o.d,y:o.v,low:o.low}));
+  const band=[];
+  if(p.planted){for(let i=0;i<=mTi;i++){const d=DATES[i],a=monthsBetween(p.planted,d);if(a<0)continue;const peers=PLOTS.filter(q=>q.planted&&q!==p).map(q=>{const idx=DATES.findIndex(dd=>monthsBetween(q.planted,dd)===a);const o=idx>=0?q.obs[idx]:null;return o&&!o.low?o.v:null}).filter(v=>v!=null);if(peers.length>=2){const b=[...peers].sort((x,y)=>x-y);band.push({x:d,lo:b[0],hi:b[b.length-1],mid:median(b)})}}}
+  const verdict=s.status==='crit'?`Reading ${f2(s.val)}, ${Math.abs(s.short).toFixed(2)} below the cohort at ${s.age} months${s.tr!=null?`, trend ${sgn(s.tr)} per year`:''}. Send a field team: check survival, sediment and grazing damage.`
+   :s.status==='warn'?`Reading ${f2(s.val)}, ${s.short!=null?sgn(s.short)+' against the cohort':'no cohort yet'}${s.tr!=null?`, trend ${sgn(s.tr)} per year`:''}. Keep on the watch list; re-check after the next two clean observations.`
+   :s.status==='good'?`Reading ${f2(s.val)}, in line with plots of the same age${s.age!=null?` (${s.age} months)`:''}. No action needed.`
+   :`Natural stand used as a reference for what mature canopy looks like at this site (≈ ${f2(s.val)}).`;
+  $('#m-detail').innerHTML=`<div class="card-b"><div style="display:flex;justify-content:space-between;gap:8px;align-items:start;flex-wrap:wrap"><div><h3>${p.id} · ${p.name}</h3><div class="sub">${p.ha} ha · ${p.planted?'planted '+fmtM(p.planted):'natural stand'}</div></div>${pill(s.status)}</div>
+  <div class="stats"><div class="stat"><div class="v">${f2(s.val)}</div><div class="l">index</div></div><div class="stat"><div class="v">${p.planted?sgn(s.short):'—'}</div><div class="l">vs cohort</div></div><div class="stat"><div class="v">${sgn(s.tr)}</div><div class="l">trend / yr</div></div><div class="stat"><div class="v">${s.age!=null?s.age+' mo':'—'}</div><div class="l">age</div></div></div>
+  <div class="chart" id="m-chart"></div>
+  <div class="legend"><span class="sw"><b style="background:var(--s4)"></b>This plot</span>${p.planted?'<span class="sw"><b style="background:var(--band);outline:1px solid var(--line-2)"></b>Cohort range, same age</span>':''}<span class="sw"><svg width="10" height="10"><circle cx="5" cy="5" r="3.5" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/></svg>Low confidence (tide), excluded</span></div>
+  <p class="verdict">${verdict}</p></div>`;
+  const yrs=[2023,2024,2025,2026].map(y=>({x:new Date(y,0,1),label:String(y)}));
+  lineChart($('#m-chart'),{series:[{name:'This plot',color:'var(--s4)',pts,dots:true}],band,bandName:'Cohort',yMin:0,yMax:0.65,yTicks:[0,0.2,0.4,0.6],yFmt:v=>v.toFixed(2),xTicks:yrs,xMin:START,xMax:END,xFmt:fmtM,h:210,vlines:p.planted&&p.planted>START?[{x:p.planted,label:'planted'}]:[],label:`Vegetation index history for ${p.id}`});
+}
+function renderM(){
+  const sc=scoreAt(mTi);
+  $('#m-date').textContent=fmtM(DATES[mTi]);
+  const lows=sc.filter(s=>s.curLow).map(s=>s.p.id);
+  $('#m-obsnote').textContent=lows.length?`${lows.length} plot${lows.length>1?'s':''} imaged at high tide this date (${lows.join(', ')}); last clean reading used.`:'All observations usable at this date.';
+  renderMKpis(sc);renderMap(sc);renderMTable(sc);renderMDetail(sc);
+}
+(function initM(){
+  const t=$('#m-time');t.max=DATES.length-1;t.value=mTi;
+  t.addEventListener('input',()=>{mTi=+t.value;renderM()});
+  $('#m-play').addEventListener('click',()=>{
+    if(mTimer){clearInterval(mTimer);mTimer=null;$('#m-play').textContent='▶ Play';return}
+    if(mTi>=DATES.length-1)mTi=0;$('#m-play').textContent='❚❚ Pause';
+    mTimer=setInterval(()=>{mTi++;t.value=mTi;renderM();if(mTi>=DATES.length-1){clearInterval(mTimer);mTimer=null;$('#m-play').textContent='▶ Play'}},380)});
+  const F=[['all','All'],['crit','Needs visit'],['warn','Watch'],['good','On track'],['ref','Reference']];
+  $('#m-filters').innerHTML=F.map(f=>`<button class="chip" data-f="${f[0]}" aria-pressed="${f[0]==='all'}">${f[1]}</button>`).join('');
+  $('#m-filters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;mFilter=b.dataset.f;$('#m-filters').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));renderM()});
+  $('#m-csv').addEventListener('click',()=>{const rows=[['plot','location','area_ha','planted','date','index','low_confidence']];for(const p of PLOTS)for(const o of p.obs)if(o)rows.push([p.id,p.name,p.ha,p.planted?p.planted.toISOString().slice(0,10):'natural',o.d.toISOString().slice(0,10),o.v.toFixed(3),o.low?1:0]);download('nabat_mangrove_plots_SIMULATED.csv',rows)});
+})();
+
+/* =====================================================================
+   CROPS
+   ===================================================================== */
+const WEEKS=16,TODAY=new Date(2026,8,21);
+const WD=[];for(let i=WEEKS-1;i>=0;i--)WD.push(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-7*i));
+const CROP={
+ palm:{label:'Date palm',ndvi:[0.34,0.40],sm:[18,30],kc:0.95,pest:'Red palm weevil / trap',pestT:4,heatT:46,unit:'trap'},
+ gh:{label:'Greenhouse',ndvi:[0.62,0.78],sm:[26,38],kc:1.05,pest:'Whitefly / sticky card',pestT:40,heatT:34,unit:'card'},
+ fodder:{label:'Fodder',ndvi:[0.58,0.74],sm:[20,32],kc:1.0,pest:'Fall armyworm / trap',pestT:12,heatT:46,unit:'trap'},
+};
+const FIELDS=[
+ {id:'DP-A1',crop:'palm',variety:'Khalas',ha:6.2,stage:'Post-harvest recovery',rect:[20,20,150,110],prof:{pest:[1,5.5]}},
+ {id:'DP-A2',crop:'palm',variety:'Barhi',ha:4.8,stage:'Post-harvest recovery',rect:[180,20,120,110],prof:{}},
+ {id:'DP-B1',crop:'palm',variety:'Lulu',ha:5.5,stage:'Post-harvest recovery',rect:[20,140,150,90],prof:{water:0.8}},
+ {id:'GH-01',crop:'gh',variety:'Tomato',ha:0.4,stage:'Transplant + 3 wk',rect:[330,20,55,70],prof:{pest:[20,46]}},
+ {id:'GH-02',crop:'gh',variety:'Cucumber',ha:0.4,stage:'Flowering',rect:[395,20,55,70],prof:{}},
+ {id:'GH-03',crop:'gh',variety:'Capsicum',ha:0.3,stage:'Vegetative',rect:[460,20,40,70],prof:{heat:1}},
+ {id:'FD-01',crop:'fodder',variety:'Rhodes grass',ha:8.0,stage:'Regrowth, cut 5',rect:[180,140,150,90],prof:{dry:1}},
+ {id:'FD-02',crop:'fodder',variety:'Rhodes grass',ha:7.5,stage:'Pre-cut',rect:[340,105,160,125],prof:{}},
+ {id:'FD-03',crop:'fodder',variety:'Alfalfa',ha:6.0,stage:'Regrowth',rect:[20,240,480,70],prof:{ndvi:-0.07}},
+];
+const ET0=WD.map((d,i)=>+(8.6-0.06*i+gauss()*0.25).toFixed(1));
+for(const f of FIELDS){
+  const c=CROP[f.crop],mid=(c.ndvi[0]+c.ndvi[1])/2;
+  f.w=WD.map((d,i)=>{
+    const t=i/(WEEKS-1);
+    let ndvi=mid+gauss()*0.012+(f.crop==='fodder'?0.04*Math.sin(i*1.3):0)+(f.prof.ndvi||0)*t;
+    let smv=(c.sm[0]+c.sm[1])/2+gauss()*1.4;
+    if(f.prof.dry&&i>=WEEKS-3){smv=c.sm[0]-2.5-(i-(WEEKS-3))*1.2;ndvi-=0.03*(i-(WEEKS-4))}
+    if(f.prof.water)smv-=t*5;
+    const etc=+(ET0[i]*7*c.kc).toFixed(0);
+    const deliv=Math.round(etc*((f.prof.dry&&i>=WEEKS-3)?0.62:(f.prof.water?1-(1-f.prof.water)*t:0.97+gauss()*0.04)));
+    const heat=Math.max(0,Math.round((f.prof.heat?14+t*16:6+gauss()*3)*(f.crop==='gh'?1:0.8)));
+    let pest=Math.max(0,Math.round(c.pestT*0.25+gauss()*c.pestT*0.08));
+    if(f.prof.pest){const[a,b]=f.prof.pest;pest=Math.round(a+(b-a)*Math.pow(t,2.2)+gauss()*a*0.1);if(f.crop==='palm')pest=Math.round(a+(b-a)*t*t)}
+    return {d,ndvi:clamp(+ndvi.toFixed(3),0.05,0.9),sm:+smv.toFixed(1),etc,deliv,heat,pest};
+  });
+  const last=f.w[WEEKS-1],prev=f.w[WEEKS-2];
+  const exp=mid,gap=last.ndvi-exp,wb=last.deliv/last.etc;
+  const reasons=[],acts=[];let st='good';
+  const RK={good:0,warn:1,crit:2};const up=k=>{if(RK[k]>RK[st])st=k};
+  if(last.sm<c.sm[0]&&prev.sm<c.sm[0]){up('crit');reasons.push(`Root-zone moisture ${last.sm}% — below ${c.sm[0]}% for 2 readings`);acts.push('Inspect drip lines and emitters for blockage; run a catch-up irrigation cycle')}
+  if(gap<-0.10){up('crit');reasons.push(`Canopy index ${f2(last.ndvi)} — ${Math.abs(gap).toFixed(2)} below stage expectation`)}
+  else if(gap<-0.05){up('warn');reasons.push(`Canopy index ${f2(last.ndvi)} — ${Math.abs(gap).toFixed(2)} below expectation`);acts.push('Scout for yellowing or patchy stand; take tissue sample')}
+  if(last.pest>=c.pestT){up('crit');reasons.push(`${c.pest.split(' /')[0]}: ${last.pest} per ${c.unit} (action ≥ ${c.pestT})`);acts.push(f.crop==='palm'?'Inspect trunks near traps for frass and oozing; notify plant protection':'Release biocontrol / targeted spray per IPM plan; replace cards')}
+  else if(last.pest>c.pestT/2){up('warn');reasons.push(`${c.pest.split(' /')[0]}: ${last.pest} per ${c.unit}, rising`);acts.push('Increase trap checks to twice weekly')}
+  if(wb<0.85&&!(last.sm<c.sm[0]&&prev.sm<c.sm[0])){up('warn');reasons.push(`Water delivered ${Math.round(wb*100)}% of crop demand`);acts.push('Extend irrigation run-time for the heat week')}
+  if(last.heat>20){up('warn');reasons.push(`${last.heat} heat-stress hours this week (>${c.heatT} °C)`);acts.push(f.crop==='gh'?'Check pad-and-fan cooling and shade screens':'Shift irrigation to night hours')}
+  f.status=st;f.reasons=reasons;f.acts=acts;f.gap=gap;f.wb=wb;f.last=last;f.exp=exp;
+  const acc=f.w.reduce((a,w)=>a+w.ndvi,0)/WEEKS/exp;f.yield=Math.round(clamp(acc*100+(st==='crit'?-8:st==='warn'?-3:0)+gauss()*2,55,110));
+}
+const cStatusLabel={crit:'Needs action',warn:'Watch',good:'On track'};
+let cSel=null,cFilter='all';
+function cKpis(){
+  const crit=FIELDS.filter(f=>f.status==='crit').length,warn=FIELDS.filter(f=>f.status==='warn').length;
+  const ha=FIELDS.reduce((a,f)=>a+f.ha,0);
+  const water=FIELDS.reduce((a,f)=>a+f.last.deliv*f.ha*10,0);
+  const wb=FIELDS.reduce((a,f)=>a+f.last.deliv*f.ha,0)/FIELDS.reduce((a,f)=>a+f.last.etc*f.ha,0);
+  $('#c-kpis').innerHTML=[
+    [FIELDS.length,'fields monitored',`${ha.toFixed(1)} ha · 3 crop groups`],
+    [crit,'need action this week',crit?pill('crit','act now'):pill('good','none')],
+    [warn,'to watch','see action queue'],
+    [Math.round(wb*100)+'%','water vs crop demand',`${Math.round(water).toLocaleString()} m³ delivered this week`],
+    [Math.round(FIELDS.reduce((a,f)=>a+f.yield*f.ha,0)/ha)+'%','yield outlook vs target','area-weighted, direction only']
+  ].map(k=>`<div class="kpi"><div class="v">${k[0]}</div><div class="l">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+}
+function cQueue(){
+  const order={crit:0,warn:1,good:2};
+  const items=FIELDS.filter(f=>f.status!=='good').sort((a,b)=>order[a.status]-order[b.status]);
+  $('#c-queue').innerHTML=items.length?items.map(f=>`<li data-id="${f.id}" tabindex="0"><span>${pill(f.status,cStatusLabel[f.status])}</span><div><div class="t">${f.id} · ${CROP[f.crop].label}, ${f.variety}</div><div class="r">${f.reasons.join(' · ')}</div>${f.acts.length?`<div class="a">${f.acts[0]}</div>`:''}</div><span class="muted mono" style="font-size:12px">${f.ha} ha</span></li>`).join(''):'<li>No actions this week.</li>';
+  $('#c-queue').querySelectorAll('li[data-id]').forEach(li=>{const go=()=>{cSel=li.dataset.id;renderC()};li.addEventListener('click',go);li.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
+}
+function cFarm(){
+  const svg=$('#farm');svg.innerHTML='';
+  svg.appendChild(el('rect',{x:0,y:0,width:520,height:330,rx:10,fill:'var(--flat)'}));
+  svg.appendChild(el('rect',{x:310,y:0,width:10,height:330,fill:'var(--panel-2)'}));
+  const tip=$('#farm-tip');const col={crit:'var(--crit)',warn:'var(--warn)',good:'var(--good)'};
+  for(const f of FIELDS){
+    const [x,y,w,h]=f.rect;
+    const g=el('g',{class:'field'+(f.id===cSel?' sel':''),tabindex:0,role:'button','aria-label':`${f.id} ${f.variety}, ${cStatusLabel[f.status]}`});
+    g.appendChild(el('rect',{x,y,width:w,height:h,rx:6,fill:'var(--panel)',stroke:'inherit'}));
+    g.appendChild(el('rect',{x,y,width:6,height:h,rx:3,fill:col[f.status]}));
+    if(f.crop==='palm'){for(let i=x+18;i<x+w-6;i+=16)for(let j=y+28;j<y+h-6;j+=16)g.appendChild(el('circle',{cx:i,cy:j,r:2.6,fill:'var(--s3)',opacity:.8}))}
+    else if(f.crop==='gh'){for(let i=x+12;i<x+w-4;i+=8)g.appendChild(el('line',{x1:i,x2:i,y1:y+24,y2:y+h-6,stroke:'var(--line-2)'}))}
+    else{for(let j=y+26;j<y+h-4;j+=7)g.appendChild(el('line',{x1:x+12,x2:x+w-8,y1:j,y2:j,stroke:'var(--s2)',opacity:.7}))}
+    g.appendChild(el('text',{x:x+12,y:y+16,class:'lbl',fill:'var(--ink)','font-weight':'600'},f.id));
+    if(w>90)g.appendChild(el('text',{x:x+62,y:y+16,class:'lbl',fill:'var(--ink-2)'},f.variety));
+    g.addEventListener('click',()=>{cSel=f.id;renderC()});
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();cSel=f.id;renderC()}});
+    g.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();tip.innerHTML=`<b>${f.id}</b> · ${CROP[f.crop].label}, ${f.variety}<div class="r"><span class="k">Canopy</span><b>${f2(f.last.ndvi)}</b></div><div class="r"><span class="k">Moisture</span><b>${f.last.sm}%</b></div><div class="r"><span class="k">Water vs demand</span><b>${Math.round(f.wb*100)}%</b></div><div style="margin-top:4px">${pill(f.status,cStatusLabel[f.status])}</div>`;tip.style.left=Math.min(r.width-tip.offsetWidth-6,e.clientX-r.left+14)+'px';tip.style.top=Math.max(4,e.clientY-r.top-10)+'px';tip.style.opacity=1});
+    g.addEventListener('pointerleave',()=>tip.style.opacity=0);
+    svg.appendChild(g);
+  }
+}
+function cTable(){
+  const order={crit:0,warn:1,good:2};
+  const rows=FIELDS.filter(f=>cFilter==='all'||f.crop===cFilter).sort((a,b)=>order[a.status]-order[b.status]||a.id.localeCompare(b.id));
+  $('#c-table').innerHTML=`<thead><tr><th>Field</th><th>Crop</th><th class="num">Area</th><th class="num">Canopy</th><th class="num">vs exp.</th><th class="num">Moisture</th><th class="num">Water/demand</th><th class="num">Heat h</th><th class="num">Pest</th><th>Canopy, 16 wk</th><th class="num">Yield outlook</th><th>Status</th></tr></thead><tbody>${rows.map(f=>{const c=CROP[f.crop];return `<tr data-id="${f.id}" class="${f.id===cSel?'sel':''}"><td class="id">${f.id}</td><td>${c.label} <span class="muted">· ${f.variety}</span></td><td class="num">${f.ha} ha</td><td class="num">${f2(f.last.ndvi)}</td><td class="num">${sgn(f.gap)}</td><td class="num">${f.last.sm}%</td><td class="num">${Math.round(f.wb*100)}%</td><td class="num">${f.last.heat}</td><td class="num">${f.last.pest}<span class="muted">/${c.pestT}</span></td><td>${spark(f.w.map(w=>w.ndvi),90,22,f.status==='crit'?'var(--crit)':'var(--ink-2)')}</td><td class="num">${f.yield}%</td><td>${pill(f.status,cStatusLabel[f.status])}</td></tr>`}).join('')}</tbody>`;
+  $('#c-table').querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>{cSel=tr.dataset.id;renderC()}));
+}
+function cDetail(){
+  const f=FIELDS.find(x=>x.id===cSel),c=CROP[f.crop];
+  const xt=WD.filter((d,i)=>i%4===3).map(d=>({x:d,label:fmtD(d)}));
+  $('#c-detail').innerHTML=`<div class="card-b"><div style="display:flex;justify-content:space-between;gap:8px;align-items:start;flex-wrap:wrap"><div><h3>${f.id} · ${c.label}, ${f.variety}</h3><div class="sub">${f.ha} ha · ${f.stage} · week of ${fmtD(TODAY)}</div></div>${pill(f.status,cStatusLabel[f.status])}</div>
+  <div class="stats"><div class="stat"><div class="v">${f2(f.last.ndvi)}</div><div class="l">canopy index</div></div><div class="stat"><div class="v">${f.last.sm}%</div><div class="l">root-zone moisture</div></div><div class="stat"><div class="v">${f.last.pest}<span class="muted" style="font-size:12px">/${c.pestT}</span></div><div class="l">${c.pest.split(' /')[0].toLowerCase()} per ${c.unit}</div></div><div class="stat"><div class="v">${f.yield}%</div><div class="l">yield outlook</div></div></div>
+  <div style="font-size:13px;font-weight:600;margin-top:6px">Canopy index vs expectation for this stage</div>
+  <div class="chart" id="c-chart1"></div>
+  <div class="legend"><span class="sw"><b style="background:var(--s4)"></b>This field</span><span class="sw"><b style="background:var(--band);outline:1px solid var(--line-2)"></b>Expected range for crop &amp; stage</span></div>
+  ${f.reasons.length?`<p class="verdict"><b>Why:</b> ${f.reasons.join('; ')}.</p>${f.acts.length?`<p class="verdict"><b>Do:</b> ${f.acts.join('; ')}.</p>`:''}`:'<p class="verdict">All five checks within range. No action needed this week.</p>'}</div>`;
+  lineChart($('#c-chart1'),{series:[{name:'Canopy',color:'var(--s4)',pts:f.w.map(w=>({x:w.d,y:w.ndvi})),dots:true}],band:f.w.map(w=>({x:w.d,lo:c.ndvi[0],hi:c.ndvi[1]})),bandName:'Expected',yMin:Math.max(0,c.ndvi[0]-0.2),yMax:Math.min(1,c.ndvi[1]+0.08),yTicks:[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8].filter(t=>t>=Math.max(0,c.ndvi[0]-0.2)-1e-9&&t<=Math.min(1,c.ndvi[1]+0.08)+1e-9),yFmt:v=>v.toFixed(2),xTicks:xt,xFmt:fmtD,h:190,label:'Canopy index, 16 weeks'});
+  $('#c-chart2-sub').textContent=`Volumetric water content, %. Shaded = target range for ${c.label.toLowerCase()} (${c.sm[0]}–${c.sm[1]}%).`;
+  lineChart($('#c-chart2'),{series:[{name:'Moisture',color:'var(--s4)',pts:f.w.map(w=>({x:w.d,y:w.sm})),dots:true}],band:f.w.map(w=>({x:w.d,lo:c.sm[0],hi:c.sm[1]})),bandName:'Target',yMin:10,yMax:45,yTicks:[10,20,30,40],yFmt:v=>Math.round(v)+'%',xTicks:xt,xFmt:fmtD,h:170,label:'Root-zone moisture'});
+  lineChart($('#c-chart3'),{series:[{name:'Delivered / demand',bars:true,bw:14,color:'var(--s3)',pts:f.w.map(w=>{const r=w.deliv/w.etc*100;return{x:w.d,y:r,color:r<85?'var(--warn)':'var(--s3)'}})}],refLine:100,yMin:40,yMax:120,yTicks:[40,60,80,100,120],yFmt:v=>Math.round(v)+'%',xTicks:xt,xFmt:fmtD,h:150,label:'Water delivered vs crop demand'});
+}
+function cWx(){
+  const days=['Thu','Fri','Sat','Sun','Mon','Tue','Wed'];
+  const T=[42,43,44,42,41,40,40],E=[8.1,8.4,8.6,8.0,7.8,7.6,7.5];
+  $('#c-wx').innerHTML=days.map((d,i)=>`<div class="${T[i]>=43?'hot':''}"><div class="d">${d} ${24+i>30?24+i-30:24+i} ${24+i>30?'Oct':'Sep'}</div><div class="t">${T[i]}°</div><div class="e">ET₀ ${E[i]}</div></div>`).join('');
+}
+function renderC(){if(!cSel)cSel=[...FIELDS].sort((a,b)=>({crit:0,warn:1,good:2})[a.status]-({crit:0,warn:1,good:2})[b.status])[0].id;cKpis();cQueue();cFarm();cTable();cDetail();cWx()}
+(function initC(){
+  const F=[['all','All'],['palm','Date palm'],['gh','Greenhouse'],['fodder','Fodder']];
+  $('#c-filters').innerHTML=F.map(f=>`<button class="chip" data-f="${f[0]}" aria-pressed="${f[0]==='all'}">${f[1]}</button>`).join('');
+  $('#c-filters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;cFilter=b.dataset.f;$('#c-filters').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));cTable()});
+  $('#c-csv').addEventListener('click',()=>{const rows=[['field','crop','variety','area_ha','week','canopy_index','soil_moisture_pct','etc_mm','delivered_mm','heat_hours','pest_count']];for(const f of FIELDS)for(const w of f.w)rows.push([f.id,CROP[f.crop].label,f.variety,f.ha,w.d.toISOString().slice(0,10),w.ndvi,w.sm,w.etc,w.deliv,w.heat,w.pest]);download('nabat_farm_fields_SIMULATED.csv',rows)});
+})();
+
+/* ---------- tabs, theme ---------- */
+let rendered={};
+function show(tab){
+  if(!['mangroves','crops','method'].includes(tab))tab='mangroves';
+  document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==tab);
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===tab));
+  if(tab==='mangroves')renderM();if(tab==='crops')renderC();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{location.hash=t.dataset.tab}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+function resolveTheme(){const t=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.dataset.resolved=t;return t}
+try{const s=localStorage.getItem('nabat-theme');if(s)document.documentElement.dataset.theme=s}catch(e){}
+resolveTheme();
+$('#theme').addEventListener('click',()=>{const n=resolveTheme()==='light'?'dark':'light';document.documentElement.dataset.theme=n;try{localStorage.setItem('nabat-theme',n)}catch(e){}resolveTheme();show(location.hash.slice(1)||'mangroves')});
+show(location.hash.slice(1)||'mangroves');
+})();
+</script>
+</body>
+</html>
