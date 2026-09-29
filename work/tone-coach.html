@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tone Coach · Case study · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="Tone Coach: Reads the emotion in a customer message, then rewrites your reply so it lands well. Case study by Syed Sarfaraz Ahmed, AI product manager.">
+<meta property="og:title" content="Tone Coach · Case study · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="Tone Coach: Reads the emotion in a customer message, then rewrites your reply so it lands well. Case study by Syed Sarfaraz Ahmed, AI product manager.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/work/tone-coach">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/work/tone-coach">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav" id="nav"><div class="wrap">
+  <a class="brand" href="/" aria-label="Syed Sarfaraz Ahmed, home"><span class="mark">SA</span><span>Syed Sarfaraz Ahmed</span></a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="/#work">Work</a><a href="/#approach">Approach</a><a href="/#experience">Experience</a><a href="/#contact">Contact</a>
+  </nav>
+  <a class="btn sm" href="https://www.linkedin.com/in/syed2017/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+</div></header>
+
+<main id="main">
+<section class="cs-hero"><div class="wrap">
+  <a class="crumb" href="/#work"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg> All work</a>
+  <div class="row"><span class="idx">04 / 05</span><span class="badge ">Live demo</span></div>
+  <h1>Tone Coach</h1>
+  <p class="tagline">Read the mood. Send the right words.</p>
+  <div class="cta"><a class="btn" href="https://sarfaraz27.lovable.app/demos/tone-coach" target="_blank" rel="noopener">Try the live demo <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></a><a class="btn ghost" href="#problem">Read the case study</a></div>
+  <div class="cs-visual" style="margin-top:48px" aria-hidden="true"><div class="mock"><div class="bar"><i></i><i></i><i></i></div>
+<div class="lbl">Customer message</div>
+<div class="bub in">I've been charged twice and nobody has replied in three days. This is unacceptable.</div>
+<div class="meter"><span class="chip" style="color:var(--crit)">Frustrated 0.86</span><span class="chip" style="color:var(--warn)">Urgent 0.71</span><span class="chip">Formal</span></div>
+<div class="bub strike">As per our policy, refunds take 7–10 days.</div>
+<div class="bub out">You're right to be frustrated, and I'm sorry for the silence. I've refunded the duplicate charge today, and you'll see it within 3 working days.</div>
+</div></div>
+</div></section>
+
+<div class="wrap"><div class="cs-body">
+  <aside>
+    <dl class="facts">
+      <div class="fact"><dt>My role</dt><dd>Solo: product, prototype, prompts and eval set</dd></div>
+      <div class="fact"><dt>For</dt><dd>Support and operations teams handling upset customers at volume</dd></div>
+      <div class="fact"><dt>Built with</dt><dd>Lovable · Lovable AI (LLM)</dd></div>
+      <div class="fact"><dt>Status</dt><dd>Live demo</dd></div>
+    </dl>
+    <a class="btn" style="margin-top:20px;width:100%;justify-content:center" href="https://sarfaraz27.lovable.app/demos/tone-coach" target="_blank" rel="noopener">Try the live demo <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></a>
+  </aside>
+  <article class="prose">
+    <section id="problem"><div class="eyebrow">The problem</div><h2>Why this needed to exist</h2><p>In travel and payments, most escalations aren't caused by the original problem. They're caused by the reply. A correct but cold answer to an angry customer turns a refund into a complaint, and a complaint into a churned customer.</p><p>Agents under pressure don't have time to re-read their own drafts through the customer's eyes.</p></section>
+    <section><div class="eyebrow">The product</div><h2>How it works</h2><ol class="steps"><li>Paste the customer's message. Tone Coach detects the tone and the emotions behind it, with a confidence score for each.</li><li>Draft your reply as you normally would.</li><li>The model checks how your draft is likely to land given the customer's mood, and rewrites it to be polite, warm and respectful while keeping the facts.</li><li>An Evals view tests the model against a fixed set of sample messages, so prompt changes can be checked before they reach agents.</li></ol></section>
+    <section><div class="eyebrow">Product decisions</div><h2>The calls that mattered</h2><div class="decisions"><div class="dec"><h3>Two steps, not one</h3><p>Reading the customer first and checking the reply second mirrors how good agents already think, so it fits the workflow instead of replacing it.</p></div><div class="dec"><h3>Keep the agent in control</h3><p>The tool suggests a rewrite. It never sends. Accountability stays with the person.</p></div><div class="dec"><h3>Evals built in</h3><p>Tone is subjective, so a fixed eval set is the only way to know if a change made things better or just different.</p></div></div></section>
+    <section><div class="eyebrow">Measuring success</div><h2>What I'd measure</h2><p>This is a prototype, so these are the metrics I'd use to judge it in production, not results I'm claiming.</p><div class="metrics"><div class="metric"><b>Escalation rate</b><span>Share of conversations escalated after a coached reply versus uncoached</span></div><div class="metric"><b>CSAT on coached replies</b><span>Customer satisfaction on replies that used a rewrite</span></div><div class="metric"><b>Acceptance rate</b><span>Share of suggested rewrites agents send as-is or lightly edited</span></div><div class="metric"><b>Eval pass rate</b><span>Share of eval cases where tone detection matches the labelled answer</span></div></div></section>
+    <section><div class="eyebrow">Where else it applies</div><h2>Beyond the demo</h2><div class="fit"><div><b>Customer support</b>Coach replies in the moment, at scale</div><div><b>Relationship teams</b>Check how sensitive client emails will land</div><div><b>Training</b>Show new agents what a good reply looks like</div></div></section>
+    <section><div class="eyebrow">Next</div><h2>What I'd build next</h2><ul><li>Arabic and English support for Gulf customers</li><li>A helpdesk plug-in so coaching happens inside the ticket</li><li>A team dashboard of tone trends across queues</li></ul></section>
+  </article>
+</div></div>
+
+<div class="wrap"><div class="next"><a href="/work/ledger"><div><small>Next case study</small><b>Ledger</b></div><span class="arr"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a></div></div>
+</main>
+<footer><div class="wrap"><span>© 2026 Syed Sarfaraz Ahmed · Dubai, UAE</span><span>Designed and built by me with AI tools</span></div></footer>
+<script>
+(function(){
+  var n=document.getElementById('nav');
+  var f=function(){n.classList.toggle('scrolled',window.scrollY>8)};f();window.addEventListener('scroll',f,{passive:true});
+  var els=document.querySelectorAll('.rv');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
