@@ -1,16 +1,14 @@
-# Sarfaraz Plant Monitor
+# Syed Sarfaraz Ahmed — AI product portfolio
 
-Field-triage dashboard for **mangrove restoration plots** (Jubail Mangrove Park, Abu Dhabi) and **irrigated farm crops** (date palm, greenhouse vegetables, fodder).
+Live: https://sarfaraz27.vercel.app
 
-Live: https://nabat-plot-monitor.vercel.app
+Static site, no build step. Every push to `main` deploys to production on Vercel.
 
-> **Illustrative data.** Every value is simulated to demonstrate the interface and the scoring method. Nothing is derived from real satellite imagery, sensors or farm records.
+## Structure
+- `index.html` — homepage: intro, grid of AI products, approach, experience, contact
+- `work/*.html` — one case study per product (Cite, Nabat Plot Monitor, Signal, Tone Coach, Ledger)
+- `assets/site.css` — shared styles (light and dark mode)
+- `nabat/index.html` — the Nabat Plot Monitor dashboard (self-contained HTML/CSS/JS). Served at `/nabat`
+- `vercel.json` — clean URLs (e.g. `/work/cite`)
 
-## What's inside
-- `index.html` — the whole site: HTML, CSS and JavaScript in one self-contained file, no build step.
-- **Mangrove plots** — each plot's vegetation index benchmarked against same-age plots; flags plots needing a field visit.
-- **Farm crops** — weekly checks on canopy vigour, root-zone moisture, water delivered vs crop demand, heat stress and pest traps, with an action queue.
-- **Method & limits** — scoring rules and what the measurements cannot tell you.
-
-## Deploying
-The repo is connected to Vercel (project `nabat-plot-monitor`): every push to `main` deploys to production automatically. To change the site, edit `index.html` on GitHub (pencil icon) and commit.
+> **Nabat uses illustrative data.** Every value is simulated to demonstrate the interface and scoring method.
