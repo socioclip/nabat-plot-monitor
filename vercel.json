@@ -1,4 +1,9 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/nabat", "destination": "/plant-monitor", "permanent": true },
+    { "source": "/nabat/:path*", "destination": "/plant-monitor", "permanent": true },
+    { "source": "/work/nabat", "destination": "/work/plant-monitor", "permanent": true }
+  ]
 }
