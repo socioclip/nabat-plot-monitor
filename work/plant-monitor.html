@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Geospatial Plant Monitor · Case study · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="Geospatial Plant Monitor: Map-based triage dashboard that tells field teams which plots and fields to visit first. Case study by Syed Sarfaraz Ahmed, AI product manager.">
+<meta property="og:title" content="Geospatial Plant Monitor · Case study · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="Geospatial Plant Monitor: Map-based triage dashboard that tells field teams which plots and fields to visit first. Case study by Syed Sarfaraz Ahmed, AI product manager.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/work/plant-monitor">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/work/plant-monitor">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav" id="nav"><div class="wrap">
+  <a class="brand" href="/" aria-label="Syed Sarfaraz Ahmed, home"><span class="mark">SA</span><span>Syed Sarfaraz Ahmed</span></a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="/#work">Work</a><a href="/#approach">Approach</a><a href="/#experience">Experience</a><a href="/#contact">Contact</a>
+  </nav>
+  <a class="btn sm" href="https://www.linkedin.com/in/syed2017/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+</div></header>
+
+<main id="main">
+<section class="cs-hero"><div class="wrap">
+  <a class="crumb" href="/#work"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg> All work</a>
+  <div class="row"><span class="idx">02 / 05</span><span class="badge proto">Working prototype</span></div>
+  <h1>Geospatial Plant Monitor</h1>
+  <p class="tagline">Know where to walk first.</p>
+  <div class="cta"><a class="btn" href="/plant-monitor">Open the dashboard <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a><a class="btn ghost" href="#problem">Read the case study</a></div>
+  <div class="cs-visual" style="margin-top:48px" aria-hidden="true"><div class="map" aria-hidden="true">
+<span class="plot g" style="left:9%;top:22%;width:13%;height:18%"></span>
+<span class="plot g" style="left:25%;top:16%;width:10%;height:14%"></span>
+<span class="plot w" style="left:17%;top:46%;width:12%;height:16%"></span>
+<span class="plot c" style="left:33%;top:38%;width:9%;height:13%"></span>
+<span class="plot g" style="left:8%;top:68%;width:10%;height:12%"></span>
+<span class="plot w" style="left:38%;top:62%;width:11%;height:14%"></span>
+<div class="queue"><div class="lbl">Walk first</div>
+<div class="q"><span>JB-14 · 3 yr</span><span class="pill" style="background:#F8E1DC;color:#B8412F">−2.1σ</span></div>
+<div class="q"><span>JB-07 · 2 yr</span><span class="pill" style="background:#F7EBD2;color:#9a6414">−1.3σ</span></div>
+<div class="q"><span>JB-22 · 4 yr</span><span class="pill" style="background:#F7EBD2;color:#9a6414">−1.1σ</span></div>
+<div class="q"><span>JB-03 · 5 yr</span><span class="pill" style="background:#DCEFE3;color:#1F8A4C">on track</span></div>
+</div>
+<div class="maplegend"><i style="background:#1fa05a"></i>On track &nbsp; <i style="background:#e6aa28"></i>Watch &nbsp; <i style="background:#d24637"></i>Visit</div>
+</div></div>
+</div></section>
+
+<div class="wrap"><div class="cs-body">
+  <aside>
+    <dl class="facts">
+      <div class="fact"><dt>My role</dt><dd>Solo: product definition, scoring method, design and build</dd></div>
+      <div class="fact"><dt>For</dt><dd>Mangrove restoration and irrigated-farm teams with more plots than people</dd></div>
+      <div class="fact"><dt>Built with</dt><dd>HTML · JavaScript · Leaflet · Esri satellite imagery · Vercel</dd></div>
+      <div class="fact"><dt>Status</dt><dd>Working prototype</dd></div>
+    </dl>
+    <a class="btn" style="margin-top:20px;width:100%;justify-content:center" href="/plant-monitor">Open the dashboard <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+  </aside>
+  <article class="prose">
+    <section id="problem"><div class="eyebrow">The problem</div><h2>Why this needed to exist</h2><p>A restoration team at a site like Jubail, Abu Dhabi, has dozens of plots and a few people. They can't visit every plot every week, so the question each morning is simple: <strong>where do we walk first?</strong></p><p>Raw vegetation readings make that question harder, not easier. A two-year-old plot will always look "weaker" than a six-year-old one, so ranking by the raw number sends the team to the wrong places.</p><p class="note">All values in the dashboard are simulated to demonstrate the interface and scoring method. Nothing is derived from real vegetation readings, sensors or farm records.</p></section>
+    <section><div class="eyebrow">The product</div><h2>How it works</h2><ol class="steps"><li>The page opens with one plain sentence: how many plots need a visit, and which one to start with.</li><li>Each plot is drawn on real satellite imagery at its actual location, coloured by status (visit now, keep an eye on, on track) or by greenness.</li><li>Its vegetation index is benchmarked against <strong>plots of the same age</strong>, not against the whole site, so young plots are not flagged just for being young.</li><li>A ranked visit list gives every flagged plot a plain-language reason and a next step. Tap one for its history chart and the numbers behind the call.</li><li>A replay slider shows how plots moved over time, and the full table exports to CSV for the field team.</li><li>A second view applies the same logic to farm crops: plant health, soil moisture, irrigation versus need, heat stress and pest traps, rolled into a weekly to-do list.</li></ol></section>
+    <section><div class="eyebrow">Product decisions</div><h2>The calls that mattered</h2><div class="decisions"><div class="dec"><h3>Benchmark against peers, not the average</h3><p>The single most important decision. It turns a misleading number into a fair comparison and changes which plots get visited.</p></div><div class="dec"><h3>A queue, not a chart</h3><p>Field teams don't need analytics, they need a to-do list. The output is a ranked list of plots to visit.</p></div><div class="dec"><h3>Be explicit about limits</h3><p>The data is simulated, and the product says so on every screen, along with what the measurements can't tell you.</p></div></div></section>
+    <section><div class="eyebrow">Measuring success</div><h2>What I'd measure</h2><p>This is a prototype, so these are the metrics I'd use to judge it in production, not results I'm claiming.</p><div class="metrics"><div class="metric"><b>Hit rate</b><span>Share of flagged plots that really need intervention when visited</span></div><div class="metric"><b>Time to first visit</b><span>Hours from a plot falling behind to someone standing in it</span></div><div class="metric"><b>Coverage</b><span>Plots checked per person per week</span></div><div class="metric"><b>Survival</b><span>Seedling survival in flagged plots after intervention</span></div></div></section>
+    <section><div class="eyebrow">Where else it applies</div><h2>Beyond the demo</h2><div class="fit"><div><b>Portfolio monitoring</b>The same peer-cohort logic flags which positions are underperforming their vintage</div><div><b>Operations</b>Rank sites, branches or assets by deviation from their true peer group</div><div><b>Field teams</b>Turn sensor or satellite data into a daily action list</div></div></section>
+    <section><div class="eyebrow">Next</div><h2>What I'd build next</h2><ul><li>Swap simulated values for real Sentinel-2 NDVI at plot level</li><li>Add confidence bands so small cohorts are not over-flagged</li><li>Offline mode for field use with no signal</li></ul></section>
+  </article>
+</div></div>
+
+<div class="wrap"><div class="next"><a href="/work/signal"><div><small>Next case study</small><b>Signal</b></div><span class="arr"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a></div></div>
+</main>
+<footer><div class="wrap"><span>© 2026 Syed Sarfaraz Ahmed · Dubai, UAE</span><span>Designed and built by me with AI tools</span></div></footer>
+<script>
+(function(){
+  var n=document.getElementById('nav');
+  var f=function(){n.classList.toggle('scrolled',window.scrollY>8)};f();window.addEventListener('scroll',f,{passive:true});
+  var els=document.querySelectorAll('.rv');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
