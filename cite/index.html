@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cite · Answers with verifiable sources</title>
+<meta name="description" content="Cite: paste your sources, ask a question, and get an answer where every claim is tagged to a source and backed by a verbatim quote. A live demo by Syed Sarfaraz Ahmed.">
+<meta property="og:title" content="Cite · Answers with verifiable sources">
+<meta property="og:description" content="Every answer, traced to a source. Paste sources, ask a question, check every claim against a verbatim quote.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/cite">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/cite">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233B4BFF'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='17' fill='%23fff'%3Ec%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF;--bg-2:#F6F7FB;--panel:#FFFFFF;--line:#E4E7EF;--line-2:#CFD4E0;
+  --ink:#12141A;--ink-2:#4A505E;--ink-3:#7B8191;
+  --accent:#3B4BFF;--accent-2:#7C3AED;--accent-bg:#ECEFFF;
+  --good:#1E8A4C;--good-bg:#E3F4EA;--warn:#A86B05;--warn-bg:#FBF0D9;--crit:#C8372D;--crit-bg:#FBE4E1;
+  --hl:#FFF1B8;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 28px -12px rgba(16,24,40,.12);
+  --serif:'Newsreader',Georgia,serif;--sans:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1015;--bg-2:#151821;--panel:#171A22;--line:#262A35;--line-2:#363B48;
+  --ink:#ECEEF3;--ink-2:#B3B8C4;--ink-3:#868C9A;
+  --accent:#8C97FF;--accent-2:#B794FF;--accent-bg:#1E2242;
+  --good:#5CCB8A;--good-bg:#14301F;--warn:#F0BE55;--warn-bg:#33270F;--crit:#F07A6E;--crit-bg:#3A1A17;
+  --hl:#4A3E10;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 12px 30px -14px rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.strip{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;background:#15171B;color:#F6F4EF;font:500 13px/1.4 var(--sans);text-decoration:none}
+.strip span{opacity:.6}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+@media (max-width:640px){.wrap{padding:0 16px}}
+header.top{border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;text-decoration:none;letter-spacing:-.01em}
+.mark{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font:italic 400 17px/1 var(--serif)}
+.top nav{margin-left:auto;display:flex;gap:4px}
+.top nav a{font-size:14px;color:var(--ink-2);text-decoration:none;padding:6px 10px;border-radius:6px}
+.top nav a:hover{background:var(--bg-2);color:var(--ink)}
+.hero{padding:44px 0 26px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+.hero h1{font:400 clamp(34px,5vw,56px)/1.05 var(--serif);letter-spacing:-.02em;margin:0}
+.hero h1 em{color:var(--accent)}
+.hero p{color:var(--ink-2);max-width:62ch;margin:14px 0 0;font-size:16.5px}
+.steps{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:13.5px;color:var(--ink-2)}
+.steps span{display:inline-flex;gap:8px;align-items:center}
+.steps b{width:20px;height:20px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:inline-grid;place-items:center;font:700 11px var(--sans)}
+.app{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;padding-bottom:56px;align-items:start}
+.app>section:first-child{position:sticky;top:16px}
+@media (max-width:960px){.app{grid-template-columns:1fr}.app>section:first-child{position:static}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.card-b{padding:20px}
+.lbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font:600 13px var(--sans);margin-bottom:8px}
+.lbl small{font-weight:400;color:var(--ink-3)}
+.samples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{appearance:none;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);font:500 12.5px var(--sans);padding:5px 11px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+textarea,input[type=text]{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;resize:vertical}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+#sources{min-height:280px;font-size:13.5px}
+.detected{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 18px;font-size:12.5px;color:var(--ink-3)}
+.sid{font:600 11px var(--mono);background:var(--accent-bg);color:var(--accent);padding:3px 7px;border-radius:6px;cursor:default}
+.actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.btn{appearance:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font:600 14px var(--sans);padding:11px 18px;border-radius:999px;cursor:pointer}
+.btn:hover{transform:translateY(-1px)}
+.btn[disabled]{opacity:.6;cursor:progress;transform:none}
+.btn.ghost{background:transparent;color:var(--ink-2);border-color:var(--line-2)}
+.hint{font-size:12px;color:var(--ink-3)}
+/* results */
+.empty{padding:36px 28px;text-align:center;color:var(--ink-3)}
+.empty h3{font:400 24px/1.2 var(--serif);color:var(--ink);margin:10px 0 6px}
+.empty .mini{margin:22px auto 0;max-width:380px;text-align:left;border:1px dashed var(--line-2);border-radius:12px;padding:14px;font-size:13px}
+.mini .a{color:var(--ink)}.mini sup{font:600 9px var(--mono);background:var(--accent-bg);color:var(--accent);padding:2px 4px;border-radius:4px}
+.loading{padding:28px}
+.sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2),var(--line),var(--bg-2));background-size:200% 100%;animation:sh 1.2s infinite;margin:10px 0}
+@keyframes sh{to{background-position:-200% 0}}
+.loading p{color:var(--ink-3);font-size:13px;margin:0 0 14px}
+.err{margin:20px;padding:14px 16px;border-radius:12px;background:var(--crit-bg);color:var(--crit);font-size:14px}
+.err small{display:block;color:var(--ink-3);margin-top:4px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);padding:4px 10px;border-radius:999px}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.good{background:var(--good-bg);color:var(--good)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.crit{background:var(--crit-bg);color:var(--crit)}.pill.neutral{background:var(--bg-2);color:var(--ink-2)}
+.cov{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin-left:auto}
+.bar{width:120px;height:8px;border-radius:4px;background:var(--bg-2);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--accent);border-radius:4px}
+.section{padding:18px 20px;border-bottom:1px solid var(--line)}
+.section:last-child{border-bottom:0}
+.h{font:500 11.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:flex;justify-content:space-between;gap:8px}
+.answer{font:400 19px/1.55 var(--serif);margin:0}
+.tag{appearance:none;border:0;font:600 10.5px var(--mono);background:var(--accent-bg);color:var(--accent);padding:2px 5px;border-radius:5px;margin:0 1px;vertical-align:2px;cursor:pointer}
+.tag:hover{background:var(--accent);color:#fff}
+.claims{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.claims li{border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:box-shadow .2s,border-color .2s}
+.claims li.flash{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.claims .c{font-size:14px;color:var(--ink)}
+.claims .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.claims blockquote{margin:10px 0 0;padding:8px 12px;border-left:3px solid var(--accent);background:var(--bg-2);border-radius:0 8px 8px 0;font:italic 400 15px/1.5 var(--serif);color:var(--ink-2)}
+.why{font-size:12px;color:var(--ink-3);margin-top:6px}
+.gaps{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.gaps li{display:flex;gap:8px;font-size:14px;color:var(--ink-2)}
+.gaps li:before{content:"◌";color:var(--warn)}
+.src{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.src summary{list-style:none;cursor:pointer;display:flex;gap:10px;align-items:center;padding:10px 12px;font-size:14px}
+.src summary::-webkit-details-marker{display:none}
+.src summary .n{margin-left:auto;font-size:12px;color:var(--ink-3)}
+.src .body{padding:0 14px 14px;font-size:13.5px;color:var(--ink-2);white-space:pre-wrap}
+mark{background:var(--hl);color:inherit;border-radius:3px;padding:0 1px}
+.src.flash{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.foot{border-top:1px solid var(--line);padding:22px 0 36px;color:var(--ink-3);font-size:13px}
+.foot .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="strip" href="/">&larr; Part of Syed Sarfaraz Ahmed&rsquo;s AI product portfolio <span>&middot; see all work</span></a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/cite"><span class="mark">c</span>Cite</a>
+  <nav><a href="/work/cite">Case study</a><a href="/#work">All work</a></nav>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Live demo · grounded answers</div>
+    <h1>Every answer, <em>traced to a source.</em></h1>
+    <p>Paste your sources and ask a question. Cite answers only from what you gave it, tags each claim with its source, shows the exact quote behind it, and tells you what your sources can&rsquo;t answer.</p>
+    <div class="steps"><span><b>1</b>Paste sources</span><span><b>2</b>Ask a question</span><span><b>3</b>Check every claim</span></div>
+  </section>
+
+  <div class="app">
+    <section class="card" aria-label="Your sources and question"><div class="card-b">
+      <div class="lbl">Try a sample</div>
+      <div class="samples" id="samples"></div>
+      <div class="lbl"><label for="sources">Sources</label><small>Separate each source with a line containing ---</small></div>
+      <textarea id="sources" spellcheck="false"></textarea>
+      <div class="detected" id="detected"></div>
+      <div class="lbl"><label for="q">Question</label></div>
+      <input type="text" id="q" maxlength="600" autocomplete="off">
+      <div class="actions">
+        <button class="btn" id="go">Answer with citations <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+        <button class="btn ghost" id="clear">Clear</button>
+        <span class="hint">⌘/Ctrl + Enter to run</span>
+      </div>
+    </div></section>
+
+    <section class="card" id="out" aria-live="polite">
+      <div class="empty" id="empty">
+        <div class="eyebrow" style="margin:0">Cited answer</div>
+        <h3>Your answer appears here</h3>
+        <div>Every claim comes with its source and the exact words that back it up.</div>
+        <div class="mini"><div class="a">Logo churn fell from 4.8% to 3.1% in Q3 <sup>S1</sup></div><div style="margin-top:8px;font-family:var(--serif);font-style:italic">&ldquo;Logo churn fell from 4.8% to 3.1% in Q3&hellip;&rdquo;</div><div style="margin-top:8px;color:var(--warn)">◌ Not in your sources: enterprise retention</div></div>
+      </div>
+      <div class="loading" id="loading" hidden><p>Reading your sources and checking every claim&hellip;</p><div class="sk" style="width:92%"></div><div class="sk" style="width:80%"></div><div class="sk" style="width:86%"></div><div class="sk" style="width:60%;margin-top:24px"></div><div class="sk" style="width:74%"></div></div>
+      <div id="result" hidden></div>
+    </section>
+  </div>
+</main>
+
+<footer class="foot"><div class="wrap"><span>Demo answers are generated by Google Gemini from the text you paste. Don&rsquo;t paste confidential material.</span><span><a href="/work/cite">Read the case study</a></span></div></footer>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SAMPLES=[
+ {name:'Product metrics',q:'Did our Q3 changes improve retention, and what is still hurting customers?',s:`Q3 Retention Review
+Logo churn fell from 4.8% to 3.1% in Q3 after the onboarding rebuild shipped in July. Weekly active teams grew 22% quarter over quarter. Enterprise accounts were excluded from this analysis.
+---
+Support Ticket Digest — August
+Billing remained the top ticket driver at 31% of volume, followed by data import failures at 18%. Median first response time was 3.9 hours.
+---
+Pricing Experiment Memo
+The seat-based test increased average contract value by 14% but reduced trial-to-paid conversion from 6.2% to 5.4%. The test ran for six weeks on new self-serve signups only.`},
+ {name:'Earnings notes',q:'What drove revenue growth, and what did management say about 2027 capital spending?',s:`Q2 Results Release (fictional company)
+Net revenue rose 14% year on year to 412 million. Operating margin was 18.2%, compared with 17.5% a year earlier. Full-year margin guidance was left unchanged.
+---
+Earnings Call Transcript — CFO remarks
+Growth in the period was led by our Gulf markets, which contributed roughly two thirds of the increase. Currency movements reduced reported revenue by about 2 points.
+---
+Analyst Note
+We expect cost pressure from new data-centre leases in the second half. Our estimates assume no change to the dividend policy.`},
+ {name:'HR policy',q:'Can I work remotely from another country for a month, and do I need approval?',s:`Remote Work Policy, section 3
+Employees may work remotely up to three days per week from their home address. Working from another country requires written approval from the employee's manager and the People team.
+---
+Travel and Tax FAQ
+Stays abroad longer than 30 consecutive days may create tax obligations in the host country. The People team reviews each request for tax and immigration risk before approval.
+---
+Equipment Policy
+Company laptops may be taken abroad. Customer data must not be accessed over public Wi-Fi without the company VPN.`}
+];
+let active=0;
+function split(t){return t.split(/\n\s*-{3,}\s*\n/).map(s=>s.trim()).filter(Boolean).slice(0,12)}
+function renderSamples(){$('#samples').innerHTML=SAMPLES.map((s,i)=>`<button class="chip" data-i="${i}" aria-pressed="${i===active}">${esc(s.name)}</button>`).join('')}
+function load(i){active=i;$('#sources').value=SAMPLES[i].s;$('#q').value=SAMPLES[i].q;renderSamples();detect()}
+function detect(){const parts=split($('#sources').value);$('#detected').innerHTML=parts.length?`${parts.length} source${parts.length>1?'s':''} detected ${parts.map((p,i)=>`<span class="sid" title="${esc(p.split('\n')[0])}">S${i+1}</span>`).join('')}`:'No sources yet. Paste text above.'}
+$('#samples').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)load(+b.dataset.i)});
+$('#sources').addEventListener('input',()=>{active=-1;renderSamples();detect()});
+$('#clear').addEventListener('click',()=>{$('#sources').value='';$('#q').value='';active=-1;renderSamples();detect();show('empty');$('#sources').focus()});
+function show(which){$('#empty').hidden=which!=='empty';$('#loading').hidden=which!=='loading';$('#result').hidden=which!=='result'}
+function confPill(c){const k=c==='High'?'good':c==='Medium'?'warn':'crit';return `<span class="pill ${k}"><i></i>${esc(c)} confidence</span>`}
+function claimPill(c){
+  if(!c.supported)return '<span class="pill crit"><i></i>Not supported</span>';
+  if(c.verified)return '<span class="pill good"><i></i>Supported · quote verified</span>';
+  return '<span class="pill warn"><i></i>Supported · quote not found word-for-word</span>';
+}
+function highlight(body,quotes){
+  let html=esc(body);
+  for(const q of quotes){const t=esc(q.trim().replace(/^["“]|["”]$/g,''));if(t.length<6)continue;const i=html.indexOf(t);if(i>=0)html=html.slice(0,i)+'<mark>'+t+'</mark>'+html.slice(i+t.length)}
+  return html;
+}
+function render(d,srcTexts){
+  const tagRe=/\[(S\d+)\]/g;
+  const ans=d.answer?esc(d.answer).replace(tagRe,(m,id)=>`<button class="tag" data-src="${id}" title="Show where this comes from">${id}</button>`):'<span style="color:var(--ink-3)">Your sources don&rsquo;t answer this question.</span>';
+  const verified=d.claims.filter(c=>c.supported&&c.verified).length;
+  const used=new Set(d.claims.flatMap(c=>c.sourceIds));
+  $('#result').innerHTML=`
+  <div class="meta">${confPill(d.confidence)}<span class="pill neutral">${verified} of ${d.claims.length} claim${d.claims.length===1?'':'s'} verified</span><span class="cov">Question covered<span class="bar"><span style="width:${d.coverage}%"></span></span><b>${d.coverage}%</b></span></div>
+  <div class="section"><div class="h">Answer</div><p class="answer">${ans}</p></div>
+  ${d.claims.length?`<div class="section"><div class="h"><span>Claim-by-claim check</span><span>quote must appear in the source</span></div><ol class="claims">${d.claims.map((c,i)=>`<li id="claim-${i}" data-src="${c.sourceIds.join(' ')}"><div class="c">${esc(c.claim)}</div><div class="row">${claimPill(c)}${c.sourceIds.map(id=>`<button class="tag" data-src="${id}">${id}</button>`).join('')}</div>${c.quote?`<blockquote>&ldquo;${esc(c.quote)}&rdquo;</blockquote>`:''}${c.supported&&!c.verified?'<div class="why">The model paraphrased instead of quoting exactly. Check the source before relying on this claim.</div>':''}</li>`).join('')}</ol></div>`:''}
+  ${d.unsupported.length?`<div class="section"><div class="h">What your sources can&rsquo;t answer</div><ul class="gaps">${d.unsupported.map(u=>`<li>${esc(u)}</li>`).join('')}</ul></div>`:''}
+  <div class="section"><div class="h"><span>Sources</span><span>${used.size} of ${d.sources.length} used</span></div>${d.sources.map((s,i)=>{const quotes=d.claims.filter(c=>c.sourceIds.includes(s.id)).map(c=>c.quote);return `<details class="src" id="src-${s.id}"${used.has(s.id)?'':' style="opacity:.7"'}><summary><span class="sid">${s.id}</span>${esc(s.title)}<span class="n">${quotes.length?quotes.length+' quote'+(quotes.length>1?'s':''):'not used'}</span></summary><div class="body">${highlight(srcTexts[i]||'',quotes)}</div></details>`}).join('')}</div>`;
+  show('result');
+}
+$('#result').addEventListener('click',e=>{
+  const t=e.target.closest('.tag');if(!t)return;
+  const el=document.getElementById('src-'+t.dataset.src);if(!el)return;
+  el.open=true;el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1600);
+});
+async function run(){
+  const sources=$('#sources').value.trim(),question=$('#q').value.trim();
+  if(!sources){$('#sources').focus();return}
+  if(!question){$('#q').focus();return}
+  const btn=$('#go');btn.disabled=true;show('loading');
+  if(matchMedia('(max-width:960px)').matches)$('#out').scrollIntoView({behavior:'smooth',block:'start'});
+  try{
+    const r=await fetch('/api/cite',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sources,question})});
+    const d=await r.json().catch(()=>({error:'Unexpected response from the server.'}));
+    if(!r.ok||d.error)throw new Error(d.error||'Something went wrong.');
+    render(d,split(sources));
+  }catch(err){
+    $('#result').innerHTML=`<div class="err">${esc(err.message||'Something went wrong.')}<small>Your sources are still in the box. Try again in a moment.</small></div>`;show('result');
+  }finally{btn.disabled=false}
+}
+$('#go').addEventListener('click',run);
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')run()});
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.metaKey&&!e.ctrlKey)run()});
+load(0);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
