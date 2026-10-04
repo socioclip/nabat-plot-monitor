@@ -344,3 +344,14 @@ body{background:#fff}
 @media (max-width:980px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.pgrid{grid-template-columns:1fr;gap:12px}.pcard{padding:16px}.pcard h3{font-size:22px}.pnext{display:none}}
 @media (prefers-reduced-motion:reduce){.pcard,.p-cs,.p-try{transition:none}}
+/* product card thumbnails */
+.pcard{padding:0;gap:0;overflow:hidden}
+.p-body{display:flex;flex-direction:column;gap:7px;padding:14px 18px 14px;flex:1}
+.p-thumb{position:relative;aspect-ratio:320/132;background:linear-gradient(135deg,#EEF1FF,#F5EFFF);border-bottom:1px solid var(--rule);overflow:hidden}
+.p-svg{display:block;width:100%;height:100%;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.pcard:hover .p-svg{transform:scale(1.04)}
+.p-meta{display:flex;margin-bottom:1px}
+.pnext .p-body{justify-content:center;padding:22px 20px}
+.pnext .p-act{margin-top:10px}
+.pcard h3{font-size:23px}
+@media (prefers-reduced-motion:reduce){.p-svg{transition:none}}
