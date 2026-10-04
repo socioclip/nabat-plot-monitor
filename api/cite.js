@@ -2,7 +2,7 @@
 // Vercel serverless function. Needs the GEMINI_API_KEY environment variable.
 // Optional: GEMINI_MODEL to pin a specific model.
 
-const FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-2.5-flash'];
 const MAX_SOURCES_CHARS = 40000;
 const MAX_QUESTION_CHARS = 600;
 const MAX_SOURCES = 12;
