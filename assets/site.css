@@ -355,3 +355,15 @@ body{background:#fff}
 .pnext .p-act{margin-top:10px}
 .pcard h3{font-size:23px}
 @media (prefers-reduced-motion:reduce){.p-svg{transition:none}}
+/* "Try it" call-to-action */
+.p-try{background:var(--grad);color:#fff;padding:7px 14px 7px 7px;gap:8px;font-size:13.5px;font-weight:650;letter-spacing:.01em;overflow:hidden;box-shadow:0 6px 16px -6px rgba(76,70,255,.65),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .18s}
+.p-try:not(.solid)::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.22) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3 2.2v5.6L7.8 5z' fill='%23fff'/%3E%3C/svg%3E") 55% 50%/10px no-repeat;box-shadow:0 0 0 0 rgba(255,255,255,.55);animation:pTryPulse 2.6s ease-out infinite}
+.p-try::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);transition:transform .6s ease;pointer-events:none}
+.p-try:hover{background:var(--grad);color:#fff;transform:translateY(-2px);box-shadow:0 12px 24px -8px rgba(76,70,255,.75),inset 0 1px 0 rgba(255,255,255,.25)}
+.p-try:hover::after{transform:translateX(120%)}
+.p-try svg{transition:transform .18s}
+.p-try:hover svg{transform:translateX(3px)}
+.p-try[target]:hover svg{transform:translate(2px,-2px)}
+.p-try.solid{padding:8px 14px}
+@keyframes pTryPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@media (prefers-reduced-motion:reduce){.p-try,.p-try::after,.p-try svg{transition:none}.p-try:not(.solid)::before{animation:none}}
