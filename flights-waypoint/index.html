@@ -130,8 +130,44 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .live .lh{font:600 12px var(--mono);color:var(--ink-2);margin-top:10px}
 .opt .fl .leg small{display:block;font:500 10.5px var(--mono);color:var(--ink-3)}
 .bdg.stops{background:#EEF1F8;color:var(--ink-2)}
-.gf{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font:600 12px var(--sans);color:var(--accent);text-decoration:none;padding:3px 10px;border:1px solid var(--accent-bg);background:#fff;border-radius:999px;white-space:nowrap}
+.badges .cp{margin-left:auto}
+.gf{display:inline-flex;align-items:center;gap:5px;font:600 12px var(--sans);color:var(--accent);text-decoration:none;padding:3px 10px;border:1px solid var(--accent-bg);background:#fff;border-radius:999px;white-space:nowrap}
 .gf:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cp{display:inline-flex;align-items:center;gap:5px;font:600 12px var(--sans);color:#fff;background:var(--grad);border:0;border-radius:999px;padding:4px 11px;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px -6px rgba(76,70,255,.7)}
+.cp:hover{transform:translateY(-1px)}
+.cp svg{width:12px;height:12px}
+.gf+.cp,.cp{margin-left:0}
+.pm{position:fixed;inset:0;z-index:100;background:rgba(10,14,30,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px}
+.pm[hidden]{display:none!important}
+.pm-box{background:#fff;border-radius:20px;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 30px 80px -20px rgba(10,14,40,.5)}
+.pm-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+.pm-h h3{margin:0;font:400 22px/1.2 var(--serif)}
+.pm-h p{margin:3px 0 0;font:600 12.5px var(--mono);color:var(--ink-3)}
+.pm-x{appearance:none;border:0;background:var(--bg-2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;color:var(--ink-2)}
+.pm-b{padding:16px 20px;display:grid;gap:14px}
+.pm-l{font:600 11.5px var(--sans);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.seg2{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg2 button{appearance:none;border:0;background:transparent;padding:7px 14px;border-radius:7px;font:600 13px var(--sans);color:var(--ink-2);cursor:pointer}
+.seg2 button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.1)}
+.dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dates input{width:100%;height:42px;border:1px solid var(--line);background:var(--bg-2);border-radius:10px;padding:0 10px;font:500 14px var(--sans)}
+.dates input:disabled{opacity:.45}
+.pax{display:grid;gap:8px}
+.pr{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 14px}
+.pr b{font-size:14px}.pr small{display:block;color:var(--ink-3);font-size:12px}
+.st{display:inline-flex;align-items:center;gap:10px}
+.st button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line-2);background:#fff;font-size:16px;cursor:pointer;color:var(--ink)}
+.st button:disabled{opacity:.35;cursor:default}
+.st output{min-width:16px;text-align:center;font:650 15px var(--sans)}
+.sites{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.site{appearance:none;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:12px;cursor:pointer;display:grid;gap:2px}
+.site b{font-size:15px}.site small{color:var(--ink-3);font-size:12px}
+.site[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.pm-err{color:var(--crit);font-size:13px;min-height:1px}
+.pm-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px 18px;border-top:1px solid var(--line)}
+.pm-f small{color:var(--ink-3);font-size:12px;max-width:30ch}
+.pm-go{appearance:none;border:0;border-radius:999px;padding:11px 20px;background:var(--grad);color:#fff;font:650 14px var(--sans);cursor:pointer;display:inline-flex;gap:8px;align-items:center;box-shadow:0 8px 20px -8px rgba(76,70,255,.7)}
+@media (max-width:480px){.dates,.sites{grid-template-columns:1fr}}
 .gf svg{width:11px;height:11px}
 .more{display:block;width:100%;appearance:none;border:1px dashed var(--line-2);background:transparent;border-radius:12px;padding:10px;font:600 13px var(--sans);color:var(--accent);cursor:pointer}
 .more:hover{border-color:var(--accent);background:var(--accent-bg)}
@@ -187,6 +223,24 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
     </div>
   </section>
 </main>
+
+<div class="pm" id="pm" hidden role="dialog" aria-modal="true" aria-labelledby="pm-t">
+  <div class="pm-box">
+    <div class="pm-h"><div><h3 id="pm-t">Check price</h3><p id="pm-route"></p></div><button class="pm-x" id="pm-x" aria-label="Close">×</button></div>
+    <div class="pm-b">
+      <div><div class="pm-l">Trip</div><div class="seg2" id="pm-trip"><button type="button" data-v="O" aria-pressed="true">One-way</button><button type="button" data-v="R" aria-pressed="false">Return</button></div></div>
+      <div class="dates"><label><div class="pm-l">Onward date</div><input type="date" id="pm-d1"></label><label><div class="pm-l">Return date</div><input type="date" id="pm-d2" disabled></label></div>
+      <div><div class="pm-l">Travellers</div><div class="pax">
+        <div class="pr"><span><b>Adults</b><small>12+ years</small></span><span class="st"><button type="button" data-p="a" data-d="-1" aria-label="Fewer adults">−</button><output id="pm-a">1</output><button type="button" data-p="a" data-d="1" aria-label="More adults">+</button></span></div>
+        <div class="pr"><span><b>Children</b><small>2–11 years</small></span><span class="st"><button type="button" data-p="c" data-d="-1" aria-label="Fewer children">−</button><output id="pm-c">0</output><button type="button" data-p="c" data-d="1" aria-label="More children">+</button></span></div>
+        <div class="pr"><span><b>Infants</b><small>Under 2, on lap</small></span><span class="st"><button type="button" data-p="i" data-d="-1" aria-label="Fewer infants">−</button><output id="pm-i">0</output><button type="button" data-p="i" data-d="1" aria-label="More infants">+</button></span></div>
+      </div></div>
+      <div><div class="pm-l">See live prices on</div><div class="sites" id="pm-sites"><button type="button" class="site" data-s="almosafer" aria-pressed="true"><b>Almosafer</b><small>Middle East · prices in local currency</small></button><button type="button" class="site" data-s="mmt" aria-pressed="false"><b>MakeMyTrip</b><small>India &amp; global · wide fare choice</small></button></div></div>
+      <div class="pm-err" id="pm-err"></div>
+    </div>
+    <div class="pm-f"><small>Prices and seats are shown live on the selected site. Economy class.</small><button class="pm-go" id="pm-go">Proceed <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></button></div>
+  </div>
+</div>
 
 <footer class="foot"><div class="wrap"><span>Routes come from the open <a href="https://github.com/Jonty/airline-route-data" target="_blank" rel="noopener">airline-route-data</a> dataset, refreshed weekly. It shows which airlines serve a route, not today&rsquo;s seats or prices; times are typical block times with a 90-minute connection.</span><span><a href="/work/flights-waypoint">Read the case study</a></span></div></footer>
 
@@ -346,6 +400,7 @@ function optHTML(o,i,list){
   if(tab==='all')b.unshift('<span class="bdg stops">'+(o.stops===0?'Nonstop':o.stops+' stop'+(o.stops>1?'s':''))+'</span>');
   const body=o.stops===0?fleetHTML(o.legs[0],'',6):o.legs.map(l=>fleetHTML(l,l.from+'–'+l.to,2,dur(l.min))).join('');
   const gq='https://www.google.com/travel/flights?q='+encodeURIComponent('Flights from '+o.legs[0].from+' to '+o.legs[o.legs.length-1].to+(o.stops?' via '+o.via.map(v=>v.iata).join(' and '):''));
+  b.push('<button type="button" class="cp" data-cp="'+i+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8.5V3.5a1 1 0 0 1 1-1h5l5 5-6 6z"/><circle cx="6" cy="6" r="1"/></svg>Check price</button>');
   b.push('<a class="gf" href="'+gq+'" target="_blank" rel="noopener" title="Open real flight times and prices on Google Flights">Real schedules <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></a>');
   return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div><div class="c">'+body+'</div><div class="badges">'+b.join('')+'</div></li>';
 }
@@ -410,6 +465,55 @@ async function run(){
   finally{$('#go').disabled=false}
 }
 $('#form').addEventListener('submit',e=>{e.preventDefault();run()});
+/* ---------- check price ---------- */
+const PM={trip:'O',a:1,c:0,i:0,site:'almosafer',from:'',to:'',intl:true};
+const iso=d=>d.toISOString().slice(0,10);
+function pmSync(){
+  $('#pm-a').value=PM.a;$('#pm-c').value=PM.c;$('#pm-i').value=PM.i;
+  $('#pm-a').textContent=PM.a;$('#pm-c').textContent=PM.c;$('#pm-i').textContent=PM.i;
+  const tot=PM.a+PM.c;
+  document.querySelectorAll('#pm .st button').forEach(b=>{const p=b.dataset.p,d=+b.dataset.d,v=PM[p]+d;b.disabled=(p==='a'?v<1:v<0)||(d>0&&(p==='i'?v>PM.a:tot+1>9))});
+  document.querySelectorAll('#pm-trip button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===PM.trip)));
+  document.querySelectorAll('#pm-sites .site').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.s===PM.site)));
+  $('#pm-d2').disabled=PM.trip!=='R';
+  if($('#pm-d1').value)$('#pm-d2').min=$('#pm-d1').value;
+}
+function openPrice(o){
+  PM.from=o.legs[0].from;PM.to=o.legs[o.legs.length-1].to;
+  PM.intl=!(data.from.country==='India'&&data.to.country==='India');
+  $('#pm-route').textContent=PM.from+' → '+PM.to+(o.stops?'  ·  via '+o.via.map(v=>v.iata).join(', '):'  ·  nonstop');
+  const t=new Date();t.setDate(t.getDate()+14);const r=new Date(t);r.setDate(r.getDate()+7);
+  const min=iso(new Date());$('#pm-d1').min=min;$('#pm-d2').min=min;
+  if(!$('#pm-d1').value||$('#pm-d1').value<min)$('#pm-d1').value=iso(t);
+  if(!$('#pm-d2').value||$('#pm-d2').value<$('#pm-d1').value)$('#pm-d2').value=iso(r);
+  $('#pm-err').textContent='';pmSync();$('#pm').hidden=false;setTimeout(()=>$('#pm-go').focus(),30);
+}
+function closePrice(){$('#pm').hidden=true}
+function priceURL(){
+  const d1=$('#pm-d1').value,d2=$('#pm-d2').value,R=PM.trip==='R';
+  if(PM.site==='almosafer'){
+    const pax=[PM.a+'Adult'].concat(PM.c?[PM.c+'Child']:[],PM.i?[PM.i+'Infant']:[]).join('/');
+    return 'https://www.almosafer.com/en/flights/'+PM.from+'-'+PM.to+'/'+d1+'/'+(R?d2+'/':'')+'Economy/'+pax;
+  }
+  const dm=v=>v.split('-').reverse().join('/');
+  const it=PM.from+'-'+PM.to+'-'+dm(d1)+(R?'_'+PM.to+'-'+PM.from+'-'+dm(d2):'');
+  return 'https://www.makemytrip.com/flight/search?itinerary='+it+'&tripType='+(R?'R':'O')+'&paxType=A-'+PM.a+'_C-'+PM.c+'_I-'+PM.i+'&intl='+PM.intl+'&cabinClass=E&lang=eng';
+}
+document.addEventListener('click',e=>{const b=e.target.closest('.cp');if(!b)return;e.preventDefault();e.stopPropagation();const L=lists()[tab];openPrice(L[+b.dataset.cp])},true);
+$('#pm-x').addEventListener('click',closePrice);
+$('#pm').addEventListener('click',e=>{if(e.target.id==='pm')closePrice()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#pm').hidden)closePrice()});
+$('#pm-trip').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;PM.trip=b.dataset.v;pmSync()});
+$('#pm-sites').addEventListener('click',e=>{const b=e.target.closest('.site');if(!b)return;PM.site=b.dataset.s;pmSync()});
+$('#pm').addEventListener('click',e=>{const b=e.target.closest('.st button');if(!b)return;PM[b.dataset.p]+=+b.dataset.d;if(PM.i>PM.a)PM.i=PM.a;pmSync()});
+$('#pm-d1').addEventListener('change',()=>{if($('#pm-d2').value<$('#pm-d1').value)$('#pm-d2').value=$('#pm-d1').value;pmSync()});
+$('#pm-go').addEventListener('click',()=>{
+  const d1=$('#pm-d1').value,d2=$('#pm-d2').value,today=iso(new Date());
+  if(!d1||d1<today){$('#pm-err').textContent='Pick an onward date from today onwards.';return}
+  if(PM.trip==='R'&&(!d2||d2<d1)){$('#pm-err').textContent='The return date must be on or after the onward date.';return}
+  window.open(priceURL(),'_blank','noopener');closePrice();
+});
+
 // open Google Flights for a route in a centred popup window (falls back to a new tab)
 document.addEventListener('click',e=>{const g=e.target.closest('a.gf');if(!g)return;e.preventDefault();e.stopPropagation();
   const w=Math.min(1100,screen.availWidth-40),h=Math.min(820,screen.availHeight-60),l=Math.round((screen.availWidth-w)/2),t=Math.round((screen.availHeight-h)/2);
