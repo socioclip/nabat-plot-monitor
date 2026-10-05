@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flights Waypoint · Can I fly from A to B?</title>
+<meta name="description" content="Flights Waypoint: enter two airports and see every nonstop, one-stop and two-stop airline route between them on an animated globe. A live demo by Syed Sarfaraz Ahmed.">
+<meta property="og:title" content="Flights Waypoint · Can I fly from A to B?">
+<meta property="og:description" content="Nonstop or not? See every airline route between two airports on an animated globe.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/flights-waypoint">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/flights-waypoint">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233B4BFF'/%3E%3Cpath d='M7 18.5l18-7-5.5 13-3-5.5z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<style>
+:root{
+  --bg:#FFFFFF;--bg-2:#F6F7FB;--panel:#FFFFFF;--line:#E4E7EF;--line-2:#CFD4E0;
+  --ink:#12141A;--ink-2:#4A505E;--ink-3:#7B8191;
+  --accent:#3B4BFF;--accent-bg:#ECEFFF;--grad:linear-gradient(100deg,#2F6BFF 0%,#5B4BFF 45%,#9B3BF0 100%);
+  --good:#0E8A45;--good-bg:#E7F7EE;--warn:#A86B05;--warn-bg:#FBF0D9;--crit:#C8372D;--crit-bg:#FBE4E1;
+  --ocean:#0B1530;--ocean-2:#16244d;--land:#2A3B6E;--land-line:#3C4F8A;--route:#FFB547;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 28px -12px rgba(16,24,40,.14);
+  --serif:'Newsreader',Georgia,serif;--sans:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.strip{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;background:#15171B;color:#F6F4EF;font:500 13px/1.4 var(--sans);text-decoration:none}
+.strip span{opacity:.6}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+@media (max-width:640px){.wrap{padding:0 16px}}
+header.top{border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;text-decoration:none;letter-spacing:-.01em}
+.mark{width:28px;height:28px;border-radius:8px;background:var(--grad);display:grid;place-items:center}
+.top nav{margin-left:auto;display:flex;gap:4px}
+.top nav a{font-size:14px;color:var(--ink-2);text-decoration:none;padding:6px 10px;border-radius:6px}
+.top nav a:hover{background:var(--bg-2);color:var(--ink)}
+.hero{padding:36px 0 18px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+.hero h1{font:400 clamp(32px,4.6vw,52px)/1.05 var(--serif);letter-spacing:-.02em;margin:0}
+.hero h1 em{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--ink-2);max-width:60ch;margin:12px 0 0;font-size:16px}
+/* search */
+.search{display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);margin-top:22px}
+@media (max-width:760px){.search{grid-template-columns:1fr}.swap{justify-self:center;transform:rotate(90deg)}}
+.field{position:relative}
+.field label{display:block;font:600 12px var(--sans);color:var(--ink-3);margin:0 0 6px 4px;text-transform:uppercase;letter-spacing:.05em}
+.field input{width:100%;height:52px;border:1px solid var(--line);background:var(--bg-2);border-radius:12px;padding:0 14px 0 42px;font-size:16px}
+.field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);background:#fff}
+.field svg.ic{position:absolute;left:14px;bottom:16px;width:18px;height:18px;color:var(--ink-3)}
+.sug{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px -16px rgba(16,24,40,.3);list-style:none;margin:0;padding:6px;z-index:20;max-height:320px;overflow:auto}
+.sug li{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer}
+.sug li[aria-selected="true"],.sug li:hover{background:var(--accent-bg)}
+.sug b{font:600 12px var(--mono);background:var(--bg-2);border-radius:6px;padding:3px 6px;min-width:42px;text-align:center}
+.sug span{font-size:14px;line-height:1.3}.sug small{display:block;color:var(--ink-3);font-size:12px}
+.swap{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;margin-bottom:4px}
+.swap:hover{border-color:var(--accent);color:var(--accent)}
+.go{height:52px;border:0;border-radius:12px;padding:0 22px;background:var(--grad);color:#fff;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 20px -8px rgba(76,70,255,.6)}
+.go:hover{transform:translateY(-1px)}
+.go[disabled]{opacity:.6;cursor:progress;transform:none}
+.examples{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0;font-size:13px;color:var(--ink-3)}
+.ex{appearance:none;border:1px solid var(--line-2);background:transparent;border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
+.ex:hover{border-color:var(--accent);color:var(--accent)}
+/* results */
+.stage{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;margin:22px 0 56px;align-items:start}
+@media (max-width:960px){.stage{grid-template-columns:1fr}}
+.globe-card{position:relative;background:radial-gradient(120% 90% at 50% 40%,#1b2a5c 0%,#0B1530 60%,#070d1f 100%);border-radius:20px;overflow:hidden;aspect-ratio:1/1;max-height:640px;box-shadow:var(--shadow)}
+.globe-card svg{width:100%;height:100%;display:block;cursor:grab}
+.globe-card svg:active{cursor:grabbing}
+.g-legend{position:absolute;left:14px;bottom:12px;display:flex;gap:12px;font-size:12px;color:#c9d2f0}
+.g-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.g-hint{position:absolute;right:14px;bottom:12px;font-size:11.5px;color:#8f9bc7}
+.g-title{position:absolute;left:16px;top:14px;color:#fff;font:600 14px var(--sans);display:flex;gap:8px;align-items:center}
+.g-title span{font:500 11px var(--mono);color:#9fb0e8;letter-spacing:.06em}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.empty{padding:34px 28px;color:var(--ink-3);text-align:center}
+.empty h3{font:400 24px/1.2 var(--serif);color:var(--ink);margin:6px 0}
+.verdict{padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+.vtag{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);padding:4px 10px;border-radius:999px}
+.vtag i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.vtag.good{background:var(--good-bg);color:var(--good)}.vtag.warn{background:var(--warn-bg);color:var(--warn)}.vtag.crit{background:var(--crit-bg);color:var(--crit)}
+.verdict h2{font:400 26px/1.2 var(--serif);margin:10px 0 6px;letter-spacing:-.01em}
+.verdict p{margin:0;color:var(--ink-2);font-size:14.5px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(2n){border-right:0}.kpi:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.kpi{padding:12px 16px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kpi b{display:block;font:650 19px/1.2 var(--sans);font-variant-numeric:tabular-nums}
+.kpi span{font-size:11.5px;color:var(--ink-3)}
+.tabs{display:flex;gap:4px;padding:12px 16px 0}
+.tab{appearance:none;border:0;background:transparent;padding:8px 12px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink-3);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent-bg);color:var(--accent)}
+.tab .n{font-weight:500;opacity:.8}
+.list{list-style:none;margin:0;padding:12px 16px 16px;display:grid;gap:8px;max-height:430px;overflow:auto}
+.opt{border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.opt:hover{border-color:var(--line-2)}
+.opt.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.opt .r{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:600 13px var(--mono)}
+.opt .r .ar{color:var(--ink-3);font-weight:400}
+.opt .r .hub{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:1px 6px}
+.opt .t{margin-left:auto;font:650 14px var(--sans)}
+.opt .c{font-size:13px;color:var(--ink-2);margin-top:4px}
+.opt .badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.bdg{font:500 11px var(--sans);padding:2px 8px;border-radius:999px;background:var(--bg-2);color:var(--ink-2)}
+.bdg.one{background:var(--good-bg);color:var(--good)}
+.bdg.fast{background:var(--accent-bg);color:var(--accent)}
+.note{padding:0 16px 16px;font-size:12px;color:var(--ink-3)}
+.loading{padding:28px}
+.sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2),var(--line),var(--bg-2));background-size:200% 100%;animation:sh 1.2s infinite;margin:10px 0}
+@keyframes sh{to{background-position:-200% 0}}
+.err{margin:18px;padding:14px 16px;border-radius:12px;background:var(--crit-bg);color:var(--crit);font-size:14px}
+.foot{border-top:1px solid var(--line);padding:22px 0 36px;color:var(--ink-3);font-size:13px}
+.foot .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="strip" href="/">&larr; Part of Syed Sarfaraz Ahmed&rsquo;s AI product portfolio <span>&middot; see all work</span></a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/flights-waypoint"><span class="mark"><svg width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 19l22-8.5-6.8 16-3.7-6.7z" fill="#fff"/></svg></span>Flights Waypoint</a>
+  <nav><a href="/work/flights-waypoint">Case study</a><a href="/#work">All work</a></nav>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Live demo · open flight-route data</div>
+    <h1>Can I fly from <em>A to B?</em></h1>
+    <p>Pick two airports. See whether any airline flies the route nonstop, the best one- and two-stop alternatives, and watch the journey on the globe.</p>
+    <form class="search" id="form" autocomplete="off">
+      <div class="field"><label for="from">From</label><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 17h18M5 13l3 1 9-5.5c1.2-.7 2.6.3 2 1.5l-.5.9L9 16"/></svg><input id="from" placeholder="City or airport code" role="combobox" aria-expanded="false" aria-autocomplete="list"><ul class="sug" id="from-sug" role="listbox" hidden></ul></div>
+      <button type="button" class="swap" id="swap" aria-label="Swap origin and destination"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg></button>
+      <div class="field"><label for="to">To</label><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><input id="to" placeholder="City or airport code" role="combobox" aria-expanded="false" aria-autocomplete="list"><ul class="sug" id="to-sug" role="listbox" hidden></ul></div>
+      <button class="go" id="go" type="submit">Find routes <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+    </form>
+    <div class="examples">Try:
+      <button class="ex" data-f="DXB" data-t="JFK">Dubai → New York</button>
+      <button class="ex" data-f="BOM" data-t="SFO">Mumbai → San Francisco</button>
+      <button class="ex" data-f="LHR" data-t="SYD">London → Sydney</button>
+      <button class="ex" data-f="CAI" data-t="MEX">Cairo → Mexico City</button>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="globe-card" id="globe-card">
+      <div class="g-title" id="g-title">Drag to spin the globe</div>
+      <svg id="globe" viewBox="0 0 600 600" role="img" aria-label="Globe showing the selected flight route"></svg>
+      <div class="g-legend" id="g-legend" hidden><span><i style="background:var(--route)"></i>Selected route</span><span><i style="background:#7f8fd6"></i>Other options</span></div>
+      <div class="g-hint">Drag to rotate</div>
+    </div>
+    <div class="panel" id="panel" aria-live="polite">
+      <div class="empty" id="empty"><div class="eyebrow" style="margin:0">Results</div><h3>Pick a route to start</h3><div>You&rsquo;ll see nonstop flights first, then the quickest ways to connect.</div></div>
+      <div class="loading" id="loading" hidden><div class="sk" style="width:60%"></div><div class="sk" style="width:85%"></div><div class="sk" style="width:75%"></div><div class="sk" style="width:90%;margin-top:22px"></div><div class="sk" style="width:80%"></div></div>
+      <div id="result" hidden></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot"><div class="wrap"><span>Routes come from the open <a href="https://github.com/Jonty/airline-route-data" target="_blank" rel="noopener">airline-route-data</a> dataset, refreshed weekly. It shows which airlines serve a route, not today&rsquo;s seats or prices; times are typical block times with a 90-minute connection.</span><span><a href="/work/flights-waypoint">Read the case study</a></span></div></footer>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dur=m=>{m=Math.round(m);const h=Math.floor(m/60),mm=m%60;return h?(h+'h'+(mm?' '+mm+'m':'')):mm+'m'};
+const km=k=>Math.round(k).toLocaleString()+' km';
+const sel={from:null,to:null};
+let data=null,tab='direct',current=null;
+
+/* ---------- autocomplete ---------- */
+function setupField(id){
+  const inp=$('#'+id),list=$('#'+id+'-sug');let items=[],idx=-1,timer=null,seq=0;
+  const close=()=>{list.hidden=true;inp.setAttribute('aria-expanded','false');idx=-1};
+  const choose=a=>{sel[id]=a;inp.value=a.city?a.city+' ('+a.iata+')':a.iata;close()};
+  const render=()=>{list.innerHTML=items.map((a,i)=>'<li role="option" aria-selected="'+(i===idx)+'" data-i="'+i+'"><b>'+esc(a.iata)+'</b><span>'+esc(a.city||a.name)+'<small>'+esc(a.name)+', '+esc(a.country)+'</small></span></li>').join('');list.hidden=!items.length;inp.setAttribute('aria-expanded',String(!!items.length))};
+  inp.addEventListener('input',()=>{sel[id]=null;clearTimeout(timer);const q=inp.value.trim();if(q.length<2){items=[];render();return}
+    timer=setTimeout(async()=>{const my=++seq;try{const r=await fetch('/api/routes?q='+encodeURIComponent(q));const d=await r.json();if(my!==seq)return;items=d.results||[];idx=items.length?0:-1;render()}catch(e){}},160)});
+  inp.addEventListener('keydown',e=>{if(list.hidden)return;
+    if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(items.length-1,idx+1);render()}
+    else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(0,idx-1);render()}
+    else if(e.key==='Enter'&&idx>=0){e.preventDefault();choose(items[idx]);if(id==='from')$('#to').focus()}
+    else if(e.key==='Escape')close()});
+  list.addEventListener('mousedown',e=>{const li=e.target.closest('li');if(!li)return;e.preventDefault();choose(items[+li.dataset.i]);if(id==='from')$('#to').focus()});
+  inp.addEventListener('blur',()=>setTimeout(()=>{if(!sel[id]&&items.length&&inp.value.trim())choose(items[0]);close()},120));
+  return {choose,set:a=>choose(a)};
+}
+const F={from:setupField('from'),to:setupField('to')};
+$('#swap').addEventListener('click',()=>{const a=sel.from,b=sel.to;if(b)F.from.set(b);else{$('#from').value='';sel.from=null}if(a)F.to.set(a);else{$('#to').value='';sel.to=null}});
+
+/* ---------- globe ---------- */
+const svg=d3.select('#globe'),W=600,H=600,R=270;
+const proj=d3.geoOrthographic().scale(R).translate([W/2,H/2]).clipAngle(90).rotate([-30,-20]);
+const path=d3.geoPath(proj);
+const defs=svg.append('defs');
+const og=defs.append('radialGradient').attr('id','oc').attr('cx','40%').attr('cy','35%');
+og.append('stop').attr('offset','0%').attr('stop-color','#1f3270');og.append('stop').attr('offset','100%').attr('stop-color','#0b1530');
+const glow=defs.append('radialGradient').attr('id','glow');
+glow.append('stop').attr('offset','80%').attr('stop-color','#5B4BFF').attr('stop-opacity',.35);glow.append('stop').attr('offset','100%').attr('stop-color','#5B4BFF').attr('stop-opacity',0);
+svg.append('circle').attr('cx',W/2).attr('cy',H/2).attr('r',R+26).attr('fill','url(#glow)');
+const gSphere=svg.append('path').datum({type:'Sphere'}).attr('fill','url(#oc)').attr('stroke','#3a4f9a').attr('stroke-width',1);
+const gGrat=svg.append('path').datum(d3.geoGraticule10()).attr('fill','none').attr('stroke','#2a3c78').attr('stroke-width',.5).attr('opacity',.6);
+const gLand=svg.append('path').attr('fill','var(--land)').attr('stroke','var(--land-line)').attr('stroke-width',.6);
+const gOther=svg.append('g'),gRoute=svg.append('g'),gPts=svg.append('g');
+const plane=svg.append('g').attr('opacity',0);
+plane.append('path').attr('d','M0,-11 L2.6,-3 L11,2 L11,4.2 L2.6,1.6 L2,8 L5,10.4 L5,12 L0,10.6 L-5,12 L-5,10.4 L-2,8 L-2.6,1.6 L-11,4.2 L-11,2 L-2.6,-3 Z').attr('fill','#fff').attr('stroke','#FFB547').attr('stroke-width',1);
+let land=null;
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json').then(r=>r.json()).then(t=>{land=topojson.feature(t,t.objects.land);draw()}).catch(()=>{});
+let routeLines=[],otherLines=[],pts=[],progress=1,planePos=null,anim=null;
+function visible(c){const r=proj.rotate();return d3.geoDistance(c,[-r[0],-r[1]])<Math.PI/2-.02}
+function draw(){
+  gSphere.attr('d',path);gGrat.attr('d',path);if(land)gLand.attr('d',path(land));
+  gOther.selectAll('path').data(otherLines).join('path').attr('d',d=>path(d)).attr('fill','none').attr('stroke','#7f8fd6').attr('stroke-width',1).attr('stroke-opacity',.45);
+  // selected route drawn up to `progress`
+  const lines=routeLines.map(l=>l.geo);
+  gRoute.selectAll('path.bg').data(lines).join('path').attr('class','bg').attr('d',d=>path(d)).attr('fill','none').attr('stroke','#FFB547').attr('stroke-opacity',.18).attr('stroke-width',2);
+  const partial=partialRoute(progress);
+  gRoute.selectAll('path.fg').data(partial).join('path').attr('class','fg').attr('d',d=>path(d)).attr('fill','none').attr('stroke','#FFB547').attr('stroke-width',2.6).attr('stroke-linecap','round');
+  const P=gPts.selectAll('g').data(pts).join(enter=>{const g=enter.append('g');g.append('circle').attr('r',5).attr('fill','#fff').attr('stroke','#FFB547').attr('stroke-width',2);g.append('text').attr('y',-10).attr('text-anchor','middle').attr('fill','#fff').attr('font-size',12).attr('font-weight',700).attr('font-family','JetBrains Mono,monospace').attr('paint-order','stroke').attr('stroke','#0b1530').attr('stroke-width',3);return g});
+  P.attr('transform',d=>{const p=proj(d.c);return 'translate('+p[0]+','+p[1]+')'}).attr('opacity',d=>visible(d.c)?1:0);
+  P.select('circle').attr('fill',d=>d.hub?'#FFB547':'#fff');
+  P.select('text').text(d=>d.iata);
+  if(planePos&&visible(planePos.c)){const a=proj(planePos.c),b=proj(planePos.n);const ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI+90;plane.attr('opacity',1).attr('transform','translate('+a[0]+','+a[1]+') rotate('+ang+') scale(1.1)')}else plane.attr('opacity',0);
+}
+// total route as a list of legs, each an interpolator; progress 0..1 across all legs by distance
+function partialRoute(t){
+  if(!routeLines.length)return[];
+  const total=d3.sum(routeLines,l=>l.d);let left=t*total;const out=[];
+  for(const l of routeLines){
+    if(left<=0)break;
+    const f=Math.min(1,left/l.d);const n=Math.max(2,Math.ceil(64*f));const coords=d3.range(n+1).map(i=>l.i(i/n*f));
+    out.push({type:'LineString',coordinates:coords});left-=l.d;
+  }
+  return out;
+}
+function pointAt(t){
+  const total=d3.sum(routeLines,l=>l.d);let left=t*total;
+  for(const l of routeLines){if(left<=l.d+1e-9){const f=Math.max(0,Math.min(1,left/l.d));return {c:l.i(f),n:l.i(Math.min(1,f+.01))}}left-=l.d}
+  const l=routeLines[routeLines.length-1];return {c:l.i(1),n:l.i(1)};
+}
+function show(opt,others){
+  cancelAnimationFrame(anim);
+  const stopsAll=[opt.legs[0].from].concat(opt.legs.map(l=>l.to));
+  const C=a=>[a.lon,a.lat];
+  const ap=code=>code===data.from.iata?data.from:code===data.to.iata?data.to:opt.via.find(v=>v.iata===code);
+  const coords=stopsAll.map(c=>C(ap(c)));
+  routeLines=coords.slice(0,-1).map((c,i)=>({i:d3.geoInterpolate(c,coords[i+1]),d:d3.geoDistance(c,coords[i+1]),geo:{type:'LineString',coordinates:[c,coords[i+1]]}}));
+  otherLines=(others||[]).filter(o=>o!==opt).slice(0,8).map(o=>({type:'MultiLineString',coordinates:[[C(data.from),C(o.via[0]||data.to)]].concat(o.via.map((v,i)=>[C(v),C(o.via[i+1]||data.to)]))}));
+  pts=stopsAll.map((c,i)=>({iata:c,c:coords[i],hub:i>0&&i<stopsAll.length-1}));
+  // rotate the globe so the whole route is in view
+  const mid=d3.geoCentroid({type:'MultiPoint',coordinates:coords});
+  const r0=proj.rotate(),r1=[-mid[0],-Math.max(-60,Math.min(60,mid[1])),0];
+  const spread=d3.max(coords,c=>d3.geoDistance(c,mid));
+  const s1=Math.max(170,Math.min(R*1.25,R*(spread<.5?1.25:spread<1?1.05:.95)));const s0=proj.scale();
+  const rot=d3.interpolate(r0,r1),scl=d3.interpolate(s0,s1);
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const t0=performance.now(),turn=reduce?1:900,fly=reduce?1:Math.max(2200,Math.min(5200,d3.sum(routeLines,l=>l.d)*1300));
+  progress=0;planePos=null;
+  function frame(now){
+    const e=now-t0;
+    if(e<turn){const k=d3.easeCubicInOut(e/turn);proj.rotate(rot(k)).scale(scl(k));progress=0;planePos=null}
+    else{proj.rotate(r1).scale(s1);const k=Math.min(1,(e-turn)/fly);progress=d3.easeSinInOut(k);planePos=pointAt(progress);if(k>=1){progress=1;planePos=pointAt(.999)}}
+    draw();
+    if(e<turn+fly)anim=requestAnimationFrame(frame);
+    else{anim=requestAnimationFrame(()=>loop(performance.now()))}
+  }
+  // after the first pass, keep a plane gently looping along the route
+  function loop(start){
+    function f(now){const k=((now-start)%(fly+800))/fly;if(k<=1){planePos=pointAt(d3.easeSinInOut(k))}else planePos=null;draw();anim=requestAnimationFrame(f)}
+    if(!reduce)anim=requestAnimationFrame(f);
+  }
+  anim=requestAnimationFrame(frame);
+  $('#g-legend').hidden=false;
+  $('#g-title').innerHTML=esc(stopsAll.join(' → '))+' <span>'+esc(dur(opt.totalMin))+'</span>';
+}
+svg.call(d3.drag().on('start',()=>cancelAnimationFrame(anim)).on('drag',e=>{const r=proj.rotate(),k=75/proj.scale();proj.rotate([r[0]+e.dx*k,Math.max(-80,Math.min(80,r[1]-e.dy*k)),r[2]]);progress=1;planePos=null;draw()}));
+// idle spin before the first search
+let idle=true;(function spin(){if(!idle)return;const r=proj.rotate();proj.rotate([r[0]+.12,r[1],0]);draw();requestAnimationFrame(spin)})();
+
+/* ---------- results ---------- */
+function verdict(d){
+  const n=d.direct,o=d.oneStop,t=d.twoStop;
+  const A=d.from.city||d.from.iata,B=d.to.city||d.to.iata;
+  if(n){
+    const c=n.legs[0].carriers;
+    return {cls:'good',tag:'Nonstop available',h:'Yes, you can fly '+A+' to '+B+' nonstop.',
+      p:(c.length===1?c[0]+' flies it':c.length+' airlines fly it ('+c.slice(0,3).join(', ')+(c.length>3?' and more':'')+')')+' in about '+dur(n.totalMin)+'.'+(o.count?' There are also '+o.count+' one-stop options if you want more choice.':'')};
+  }
+  if(o.count){const b=o.options[0];
+    return {cls:'warn',tag:'No nonstop · 1 stop',h:'No nonstop flight, but it’s an easy one-stop trip.',
+      p:'The quickest connection is via '+(b.via[0].city||b.via[0].iata)+' ('+b.via[0].iata+'), about '+dur(b.totalMin)+' door to door.'+(b.sameAirline.length?' '+b.sameAirline[0]+' flies both legs, so it can usually be one ticket.':'')+' '+o.count+' one-stop routes in total.'};
+  }
+  if(t.count){const b=t.options[0];
+    return {cls:'crit',tag:'2 stops needed',h:'This trip needs two connections.',
+      p:'The quickest path found goes via '+b.via.map(v=>v.city||v.iata).join(' and ')+', about '+dur(b.totalMin)+' in total.'};
+  }
+  return {cls:'crit',tag:'No route found',h:'We couldn’t find an airline route between these airports.',p:'Try a bigger nearby airport; small airports often connect through a regional hub first.'};
+}
+function optHTML(o,i,list){
+  const codes=[o.legs[0].from].concat(o.legs.map(l=>l.to));
+  const r=codes.map((c,j)=>(j>0?'<span class="ar">→</span>':'')+(j>0&&j<codes.length-1?'<span class="hub">'+esc(c)+'</span>':esc(c))).join(' ');
+  const carriers=o.stops===0?o.legs[0].carriers:o.legs.map(l=>l.carriers[0]).filter(Boolean);
+  const fastest=i===0&&list.length>1;
+  const b=[];if(fastest)b.push('<span class="bdg fast">Fastest</span>');
+  if(o.stops>0&&o.sameAirline.length)b.push('<span class="bdg one">One airline: '+esc(o.sameAirline[0])+'</span>');
+  if(o.stops>0)b.push('<span class="bdg">'+o.via.map(v=>esc(v.city||v.iata)).join(', ')+'</span>');
+  b.push('<span class="bdg">'+km(o.km)+'</span>');
+  const ctext=o.stops===0?carriers.join(', '):o.legs.map(l=>esc(l.from)+'–'+esc(l.to)+': '+esc(l.carriers.slice(0,2).join(', ')+(l.carriers.length>2?' +'+(l.carriers.length-2):''))).join(' · ');
+  return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div><div class="c">'+(o.stops===0?esc(ctext):ctext)+'</div><div class="badges">'+b.join('')+'</div></li>';
+}
+function lists(){return {direct:data.direct?[data.direct]:[],one:data.oneStop.options,two:data.twoStop.options}}
+function renderList(){
+  const L=lists()[tab];
+  const el=$('#list');
+  el.innerHTML=L.length?L.map((o,i)=>optHTML(o,i,L)).join(''):'<li class="note" style="padding:12px 2px">'+(tab==='direct'?'No airline flies this route nonstop.':tab==='one'?'No one-stop routes found.':(data.direct||data.oneStop.count)?'Not needed: there are quicker options with fewer stops.':'No two-stop routes found.')+'</li>';
+  el.querySelectorAll('.opt').forEach(li=>{const go=()=>{el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));li.classList.add('sel');current=L[+li.dataset.i];show(current,L)};li.addEventListener('click',go);li.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
+  const first=el.querySelector('.opt');if(first){first.classList.add('sel');current=L[0];show(current,L)}
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.t===tab)));
+}
+function render(d){
+  data=d;const v=verdict(d);
+  const fastest=d.direct||d.oneStop.options[0]||d.twoStop.options[0];
+  const airlines=new Set();(d.direct?d.direct.legs[0].carriers:[]).forEach(c=>airlines.add(c));
+  $('#result').innerHTML='<div class="verdict"><span class="vtag '+v.cls+'"><i></i>'+esc(v.tag)+'</span><h2>'+esc(v.h)+'</h2><p>'+esc(v.p)+'</p></div>'+
+   '<div class="kpis"><div class="kpi"><b>'+(d.direct?d.direct.legs[0].carriers.length:0)+'</b><span>nonstop airlines</span></div><div class="kpi"><b>'+d.oneStop.count+'</b><span>one-stop routes</span></div><div class="kpi"><b>'+(fastest?dur(fastest.totalMin):'—')+'</b><span>fastest trip</span></div><div class="kpi"><b>'+km(d.straightKm)+'</b><span>as the crow flies</span></div></div>'+
+   '<div class="tabs" role="tablist"><button class="tab" data-t="direct" role="tab">Nonstop <span class="n">'+(d.direct?1:0)+'</span></button><button class="tab" data-t="one" role="tab">1 stop <span class="n">'+d.oneStop.count+'</span></button><button class="tab" data-t="two" role="tab">2 stops <span class="n">'+d.twoStop.count+'</span></button></div>'+
+   '<ul class="list" id="list"></ul><div class="note">Times are typical flight times plus 90 minutes per connection. Showing the quickest '+Math.min(12,d.oneStop.count||0)+' of '+d.oneStop.count+' one-stop routes.</div>';
+  $('#result').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{tab=t.dataset.t;renderList()}));
+  tab=d.direct?'direct':d.oneStop.count?'one':'two';renderList();
+  view('result');
+}
+function view(w){$('#empty').hidden=w!=='empty';$('#loading').hidden=w!=='loading';$('#result').hidden=w!=='result'}
+async function run(){
+  if(!sel.from){$('#from').focus();return}
+  if(!sel.to){$('#to').focus();return}
+  idle=false;view('loading');$('#go').disabled=true;
+  history.replaceState(null,'','?from='+sel.from.iata+'&to='+sel.to.iata);
+  try{
+    const r=await fetch('/api/routes?from='+sel.from.iata+'&to='+sel.to.iata);const d=await r.json();
+    if(!r.ok||d.error)throw new Error(d.error||'Something went wrong.');
+    render(d);
+    if(matchMedia('(max-width:960px)').matches)$('#globe-card').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){$('#result').innerHTML='<div class="err">'+esc(e.message)+'</div>';view('result')}
+  finally{$('#go').disabled=false}
+}
+$('#form').addEventListener('submit',e=>{e.preventDefault();run()});
+async function preset(f,t){
+  const get=async c=>{const r=await fetch('/api/routes?q='+c);const d=await r.json();return (d.results||[]).find(a=>a.iata===c)||{iata:c,city:'',name:c,country:''}};
+  const [a,b]=await Promise.all([get(f),get(t)]);F.from.set(a);F.to.set(b);run();
+}
+document.querySelectorAll('.ex').forEach(b=>b.addEventListener('click',()=>preset(b.dataset.f,b.dataset.t)));
+const qs=new URLSearchParams(location.search);
+if(/^[A-Za-z0-9]{3}$/.test(qs.get('from')||'')&&/^[A-Za-z0-9]{3}$/.test(qs.get('to')||''))preset(qs.get('from').toUpperCase(),qs.get('to').toUpperCase());
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
