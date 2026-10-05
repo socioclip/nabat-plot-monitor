@@ -4,14 +4,41 @@
 //   GET /api/routes?from=DXB&to=JFK -> direct, one-stop and two-stop options
 
 const DATA_URL = 'https://raw.githubusercontent.com/Jonty/airline-route-data/main/airline_routes.json';
+const OF_ROUTES = 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat';
+const OF_PLANES = 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/planes.dat';
 const LAYOVER_MIN = 90; // assumed connection time per stop
+
+// Aircraft last recorded on each airline route (OpenFlights, historical ~2014).
+async function loadEquipment() {
+  try {
+    const [rt, pl] = await Promise.all([fetch(OF_ROUTES).then(r => r.ok ? r.text() : ''), fetch(OF_PLANES).then(r => r.ok ? r.text() : '')]);
+    // common IATA aircraft codes missing from planes.dat
+    const names = { '73H': 'Boeing 737-800', '73W': 'Boeing 737-700', '73G': 'Boeing 737-700', '73J': 'Boeing 737-900', '76W': 'Boeing 767-300ER', '77L': 'Boeing 777-200LR', '77X': 'Boeing 777-200F', '32S': 'Airbus A320 family', '32A': 'Airbus A320', '32B': 'Airbus A321', '31F': 'Airbus A318', 'CR7': 'Bombardier CRJ700', 'CR9': 'Bombardier CRJ900', 'E75': 'Embraer 175', 'E90': 'Embraer 190', 'AT7': 'ATR 72', 'AT5': 'ATR 42', 'DH4': 'De Havilland Dash 8-400' };
+    for (const line of pl.split('\n')) {
+      const m = line.match(/^"([^"]*)","([^"]*)"/);
+      if (m && m[2] && m[2] !== '\\N' && !names[m[2]]) names[m[2]] = m[1].replace(/^(Boeing|Airbus|Embraer|Bombardier|ATR|De Havilland Canada)\s+/, (x, y) => y + ' ');
+    }
+    const eq = new Map();
+    for (const line of rt.split('\n')) {
+      const f = line.split(',');
+      if (f.length < 9 || !f[0] || !f[2] || !f[4]) continue;
+      const codes = f[8].trim().split(/\s+/).filter(Boolean);
+      if (!codes.length) continue;
+      const k = f[0] + '|' + f[2] + '|' + f[4];
+      const set = eq.get(k) || new Set();
+      for (const c of codes) set.add(names[c] || c);
+      eq.set(k, set);
+    }
+    return eq;
+  } catch (e) { return new Map(); }
+}
 let cache = null, loading = null;
 
 async function load() {
   if (cache && Date.now() - cache.at < 6 * 3600e3) return cache;
   if (loading) return loading;
   loading = (async () => {
-    const r = await fetch(DATA_URL);
+    const [r, eq] = await Promise.all([fetch(DATA_URL), loadEquipment()]);
     if (!r.ok) throw new Error('dataset ' + r.status);
     const raw = await r.json();
     const ap = {}, out = {};
@@ -19,10 +46,14 @@ async function load() {
       if (!a || !a.iata) continue;
       ap[code] = { iata: code, name: a.name, city: a.city_name || '', country: a.country || '', cc: a.country_code || '', lat: +a.latitude, lon: +a.longitude, n: (a.routes || []).length };
       const m = new Map();
-      for (const rt of a.routes || []) m.set(rt.iata, { min: rt.min || null, km: rt.km || null, carriers: (rt.carriers || []).map(c => c.name).filter(Boolean) });
+      for (const rt of a.routes || []) {
+        const cs = (rt.carriers || []).filter(c => c.name);
+        m.set(rt.iata, { min: rt.min || null, km: rt.km || null, carriers: cs.map(c => c.name),
+          fleet: cs.map(c => ({ airline: c.name, aircraft: [...(eq.get(c.iata + '|' + code + '|' + rt.iata) || [])] })) });
+      }
       out[code] = m;
     }
-    cache = { at: Date.now(), ap, out };
+    cache = { at: Date.now(), ap, out, hasAircraft: eq.size > 0 };
     loading = null;
     return cache;
   })().catch(e => { loading = null; throw e; });
@@ -63,7 +94,7 @@ function leg(db, f, t) {
   const r = db.out[f] && db.out[f].get(t);
   if (!r) return null;
   const km = r.km || haversine(db.ap[f], db.ap[t]);
-  return { from: f, to: t, min: r.min || Math.round(km / 13 + 30), km, carriers: r.carriers };
+  return { from: f, to: t, min: r.min || Math.round(km / 13 + 30), km, carriers: r.carriers, fleet: r.fleet };
 }
 
 function option(db, legs) {
@@ -112,7 +143,9 @@ function search(db, from, to) {
     direct: direct ? option(db, [direct]) : null,
     oneStop: { count: one.length, options: one.slice(0, 12) },
     twoStop: { count: two.length, options: two },
-    dataset: { name: 'airline-route-data (open data, updated weekly)', url: 'https://github.com/Jonty/airline-route-data', loadedAt: new Date(db.at).toISOString() }
+    dataset: { name: 'airline-route-data (open data, updated weekly)', url: 'https://github.com/Jonty/airline-route-data', loadedAt: new Date(db.at).toISOString() },
+    aircraftSource: db.hasAircraft ? { name: 'OpenFlights (historical, last updated around 2014)', url: 'https://openflights.org/data' } : null,
+    liveAircraft: !!process.env.AERODATABOX_KEY
   };
 }
 
