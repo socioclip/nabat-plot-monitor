@@ -1,4 +1,4 @@
-// Plane Route Jump: route search over the open airline-route-data dataset
+// Flights Waypoint: route search over the open airline-route-data dataset
 // (github.com/Jonty/airline-route-data, updated weekly). No API key needed.
 //   GET /api/routes?q=dub          -> airport suggestions
 //   GET /api/routes?from=DXB&to=JFK -> direct, one-stop and two-stop options
