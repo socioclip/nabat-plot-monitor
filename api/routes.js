@@ -44,7 +44,7 @@ async function load() {
     const ap = {}, out = {};
     for (const [code, a] of Object.entries(raw)) {
       if (!a || !a.iata) continue;
-      ap[code] = { iata: code, name: a.name, city: a.city_name || '', country: a.country || '', cc: a.country_code || '', lat: +a.latitude, lon: +a.longitude, n: (a.routes || []).length };
+      ap[code] = { iata: code, name: a.name, city: a.city_name || '', country: a.country || '', cc: a.country_code || '', lat: +a.latitude, lon: +a.longitude, tz: a.timezone || '', n: (a.routes || []).length };
       const m = new Map();
       for (const rt of a.routes || []) {
         const cs = (rt.carriers || []).filter(c => c.name);
@@ -81,7 +81,7 @@ function suggest(db, q) {
   return res.sort((x, y) => y[0] - x[0]).slice(0, 8).map(([, a]) => pick(a));
 }
 
-const pick = a => ({ iata: a.iata, name: a.name, city: a.city, country: a.country, lat: a.lat, lon: a.lon });
+const pick = a => ({ iata: a.iata, name: a.name, city: a.city, country: a.country, lat: a.lat, lon: a.lon, tz: a.tz });
 
 function haversine(a, b) {
   const R = 6371, t = Math.PI / 180;
@@ -141,7 +141,7 @@ function search(db, from, to) {
   return {
     from: pick(A), to: pick(B), straightKm: straight,
     direct: direct ? option(db, [direct]) : null,
-    oneStop: { count: one.length, options: one.slice(0, 12) },
+    oneStop: { count: one.length, options: one.slice(0, 80) },
     twoStop: { count: two.length, options: two },
     dataset: { name: 'airline-route-data (open data, updated weekly)', url: 'https://github.com/Jonty/airline-route-data', loadedAt: new Date(db.at).toISOString() },
     aircraftSource: db.hasAircraft ? { name: 'OpenFlights (historical, last updated around 2014)', url: 'https://openflights.org/data' } : null,
