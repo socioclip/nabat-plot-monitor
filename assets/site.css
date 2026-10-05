@@ -367,3 +367,7 @@ body{background:#fff}
 .p-try.solid{padding:8px 14px}
 @keyframes pTryPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
 @media (prefers-reduced-motion:reduce){.p-try,.p-try::after,.p-try svg{transition:none}.p-try:not(.solid)::before{animation:none}}
+/* case study sidebar: keep facts and demo button together while scrolling */
+.cs-body>aside{position:sticky;top:88px;align-self:start}
+.cs-body .facts{position:static}
+@media (max-width:900px){.cs-body>aside{position:static}}
