@@ -128,6 +128,20 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .live td{padding:6px;border-bottom:1px solid var(--line)}
 .live td.m{font:600 12px var(--mono)}
 .live .lh{font:600 12px var(--mono);color:var(--ink-2);margin-top:10px}
+.depbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px 0;font-size:13px;color:var(--ink-2)}
+.depbar input{font:600 13px var(--mono);border:1px solid var(--line);background:var(--bg-2);border-radius:8px;padding:4px 8px}
+.depbar input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.depbar small{color:var(--ink-3);font-size:12px}
+.times{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+.times b{font:650 16px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+.times .tl{flex:1;min-width:40px;height:1px;background:repeating-linear-gradient(90deg,var(--line-2) 0 4px,transparent 4px 8px);position:relative}
+.times sup{font:600 10px var(--sans);color:var(--warn);margin-left:2px}
+.times .est{font:500 10.5px var(--sans);color:var(--ink-3);background:var(--bg-2);border-radius:999px;padding:1px 7px}
+.opt .fl .leg small{display:block;font:500 10.5px var(--mono);color:var(--ink-3)}
+.bdg.stops{background:#EEF1F8;color:var(--ink-2)}
+.more{display:block;width:100%;appearance:none;border:1px dashed var(--line-2);background:transparent;border-radius:12px;padding:10px;font:600 13px var(--sans);color:var(--accent);cursor:pointer}
+.more:hover{border-color:var(--accent);background:var(--accent-bg)}
+.list{max-height:none}
 .note{padding:0 16px 16px;font-size:12px;color:var(--ink-3)}
 .loading{padding:28px}
 .sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2),var(--line),var(--bg-2));background-size:200% 100%;animation:sh 1.2s infinite;margin:10px 0}
@@ -321,11 +335,24 @@ function verdict(d){
   return {cls:'crit',tag:'No route found',h:'We couldn’t find an airline route between these airports.',p:'Try a bigger nearby airport; small airports often connect through a regional hub first.'};
 }
 const PLANE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
+/* ---------- estimated times ---------- */
+function tzOff(tz,ms){try{const p=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(ms));const g=t=>+p.find(x=>x.type===t).value;return (Date.UTC(g('year'),g('month')-1,g('day'),g('hour'),g('minute'))-Math.floor(ms/6e4)*6e4)/6e4}catch(e){return 0}}
+function tzOf(a){return a&&a.tz?a.tz:'UTC'}
+function localDay(tz,ms){const t=ms+tzOff(tz,ms)*6e4;return Math.floor(t/864e5)}
+function hm(tz,ms){const t=new Date(ms+tzOff(tz,ms)*6e4);return String(t.getUTCHours()).padStart(2,'0')+':'+String(t.getUTCMinutes()).padStart(2,'0')}
+function startUTC(tz){const v=($('#dep')&&$('#dep').value)||'09:00';const [h,m]=v.split(':').map(Number);const now=Date.now();const t=new Date(now+tzOff(tz,now)*6e4);let g=Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate(),h,m);g-=tzOff(tz,g)*6e4;return g-(tzOff(tz,g)*6e4-tzOff(tz,g)*6e4)}
+function airportOf(code,o){return code===data.from.iata?data.from:code===data.to.iata?data.to:(o.via.find(v=>v.iata===code)||{iata:code})}
+function schedule(o){
+  let t=startUTC(tzOf(data.from));const out=[];
+  o.legs.forEach((l,i)=>{const A=airportOf(l.from,o),B=airportOf(l.to,o);const dep=t,arr=t+l.min*6e4;out.push({l,A,B,dep,arr});t=arr+90*6e4});
+  return out;
+}
+function dayTag(tzA,a,tzB,b){const d=localDay(tzB,b)-localDay(tzA,a);return d>0?'<sup>+'+d+'</sup>':d<0?'<sup>'+d+'</sup>':''}
 function acText(list){if(!list||!list.length)return '';const a=list.slice(0,2).join(', ');return a+(list.length>2?' +'+(list.length-2):'')}
-function fleetHTML(l,label,max){
+function fleetHTML(l,label,max,sub){
   const rows=(l.fleet&&l.fleet.length?l.fleet:l.carriers.map(c=>({airline:c,aircraft:[]}))).slice(0,max);
   const more=(l.fleet||l.carriers).length-rows.length;
-  return rows.map((f,j)=>'<div class="fl">'+(label?'<span class="leg">'+(j===0?esc(label):'')+'</span>':'')+'<b>'+esc(f.airline)+'</b>'+(f.aircraft&&f.aircraft.length?'<span class="ac">'+PLANE+esc(acText(f.aircraft))+'</span>':'')+'</div>').join('')+(more>0?'<div class="fl">'+(label?'<span class="leg"></span>':'')+'<span class="ac">+'+more+' more airline'+(more>1?'s':'')+'</span></div>':'');
+  return rows.map((f,j)=>'<div class="fl">'+(label?'<span class="leg">'+(j===0?esc(label)+(sub?'<small>'+sub+'</small>':''):'')+'</span>':'')+'<b>'+esc(f.airline)+'</b>'+(f.aircraft&&f.aircraft.length?'<span class="ac">'+PLANE+esc(acText(f.aircraft))+'</span>':'')+'</div>').join('')+(more>0?'<div class="fl">'+(label?'<span class="leg"></span>':'')+'<span class="ac">+'+more+' more airline'+(more>1?'s':'')+'</span></div>':'');
 }
 function optHTML(o,i,list){
   const codes=[o.legs[0].from].concat(o.legs.map(l=>l.to));
@@ -335,16 +362,22 @@ function optHTML(o,i,list){
   if(o.stops>0&&o.sameAirline.length)b.push('<span class="bdg one">One airline: '+esc(o.sameAirline[0])+'</span>');
   if(o.stops>0)b.push('<span class="bdg">'+o.via.map(v=>esc(v.city||v.iata)).join(', ')+'</span>');
   b.push('<span class="bdg">'+km(o.km)+'</span>');
-  const body=o.stops===0?fleetHTML(o.legs[0],'',6):o.legs.map(l=>fleetHTML(l,l.from+'–'+l.to,2)).join('');
-  return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div><div class="c">'+body+'</div><div class="badges">'+b.join('')+'</div></li>';
+  if(tab==='all')b.unshift('<span class="bdg stops">'+(o.stops===0?'Nonstop':o.stops+' stop'+(o.stops>1?'s':''))+'</span>');
+  const sc=schedule(o),first=sc[0],last=sc[sc.length-1];
+  const times='<div class="times"><b>'+hm(tzOf(first.A),first.dep)+'</b>'+esc(first.A.iata)+'<span class="tl"></span><b>'+hm(tzOf(last.B),last.arr)+dayTag(tzOf(first.A),first.dep,tzOf(last.B),last.arr)+'</b>'+esc(last.B.iata)+'<span class="est">est.</span></div>';
+  const body=o.stops===0?fleetHTML(o.legs[0],'',6):sc.map(s=>fleetHTML(s.l,s.l.from+'–'+s.l.to,2,hm(tzOf(s.A),s.dep)+'–'+hm(tzOf(s.B),s.arr)+dayTag(tzOf(first.A),first.dep,tzOf(s.B),s.arr).replace(/<\/?sup>/g,' '))).join('');
+  return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div>'+times+'<div class="c">'+body+'</div><div class="badges">'+b.join('')+'</div></li>';
 }
-function lists(){return {direct:data.direct?[data.direct]:[],one:data.oneStop.options,two:data.twoStop.options}}
-function renderList(){
-  const L=lists()[tab];
-  const el=$('#list');
-  el.innerHTML=L.length?L.map((o,i)=>optHTML(o,i,L)).join(''):'<li class="note" style="padding:12px 2px">'+(tab==='direct'?'No airline flies this route nonstop.':tab==='one'?'No one-stop routes found.':(data.direct||data.oneStop.count)?'Not needed: there are quicker options with fewer stops.':'No two-stop routes found.')+'</li>';
+let shown=5;const PAGE=5;
+function lists(){const d=data.direct?[data.direct]:[],o=data.oneStop.options,t=data.twoStop.options;return {all:d.concat(o,t).sort((a,b)=>a.totalMin-b.totalMin),direct:d,one:o,two:t}}
+function renderList(keepSel){
+  const Lall=lists()[tab];const L=Lall.slice(0,shown);
+  const el=$('#list');const selIdx=keepSel&&current?L.indexOf(current):-1;
+  el.innerHTML=L.length?L.map((o,i)=>optHTML(o,i,Lall)).join('')+(Lall.length>L.length?'<li><button class="more" id="more">Show '+Math.min(PAGE,Lall.length-L.length)+' more · '+(Lall.length-L.length)+' left</button></li>':''):'<li class="note" style="padding:12px 2px">'+(tab==='direct'?'No airline flies this route nonstop.':tab==='one'?'No one-stop routes found.':(data.direct||data.oneStop.count)?'Not needed: there are quicker options with fewer stops.':'No two-stop routes found.')+'</li>';
   el.querySelectorAll('.opt').forEach(li=>{const go=()=>{el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));li.classList.add('sel');current=L[+li.dataset.i];show(current,L);resetLive()};li.addEventListener('click',go);li.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
-  const first=el.querySelector('.opt');if(first){first.classList.add('sel');current=L[0];show(current,L)}
+  const mb=$('#more');if(mb)mb.addEventListener('click',()=>{shown+=PAGE;renderList(true)});
+  if(selIdx>=0){el.querySelectorAll('.opt')[selIdx].classList.add('sel')}
+  else{const first=el.querySelector('.opt');if(first){first.classList.add('sel');current=L[0];show(current,L)}}
   resetLive();
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.t===tab)));
 }
@@ -354,10 +387,12 @@ function render(d){
   const airlines=new Set();(d.direct?d.direct.legs[0].carriers:[]).forEach(c=>airlines.add(c));
   $('#result').innerHTML='<div class="verdict"><span class="vtag '+v.cls+'"><i></i>'+esc(v.tag)+'</span><h2>'+esc(v.h)+'</h2><p>'+esc(v.p)+'</p></div>'+
    '<div class="kpis"><div class="kpi"><b>'+(d.direct?d.direct.legs[0].carriers.length:0)+'</b><span>nonstop airlines</span></div><div class="kpi"><b>'+d.oneStop.count+'</b><span>one-stop routes</span></div><div class="kpi"><b>'+(fastest?dur(fastest.totalMin):'—')+'</b><span>fastest trip</span></div><div class="kpi"><b>'+km(d.straightKm)+'</b><span>as the crow flies</span></div></div>'+
-   '<div class="tabs" role="tablist"><button class="tab" data-t="direct" role="tab">Nonstop <span class="n">'+(d.direct?1:0)+'</span></button><button class="tab" data-t="one" role="tab">1 stop <span class="n">'+d.oneStop.count+'</span></button><button class="tab" data-t="two" role="tab">2 stops <span class="n">'+d.twoStop.count+'</span></button></div>'+
-   '<ul class="list" id="list"></ul>'+(d.liveAircraft?'<div class="live" id="live"></div>':'')+'<div class="note">Times are typical flight times plus 90 minutes per connection. Showing the quickest '+Math.min(12,d.oneStop.count||0)+' of '+d.oneStop.count+' one-stop routes.'+(d.aircraftSource?' Aircraft shown are those last recorded on each route (<a href="'+esc(d.aircraftSource.url)+'" target="_blank" rel="noopener">OpenFlights</a>, historical data) and may have changed.':'')+'</div>';
-  $('#result').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{tab=t.dataset.t;renderList()}));
-  tab=d.direct?'direct':d.oneStop.count?'one':'two';renderList();
+   '<div class="tabs" role="tablist"><button class="tab" data-t="all" role="tab">All <span class="n">'+((d.direct?1:0)+d.oneStop.options.length+d.twoStop.options.length)+'</span></button><button class="tab" data-t="direct" role="tab">Nonstop <span class="n">'+(d.direct?1:0)+'</span></button><button class="tab" data-t="one" role="tab">1 stop <span class="n">'+d.oneStop.count+'</span></button><button class="tab" data-t="two" role="tab">2 stops <span class="n">'+d.twoStop.count+'</span></button></div>'+
+   '<div class="depbar"><label for="dep">Leaving at</label><input type="time" id="dep" value="'+esc(($('#dep')&&$('#dep').value)||'09:00')+'"><small>local time in '+esc(d.from.city||d.from.iata)+' · arrivals shown in local time</small></div>'+
+   '<ul class="list" id="list"></ul>'+(d.liveAircraft?'<div class="live" id="live"></div>':'')+'<div class="note">Departure and arrival times are estimates: typical flight times plus 90 minutes per connection, not real schedules.'+(d.oneStop.count>d.oneStop.options.length?' The quickest '+d.oneStop.options.length+' of '+d.oneStop.count+' one-stop routes are included.':'')+(d.aircraftSource?' Aircraft shown are those last recorded on each route (<a href="'+esc(d.aircraftSource.url)+'" target="_blank" rel="noopener">OpenFlights</a>, historical data) and may have changed.':'')+'</div>';
+  $('#result').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{tab=t.dataset.t;shown=PAGE;renderList()}));
+  $('#dep').addEventListener('change',()=>renderList(true));
+  tab='all';shown=PAGE;renderList();
   view('result');
 }
 function resetLive(){
