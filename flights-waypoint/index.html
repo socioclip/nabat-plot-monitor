@@ -130,6 +130,9 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .live .lh{font:600 12px var(--mono);color:var(--ink-2);margin-top:10px}
 .opt .fl .leg small{display:block;font:500 10.5px var(--mono);color:var(--ink-3)}
 .bdg.stops{background:#EEF1F8;color:var(--ink-2)}
+.gf{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font:600 12px var(--sans);color:var(--accent);text-decoration:none;padding:3px 10px;border:1px solid var(--accent-bg);background:#fff;border-radius:999px;white-space:nowrap}
+.gf:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gf svg{width:11px;height:11px}
 .more{display:block;width:100%;appearance:none;border:1px dashed var(--line-2);background:transparent;border-radius:12px;padding:10px;font:600 13px var(--sans);color:var(--accent);cursor:pointer}
 .more:hover{border-color:var(--accent);background:var(--accent-bg)}
 .list{max-height:none}
@@ -342,6 +345,8 @@ function optHTML(o,i,list){
   b.push('<span class="bdg">'+km(o.km)+'</span>');
   if(tab==='all')b.unshift('<span class="bdg stops">'+(o.stops===0?'Nonstop':o.stops+' stop'+(o.stops>1?'s':''))+'</span>');
   const body=o.stops===0?fleetHTML(o.legs[0],'',6):o.legs.map(l=>fleetHTML(l,l.from+'–'+l.to,2,dur(l.min))).join('');
+  const gq='https://www.google.com/travel/flights?q='+encodeURIComponent('Flights from '+o.legs[0].from+' to '+o.legs[o.legs.length-1].to+(o.stops?' via '+o.via.map(v=>v.iata).join(' and '):''));
+  b.push('<a class="gf" href="'+gq+'" target="_blank" rel="noopener" title="Open real flight times and prices on Google Flights">Real schedules <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></a>');
   return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div><div class="c">'+body+'</div><div class="badges">'+b.join('')+'</div></li>';
 }
 let shown=5;const PAGE=5;
@@ -364,7 +369,7 @@ function render(d){
   $('#result').innerHTML='<div class="verdict"><span class="vtag '+v.cls+'"><i></i>'+esc(v.tag)+'</span><h2>'+esc(v.h)+'</h2><p>'+esc(v.p)+'</p></div>'+
    '<div class="kpis"><div class="kpi"><b>'+(d.direct?d.direct.legs[0].carriers.length:0)+'</b><span>nonstop airlines</span></div><div class="kpi"><b>'+d.oneStop.count+'</b><span>one-stop routes</span></div><div class="kpi"><b>'+(fastest?dur(fastest.totalMin):'—')+'</b><span>fastest trip</span></div><div class="kpi"><b>'+km(d.straightKm)+'</b><span>as the crow flies</span></div></div>'+
    '<div class="tabs" role="tablist"><button class="tab" data-t="all" role="tab">All <span class="n">'+((d.direct?1:0)+d.oneStop.options.length+d.twoStop.options.length)+'</span></button><button class="tab" data-t="direct" role="tab">Nonstop <span class="n">'+(d.direct?1:0)+'</span></button><button class="tab" data-t="one" role="tab">1 stop <span class="n">'+d.oneStop.count+'</span></button><button class="tab" data-t="two" role="tab">2 stops <span class="n">'+d.twoStop.count+'</span></button></div>'+
-   '<ul class="list" id="list"></ul>'+(d.liveAircraft?'<div class="live" id="live"></div>':'')+'<div class="note">Trip times are typical flight times plus 90 minutes per connection.'+(d.liveAircraft?' Use “Check live schedule” for real departure and arrival times.':'')+(d.oneStop.count>d.oneStop.options.length?' The quickest '+d.oneStop.options.length+' of '+d.oneStop.count+' one-stop routes are included.':'')+(d.aircraftSource?' Aircraft shown are those last recorded on each route (<a href="'+esc(d.aircraftSource.url)+'" target="_blank" rel="noopener">OpenFlights</a>, historical data) and may have changed.':'')+'</div>';
+   '<ul class="list" id="list"></ul>'+(d.liveAircraft?'<div class="live" id="live"></div>':'')+'<div class="note">Trip times are typical flight times plus 90 minutes per connection. Tap “Real schedules” on any route for actual flight times and prices on Google Flights.'+(d.liveAircraft?' Use “Check live schedule” for real departure and arrival times.':'')+(d.oneStop.count>d.oneStop.options.length?' The quickest '+d.oneStop.options.length+' of '+d.oneStop.count+' one-stop routes are included.':'')+(d.aircraftSource?' Aircraft shown are those last recorded on each route (<a href="'+esc(d.aircraftSource.url)+'" target="_blank" rel="noopener">OpenFlights</a>, historical data) and may have changed.':'')+'</div>';
   $('#result').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{tab=t.dataset.t;shown=PAGE;renderList()}));
   tab='all';shown=PAGE;renderList();
   view('result');
