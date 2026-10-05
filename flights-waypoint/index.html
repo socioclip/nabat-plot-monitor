@@ -112,6 +112,22 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .bdg{font:500 11px var(--sans);padding:2px 8px;border-radius:999px;background:var(--bg-2);color:var(--ink-2)}
 .bdg.one{background:var(--good-bg);color:var(--good)}
 .bdg.fast{background:var(--accent-bg);color:var(--accent)}
+.opt .fl{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;font-size:13px;margin-top:3px}
+.opt .fl b{font-weight:600;color:var(--ink)}
+.opt .fl .leg{font:600 11px var(--mono);color:var(--ink-3);min-width:62px}
+.opt .fl .ac{display:inline-flex;gap:4px;align-items:center;color:var(--ink-2);font-size:12.5px}
+.opt .fl .ac svg{width:12px;height:12px;color:var(--ink-3);flex:none}
+.live{margin:0 16px 14px;border:1px dashed var(--line-2);border-radius:14px;padding:12px 14px}
+.live-btn{appearance:none;border:0;border-radius:999px;padding:8px 14px;background:var(--grad);color:#fff;font:600 13px var(--sans);cursor:pointer;display:inline-flex;gap:8px;align-items:center;box-shadow:0 6px 16px -8px rgba(76,70,255,.6)}
+.live-btn[disabled]{opacity:.6;cursor:progress}
+.live-btn i{width:8px;height:8px;border-radius:50%;background:#7CF3A5;box-shadow:0 0 0 0 rgba(124,243,165,.7);animation:lp 1.8s infinite}
+@keyframes lp{70%{box-shadow:0 0 0 7px rgba(124,243,165,0)}100%{box-shadow:0 0 0 0 rgba(124,243,165,0)}}
+.live small{display:block;color:var(--ink-3);font-size:12px;margin-top:6px}
+.live table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.live th{text-align:left;font:500 11px var(--sans);color:var(--ink-3);padding:4px 6px;border-bottom:1px solid var(--line)}
+.live td{padding:6px;border-bottom:1px solid var(--line)}
+.live td.m{font:600 12px var(--mono)}
+.live .lh{font:600 12px var(--mono);color:var(--ink-2);margin-top:10px}
 .note{padding:0 16px 16px;font-size:12px;color:var(--ink-3)}
 .loading{padding:28px}
 .sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2),var(--line),var(--bg-2));background-size:200% 100%;animation:sh 1.2s infinite;margin:10px 0}
@@ -304,25 +320,32 @@ function verdict(d){
   }
   return {cls:'crit',tag:'No route found',h:'We couldn’t find an airline route between these airports.',p:'Try a bigger nearby airport; small airports often connect through a regional hub first.'};
 }
+const PLANE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
+function acText(list){if(!list||!list.length)return '';const a=list.slice(0,2).join(', ');return a+(list.length>2?' +'+(list.length-2):'')}
+function fleetHTML(l,label,max){
+  const rows=(l.fleet&&l.fleet.length?l.fleet:l.carriers.map(c=>({airline:c,aircraft:[]}))).slice(0,max);
+  const more=(l.fleet||l.carriers).length-rows.length;
+  return rows.map((f,j)=>'<div class="fl">'+(label?'<span class="leg">'+(j===0?esc(label):'')+'</span>':'')+'<b>'+esc(f.airline)+'</b>'+(f.aircraft&&f.aircraft.length?'<span class="ac">'+PLANE+esc(acText(f.aircraft))+'</span>':'')+'</div>').join('')+(more>0?'<div class="fl">'+(label?'<span class="leg"></span>':'')+'<span class="ac">+'+more+' more airline'+(more>1?'s':'')+'</span></div>':'');
+}
 function optHTML(o,i,list){
   const codes=[o.legs[0].from].concat(o.legs.map(l=>l.to));
   const r=codes.map((c,j)=>(j>0?'<span class="ar">→</span>':'')+(j>0&&j<codes.length-1?'<span class="hub">'+esc(c)+'</span>':esc(c))).join(' ');
-  const carriers=o.stops===0?o.legs[0].carriers:o.legs.map(l=>l.carriers[0]).filter(Boolean);
   const fastest=i===0&&list.length>1;
   const b=[];if(fastest)b.push('<span class="bdg fast">Fastest</span>');
   if(o.stops>0&&o.sameAirline.length)b.push('<span class="bdg one">One airline: '+esc(o.sameAirline[0])+'</span>');
   if(o.stops>0)b.push('<span class="bdg">'+o.via.map(v=>esc(v.city||v.iata)).join(', ')+'</span>');
   b.push('<span class="bdg">'+km(o.km)+'</span>');
-  const ctext=o.stops===0?carriers.join(', '):o.legs.map(l=>esc(l.from)+'–'+esc(l.to)+': '+esc(l.carriers.slice(0,2).join(', ')+(l.carriers.length>2?' +'+(l.carriers.length-2):''))).join(' · ');
-  return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div><div class="c">'+(o.stops===0?esc(ctext):ctext)+'</div><div class="badges">'+b.join('')+'</div></li>';
+  const body=o.stops===0?fleetHTML(o.legs[0],'',6):o.legs.map(l=>fleetHTML(l,l.from+'–'+l.to,2)).join('');
+  return '<li class="opt" data-i="'+i+'" tabindex="0"><div class="r">'+r+'<span class="t">'+dur(o.totalMin)+'</span></div><div class="c">'+body+'</div><div class="badges">'+b.join('')+'</div></li>';
 }
 function lists(){return {direct:data.direct?[data.direct]:[],one:data.oneStop.options,two:data.twoStop.options}}
 function renderList(){
   const L=lists()[tab];
   const el=$('#list');
   el.innerHTML=L.length?L.map((o,i)=>optHTML(o,i,L)).join(''):'<li class="note" style="padding:12px 2px">'+(tab==='direct'?'No airline flies this route nonstop.':tab==='one'?'No one-stop routes found.':(data.direct||data.oneStop.count)?'Not needed: there are quicker options with fewer stops.':'No two-stop routes found.')+'</li>';
-  el.querySelectorAll('.opt').forEach(li=>{const go=()=>{el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));li.classList.add('sel');current=L[+li.dataset.i];show(current,L)};li.addEventListener('click',go);li.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
+  el.querySelectorAll('.opt').forEach(li=>{const go=()=>{el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));li.classList.add('sel');current=L[+li.dataset.i];show(current,L);resetLive()};li.addEventListener('click',go);li.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
   const first=el.querySelector('.opt');if(first){first.classList.add('sel');current=L[0];show(current,L)}
+  resetLive();
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.t===tab)));
 }
 function render(d){
@@ -332,10 +355,30 @@ function render(d){
   $('#result').innerHTML='<div class="verdict"><span class="vtag '+v.cls+'"><i></i>'+esc(v.tag)+'</span><h2>'+esc(v.h)+'</h2><p>'+esc(v.p)+'</p></div>'+
    '<div class="kpis"><div class="kpi"><b>'+(d.direct?d.direct.legs[0].carriers.length:0)+'</b><span>nonstop airlines</span></div><div class="kpi"><b>'+d.oneStop.count+'</b><span>one-stop routes</span></div><div class="kpi"><b>'+(fastest?dur(fastest.totalMin):'—')+'</b><span>fastest trip</span></div><div class="kpi"><b>'+km(d.straightKm)+'</b><span>as the crow flies</span></div></div>'+
    '<div class="tabs" role="tablist"><button class="tab" data-t="direct" role="tab">Nonstop <span class="n">'+(d.direct?1:0)+'</span></button><button class="tab" data-t="one" role="tab">1 stop <span class="n">'+d.oneStop.count+'</span></button><button class="tab" data-t="two" role="tab">2 stops <span class="n">'+d.twoStop.count+'</span></button></div>'+
-   '<ul class="list" id="list"></ul><div class="note">Times are typical flight times plus 90 minutes per connection. Showing the quickest '+Math.min(12,d.oneStop.count||0)+' of '+d.oneStop.count+' one-stop routes.</div>';
+   '<ul class="list" id="list"></ul>'+(d.liveAircraft?'<div class="live" id="live"></div>':'')+'<div class="note">Times are typical flight times plus 90 minutes per connection. Showing the quickest '+Math.min(12,d.oneStop.count||0)+' of '+d.oneStop.count+' one-stop routes.'+(d.aircraftSource?' Aircraft shown are those last recorded on each route (<a href="'+esc(d.aircraftSource.url)+'" target="_blank" rel="noopener">OpenFlights</a>, historical data) and may have changed.':'')+'</div>';
   $('#result').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{tab=t.dataset.t;renderList()}));
   tab=d.direct?'direct':d.oneStop.count?'one':'two';renderList();
   view('result');
+}
+function resetLive(){
+  const box=document.getElementById('live');if(!box||!current)return;
+  const legs=current.legs.map(l=>l.from+'→'+l.to).join(', ');
+  box.innerHTML='<button class="live-btn" id="live-go"><i></i>Check live aircraft</button><small>See the aircraft actually scheduled on '+esc(legs)+' in the next 24 hours.</small>';
+  document.getElementById('live-go').addEventListener('click',checkLive);
+}
+async function checkLive(){
+  const box=document.getElementById('live'),btn=document.getElementById('live-go');btn.disabled=true;btn.lastChild.textContent='Checking live schedules…';
+  const opt=current;let html='';
+  try{
+    for(const l of opt.legs){
+      const r=await fetch('/api/aircraft?from='+l.from+'&to='+l.to);const d=await r.json();
+      if(!r.ok||d.error)throw new Error(d.error||'Live check failed.');
+      html+=(opt.legs.length>1?'<div class="lh">'+esc(l.from)+' → '+esc(l.to)+'</div>':'');
+      html+=d.flights.length?'<table><thead><tr><th>Flight</th><th>Airline</th><th>Aircraft</th><th>Departs</th></tr></thead><tbody>'+d.flights.map(f=>'<tr><td class="m">'+esc(f.number)+'</td><td>'+esc(f.airline)+'</td><td>'+esc(f.aircraft||'—')+'</td><td>'+esc(String(f.departs).replace('T',' ').slice(11,16)||'—')+'</td></tr>').join('')+'</tbody></table>':'<small>No departures on this leg in the next 24 hours.</small>';
+    }
+    if(current!==opt)return;
+    box.innerHTML=html+'<small>Live schedule data from AeroDataBox. Departure times are local to the origin airport.</small>';
+  }catch(e){if(current!==opt)return;box.innerHTML='<small style="color:var(--crit)">'+esc(e.message)+'</small>'}
 }
 function view(w){$('#empty').hidden=w!=='empty';$('#loading').hidden=w!=='loading';$('#result').hidden=w!=='result'}
 async function run(){
