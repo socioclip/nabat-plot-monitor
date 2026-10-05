@@ -410,6 +410,11 @@ async function run(){
   finally{$('#go').disabled=false}
 }
 $('#form').addEventListener('submit',e=>{e.preventDefault();run()});
+// open Google Flights for a route in a centred popup window (falls back to a new tab)
+document.addEventListener('click',e=>{const g=e.target.closest('a.gf');if(!g)return;e.preventDefault();e.stopPropagation();
+  const w=Math.min(1100,screen.availWidth-40),h=Math.min(820,screen.availHeight-60),l=Math.round((screen.availWidth-w)/2),t=Math.round((screen.availHeight-h)/2);
+  const win=window.open(g.href,'gflights','popup=yes,width='+w+',height='+h+',left='+l+',top='+t);
+  if(!win)window.open(g.href,'_blank','noopener');else{try{win.opener=null}catch(x){}win.focus()}},true);
 async function preset(f,t){
   const get=async c=>{const r=await fetch('/api/routes?q='+c);const d=await r.json();return (d.results||[]).find(a=>a.iata===c)||{iata:c,city:'',name:c,country:''}};
   const [a,b]=await Promise.all([get(f),get(t)]);F.from.set(a);F.to.set(b);run();
