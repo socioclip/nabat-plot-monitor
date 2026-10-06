@@ -76,6 +76,7 @@ module.exports = async (req, res) => {
         departs: f.departure_at,
         returns: f.return_at || null,
         minutes: f.duration_to || f.duration || null,
+        minutesBack: f.duration_back || null,
         from: f.origin_airport || f.origin,
         to: f.destination_airport || f.destination
       }))
