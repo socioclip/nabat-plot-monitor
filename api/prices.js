@@ -6,6 +6,25 @@ const API = 'https://api.travelpayouts.com/aviasales/v3/prices_for_dates';
 const IATA = /^[A-Z]{3}$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+const AIRLINES = 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat';
+const EXTRA = { GF: 'Gulf Air', EK: 'Emirates', EY: 'Etihad Airways', QR: 'Qatar Airways', AI: 'Air India', SV: 'Saudia', G9: 'Air Arabia', FZ: 'flydubai', IX: 'Air India Express', '6E': 'IndiGo', QP: 'Akasa Air', XY: 'flynas', J9: 'Jazeera Airways', OV: 'SalamAir', WY: 'Oman Air', UL: 'SriLankan Airlines' };
+let names = null;
+async function airlineNames() {
+  if (names) return names;
+  const m = { };
+  try {
+    const txt = await (await fetch(AIRLINES)).text();
+    for (const line of txt.split('\n')) {
+      const c = (line.match(/("([^"]|"")*"|[^,]*)(,|$)/g) || []).map(x => x.replace(/,$/, '').replace(/^"|"$/g, ''));
+      const code = c[3], name = c[1], active = c[7] === 'Y';
+      if (!/^[A-Z0-9]{2}$/.test(code || '') || !name) continue;
+      if (!m[code] || active) m[code] = name;
+    }
+  } catch (e) { /* fall back to codes */ }
+  names = Object.assign(m, EXTRA);
+  return names;
+}
+
 async function query(token, p) {
   const qs = new URLSearchParams({ sorting: 'price', limit: '30', unique: 'false', ...p });
   const r = await fetch(API + '?' + qs, { headers: { 'X-Access-Token': token, 'Accept-Encoding': 'gzip, deflate' } });
@@ -41,6 +60,7 @@ module.exports = async (req, res) => {
       fares = await query(token, { ...base, departure_at: d1.slice(0, 7), ...(ret ? { return_at: d2.slice(0, 7) } : {}) });
       match = 'month';
     }
+    const an = await airlineNames();
     res.setHeader('cache-control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     res.status(200).json({
       configured: true,
@@ -49,6 +69,7 @@ module.exports = async (req, res) => {
       fares: fares.slice(0, 6).map(f => ({
         price: f.price,
         airline: f.airline,
+        airlineName: an[f.airline] || f.airline,
         flight: f.flight_number,
         stops: f.transfers,
         returnStops: f.return_transfers,
