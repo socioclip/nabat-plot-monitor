@@ -171,10 +171,14 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .fare .fp{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .fare .fp b{font:700 24px/1.1 var(--sans);color:var(--ink)}
 .fare .fp em{font:600 12.5px var(--sans);color:var(--ink-3);font-style:normal}
-.fare .fd{font-size:13px;color:var(--ink-2);margin-top:3px}
-.fare ul{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1px dashed var(--line);display:grid;gap:4px}
-.fare li{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--ink-2)}
-.fare li b{font-weight:650;color:var(--ink);white-space:nowrap}
+.fare ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:0}
+.fare li{padding:9px 0;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-2)}
+.fare li b{font-weight:650;color:var(--ink)}
+.fare .r1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.fare .r1>b{white-space:nowrap;font-size:13.5px}
+.fare .r2{font:500 12.5px/1.5 var(--mono);color:var(--ink-2);margin-top:2px}
+.fare .r2 b{font-weight:700}.fare .r2 sup{font-size:10px;color:var(--warn);margin-left:1px}
+.fare .r2 i{font-style:normal;color:var(--ink-3);font-family:var(--sans)}
 .fare .fn{font-size:11.5px;color:var(--ink-3);margin-top:8px;line-height:1.45}
 .fare .fl{font-size:13px;color:var(--ink-3)}
 .pm-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px 18px;border-top:1px solid var(--line)}
@@ -494,7 +498,7 @@ function pmSync(){
 }
 function openPrice(o){
   PM.from=o.legs[0].from;PM.to=o.legs[o.legs.length-1].to;
-  PM.intl=!(data.from.country==='India'&&data.to.country==='India');
+  PM.intl=!(data.from.country==='India'&&data.to.country==='India');PM.ftz=data.from.tz;PM.ttz=data.to.tz;
   $('#pm-route').textContent=PM.from+' → '+PM.to+(o.stops?'  ·  via '+o.via.map(v=>v.iata).join(', '):'  ·  nonstop');
   const t=new Date();t.setDate(t.getDate()+14);const r=new Date(t);r.setDate(r.getDate()+7);
   const min=iso(new Date());$('#pm-d1').min=min;$('#pm-d2').min=min;
@@ -524,14 +528,22 @@ async function loadFares(){
   const seen=new Set(),F=(j.fares||[]).filter(f=>{const k=f.price+'|'+f.airline+'|'+f.departs;if(seen.has(k))return false;seen.add(k);return true});
   if(!F.length){box.innerHTML='<div class="pm-l">Recent fares</div><div class="fl">No recent fares found for this route. Check live prices below.</div>';return}
   const nm=f=>esc(f.airlineName||f.airline||'');
-  const when=f=>fday(f.departs)+(R&&f.returns?' → '+fday(f.returns):'');
-  const from=f=>f.from&&f.from!==PM.from?' · from '+esc(f.from):'';
+  const fno=f=>f.flight?' '+esc((f.airline||'')+' '+f.flight):'';
+  const hm=(d,tz)=>d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz});
+  const dur=m=>Math.floor(m/60)+'h'+(m%60?' '+(m%60)+'m':'');
+  const leg=(dep,min,a,z,tz)=>{const t=dep.slice(11,16);let out='<b>'+t+'</b> '+esc(a)+' → ';
+    try{if(!min||!tz)throw 0;const arr=new Date(new Date(dep).getTime()+min*60000);
+      const dd=Math.round((Date.parse(arr.toLocaleDateString('en-CA',{timeZone:tz}))-Date.parse(dep.slice(0,10)))/864e5);
+      return out+'<b>'+hm(arr,tz)+'</b>'+(dd>0?'<sup>+'+dd+'</sup>':'')+' '+esc(z)+' <i>· '+dur(min)+'</i>'}
+    catch(e){return out+esc(z)}};
   const b=F[0],mon=new Date(d1+'T12:00:00Z').toLocaleDateString('en-GB',{month:'long',timeZone:'UTC'});
-  box.innerHTML='<div class="pm-l">Recent fares <span>per adult · '+(R?'return':'one-way')+'</span></div>'+
+  box.innerHTML='<div class="pm-l">Recent flights &amp; fares <span>per adult · '+(R?'return':'one-way')+'</span></div>'+
     '<div class="fp"><b>'+money(b.price,j.currency)+'</b><em>'+(j.match==='exact'?'on your dates':'cheapest in '+mon)+'</em></div>'+
-    '<div class="fd">'+nm(b)+' · '+fstops(b.stops)+' · '+when(b)+from(b)+'</div>'+
-    (F.length>1?'<ul>'+F.slice(1,4).map(f=>'<li><span>'+nm(f)+' · '+fstops(f.stops)+' · '+when(f)+from(f)+'</span><b>'+money(f.price,j.currency)+'</b></li>').join('')+'</ul>':'')+
-    '<div class="fn">'+(j.match==='exact'?'':'No fares were seen for your exact dates, so these are the cheapest seen that month. ')+'Fares other travellers found on Aviasales in the last few days. The live price on Almosafer or MakeMyTrip may differ.</div>';
+    '<ul>'+F.slice(0,4).map(f=>{const a=f.from||PM.from,z=f.to||PM.to;
+      return '<li><div class="r1"><span><b>'+nm(f)+fno(f)+'</b> · '+fstops(f.stops)+' · '+fday(f.departs)+'</span><b>'+money(f.price,j.currency)+'</b></div>'+
+      '<div class="r2">'+leg(f.departs,f.minutes,a,z,PM.ttz)+'</div>'+
+      (R&&f.returns?'<div class="r2"><i>Return '+fday(f.returns)+' ·</i> '+leg(f.returns,f.minutesBack,z,a,PM.ftz)+'</div>':'')+'</li>'}).join('')+'</ul>'+
+    '<div class="fn">'+(j.match==='exact'?'':'No fares were seen for your exact dates, so these are the cheapest seen that month. ')+'Flights and fares other travellers found on Aviasales in the last few days, in local time. Only flights with a recent fare are listed; use “Real schedules” on the result card for the full timetable. The live price on Almosafer or MakeMyTrip may differ.</div>';
 }
 function priceURL(){
   const d1=$('#pm-d1').value,d2=$('#pm-d2').value,R=PM.trip==='R';
