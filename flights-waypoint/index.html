@@ -253,7 +253,7 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
         <div class="pr"><span><b>Infants</b><small>Under 2, on lap</small></span><span class="st"><button type="button" data-p="i" data-d="-1" aria-label="Fewer infants">−</button><output id="pm-i">0</output><button type="button" data-p="i" data-d="1" aria-label="More infants">+</button></span></div>
       </div></div>
       <div class="fare" id="pm-fare" aria-live="polite" hidden></div>
-      <div><div class="pm-l">See live prices on</div><div class="sites" id="pm-sites"><button type="button" class="site" data-s="almosafer" aria-pressed="true"><b>Almosafer</b><small>Middle East · prices in local currency</small></button><button type="button" class="site" data-s="mmt" aria-pressed="false"><b>MakeMyTrip</b><small>India &amp; global · wide fare choice</small></button></div></div>
+      <div><div class="pm-l">See live prices on</div><div class="sites" id="pm-sites"><button type="button" class="site" data-s="almosafer" aria-pressed="true"><b>Almosafer</b><small>Middle East · local currency</small></button><button type="button" class="site" data-s="mmt" aria-pressed="false"><b>MakeMyTrip</b><small>India &amp; global</small></button><button type="button" class="site" data-s="booking" aria-pressed="false"><b>Booking.com</b><small>Global · fare options</small></button><button type="button" class="site" data-s="trip" aria-pressed="false"><b>Trip.com</b><small>Global · strong in Asia</small></button></div></div>
       <div class="pm-err" id="pm-err"></div>
     </div>
     <div class="pm-f"><small>Prices and seats are shown live on the selected site. Economy class.</small><button class="pm-go" id="pm-go">Proceed <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg></button></div>
@@ -543,13 +543,20 @@ async function loadFares(){
       return '<li><div class="r1"><span><b>'+nm(f)+fno(f)+'</b> · '+fstops(f.stops)+' · '+fday(f.departs)+'</span><b>'+money(f.price,j.currency)+'</b></div>'+
       '<div class="r2">'+leg(f.departs,f.minutes,a,z,PM.ttz)+'</div>'+
       (R&&f.returns?'<div class="r2"><i>Return '+fday(f.returns)+' ·</i> '+leg(f.returns,f.minutesBack,z,a,PM.ftz)+'</div>':'')+'</li>'}).join('')+'</ul>'+
-    '<div class="fn">'+(j.match==='exact'?'':'No fares were seen for your exact dates, so these are the cheapest seen that month. ')+'Flights and fares other travellers found on Aviasales in the last few days, in local time. Only flights with a recent fare are listed; use “Real schedules” on the result card for the full timetable. The live price on Almosafer or MakeMyTrip may differ.</div>';
+    '<div class="fn">'+(j.match==='exact'?'':'No fares were seen for your exact dates, so these are the cheapest seen that month. ')+'Flights and fares other travellers found on Aviasales in the last few days, in local time. Only flights with a recent fare are listed; use “Real schedules” on the result card for the full timetable. The live price on the booking site may differ.</div>';
 }
 function priceURL(){
   const d1=$('#pm-d1').value,d2=$('#pm-d2').value,R=PM.trip==='R';
   if(PM.site==='almosafer'){
     const pax=[PM.a+'Adult'].concat(PM.c?[PM.c+'Child']:[],PM.i?[PM.i+'Infant']:[]).join('/');
     return 'https://www.almosafer.com/en/flights/'+PM.from+'-'+PM.to+'/'+d1+'/'+(R?d2+'/':'')+'Economy/'+pax;
+  }
+  if(PM.site==='trip'){
+    return 'https://www.trip.com/flights/showfarefirst?dcity='+PM.from.toLowerCase()+'&acity='+PM.to.toLowerCase()+'&ddate='+d1+(R?'&rdate='+d2:'')+'&triptype='+(R?'rt':'ow')+'&class=y&quantity='+PM.a+'&childqty='+PM.c+'&babyqty='+PM.i+'&searchboxarg=t&nonstoponly=off&locale=en-XX&curr=AED';
+  }
+  if(PM.site==='booking'){
+    const kids=Array(PM.c).fill(8).concat(Array(PM.i).fill(0)).join(',');
+    return 'https://flights.booking.com/flights/'+PM.from+'.AIRPORT-'+PM.to+'.AIRPORT/?type='+(R?'ROUNDTRIP':'ONEWAY')+'&adults='+PM.a+'&cabinClass=ECONOMY'+(kids?'&children='+encodeURIComponent(kids):'')+'&from='+PM.from+'.AIRPORT&to='+PM.to+'.AIRPORT&depart='+d1+(R?'&return='+d2:'')+'&sort=BEST';
   }
   const dm=v=>v.split('-').reverse().join('/');
   const it=PM.from+'-'+PM.to+'-'+dm(d1)+(R?'_'+PM.to+'-'+PM.from+'-'+dm(d2):'');
