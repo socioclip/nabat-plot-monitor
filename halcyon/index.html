@@ -353,15 +353,15 @@ function parseTLEText(txt){
   return out;
 }
 const LIVE = {
-  yam:{label:"YAM series (public TLEs)", url:"https://celestrak.org/NORAD/elements/gp.php?NAME=YAM&FORMAT=tle"},
-  s2:{label:"Sentinel-2 (public TLEs)", url:"https://celestrak.org/NORAD/elements/gp.php?NAME=SENTINEL-2&FORMAT=tle"}
+  yam:{label:"YAM series (public TLEs)", url:"https://celestrak.org/NORAD/elements/gp.php?NAME=YAM&FORMAT=tle", match:/^YAM-\d+$/},
+  s2:{label:"Sentinel-2 (public TLEs)", url:"https://celestrak.org/NORAD/elements/gp.php?NAME=SENTINEL-2&FORMAT=tle", match:/^SENTINEL-2[A-Z]$/}
 };
 async function loadLive(key){
   const ctl = new AbortController(); const to = setTimeout(()=>ctl.abort(), 8000);
   try{
     const r = await fetch(LIVE[key].url, {signal:ctl.signal});
     if(!r.ok) throw new Error("HTTP "+r.status);
-    const recs = parseTLEText(await r.text()).slice(0,8);
+    const recs = parseTLEText(await r.text()).filter(x=>LIVE[key].match.test(x.name.trim())).slice(0,10);
     if(!recs.length) throw new Error("no records");
     return recs.map(x=>{
       const satrec = S.twoline2satrec(x.l1,x.l2);
@@ -901,7 +901,7 @@ function renderGallery(){
       '<div class="ct"><span class="rid">'+t.id+'</span><span class="rt">'+esc(t.target)+'</span></div>'+
       '<div class="cm">'+esc(t.customer)+' · downlinked via '+esc(stName(r.st))+' at '+hhmm(r.dl[0])+' · '+dur(r.deliver-r.cap[0])+' capture to delivery</div>'+
       '<div class="cl">'+realLinks(t)+'</div>'+
-      (t.cap==="optical" ? '<div class="ref" hidden><img alt="NASA MODIS true-color image around '+esc(t.target)+'" loading="lazy"><span>Real reference: NASA MODIS true color, yesterday, 250 m per pixel</span></div>' : '');
+      (t.cap==="optical" ? '<div class="ref" hidden><img alt="NASA MODIS true-color image around '+esc(t.target)+'"><span>Real reference: NASA MODIS true color, yesterday, 250 m per pixel</span></div>' : '');
     const shot = card.querySelector(".shot"); shot.insertBefore(p.node, shot.firstChild);
     const ref = card.querySelector(".ref");
     if(ref){ const img = ref.querySelector("img"); img.onload = ()=>{ ref.hidden=false; }; img.onerror = ()=>{ ref.remove(); }; img.src = gibsURL(t); }
