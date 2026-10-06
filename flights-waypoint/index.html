@@ -575,7 +575,7 @@ $('#pm-go').addEventListener('click',()=>{
   const d1=$('#pm-d1').value,d2=$('#pm-d2').value,today=iso(new Date());
   if(!d1||d1<today){$('#pm-err').textContent='Pick an onward date from today onwards.';return}
   if(PM.trip==='R'&&(!d2||d2<d1)){$('#pm-err').textContent='The return date must be on or after the onward date.';return}
-  window.open(priceURL(),'_blank','noopener');closePrice();
+  window.open('/api/go?s=fw-'+PM.site+'&u='+encodeURIComponent(priceURL()),'_blank','noopener');closePrice();
 });
 
 // open Google Flights for a route in a centred popup window (falls back to a new tab)
