@@ -164,6 +164,19 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .site b{font-size:15px}.site small{color:var(--ink-3);font-size:12px}
 .site[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
 .pm-err{color:var(--crit);font-size:13px;min-height:1px}
+.fare{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:linear-gradient(180deg,var(--accent-bg),#fff 70%)}
+.fare[hidden]{display:none}
+.fare .pm-l{display:flex;justify-content:space-between;gap:8px}
+.fare .pm-l span{text-transform:none;letter-spacing:0;font-weight:500}
+.fare .fp{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fare .fp b{font:700 24px/1.1 var(--sans);color:var(--ink)}
+.fare .fp em{font:600 12.5px var(--sans);color:var(--ink-3);font-style:normal}
+.fare .fd{font-size:13px;color:var(--ink-2);margin-top:3px}
+.fare ul{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1px dashed var(--line);display:grid;gap:4px}
+.fare li{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--ink-2)}
+.fare li b{font-weight:650;color:var(--ink);white-space:nowrap}
+.fare .fn{font-size:11.5px;color:var(--ink-3);margin-top:8px;line-height:1.45}
+.fare .fl{font-size:13px;color:var(--ink-3)}
 .pm-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px 18px;border-top:1px solid var(--line)}
 .pm-f small{color:var(--ink-3);font-size:12px;max-width:30ch}
 .pm-go{appearance:none;border:0;border-radius:999px;padding:11px 20px;background:var(--grad);color:#fff;font:650 14px var(--sans);cursor:pointer;display:inline-flex;gap:8px;align-items:center;box-shadow:0 8px 20px -8px rgba(76,70,255,.7)}
@@ -235,6 +248,7 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
         <div class="pr"><span><b>Children</b><small>2–11 years</small></span><span class="st"><button type="button" data-p="c" data-d="-1" aria-label="Fewer children">−</button><output id="pm-c">0</output><button type="button" data-p="c" data-d="1" aria-label="More children">+</button></span></div>
         <div class="pr"><span><b>Infants</b><small>Under 2, on lap</small></span><span class="st"><button type="button" data-p="i" data-d="-1" aria-label="Fewer infants">−</button><output id="pm-i">0</output><button type="button" data-p="i" data-d="1" aria-label="More infants">+</button></span></div>
       </div></div>
+      <div class="fare" id="pm-fare" aria-live="polite" hidden></div>
       <div><div class="pm-l">See live prices on</div><div class="sites" id="pm-sites"><button type="button" class="site" data-s="almosafer" aria-pressed="true"><b>Almosafer</b><small>Middle East · prices in local currency</small></button><button type="button" class="site" data-s="mmt" aria-pressed="false"><b>MakeMyTrip</b><small>India &amp; global · wide fare choice</small></button></div></div>
       <div class="pm-err" id="pm-err"></div>
     </div>
@@ -486,9 +500,39 @@ function openPrice(o){
   const min=iso(new Date());$('#pm-d1').min=min;$('#pm-d2').min=min;
   if(!$('#pm-d1').value||$('#pm-d1').value<min)$('#pm-d1').value=iso(t);
   if(!$('#pm-d2').value||$('#pm-d2').value<$('#pm-d1').value)$('#pm-d2').value=iso(r);
-  $('#pm-err').textContent='';pmSync();$('#pm').hidden=false;setTimeout(()=>$('#pm-go').focus(),30);
+  $('#pm-err').textContent='';pmSync();$('#pm').hidden=false;loadFares();setTimeout(()=>$('#pm-go').focus(),30);
 }
 function closePrice(){$('#pm').hidden=true}
+/* recent fares (Travelpayouts / Aviasales data, cached) */
+const fareCache=new Map();let fareSeq=0,fareT=0,fareOff=false;
+const money=(n,c)=>c+' '+Math.round(n).toLocaleString('en-US');
+const fday=s=>{const d=new Date(s.slice(0,10)+'T12:00:00Z');return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})};
+const fstops=n=>n?n+' stop'+(n>1?'s':''):'nonstop';
+function queueFares(){clearTimeout(fareT);fareT=setTimeout(loadFares,250)}
+async function loadFares(){
+  const box=$('#pm-fare');if(fareOff){box.hidden=true;return}
+  const d1=$('#pm-d1').value,d2=$('#pm-d2').value,R=PM.trip==='R';
+  if(!d1||(R&&(!d2||d2<d1))){box.hidden=true;return}
+  const u='/api/prices?from='+PM.from+'&to='+PM.to+'&d1='+d1+(R?'&d2='+d2:'')+'&cur=aed';
+  const seq=++fareSeq;box.hidden=false;
+  if(!fareCache.has(u))box.innerHTML='<div class="pm-l">Recent fares</div><div class="fl">Looking up recent fares…</div>';
+  let j;try{j=fareCache.get(u)||await fetch(u).then(r=>r.json());}catch(e){j={error:1}}
+  if(seq!==fareSeq)return;
+  if(j&&j.configured===false){fareOff=true;box.hidden=true;return}
+  if(!j||j.error){box.innerHTML='<div class="pm-l">Recent fares</div><div class="fl">Couldn’t load fares right now. Check live prices below.</div>';return}
+  fareCache.set(u,j);
+  const seen=new Set(),F=(j.fares||[]).filter(f=>{const k=f.price+'|'+f.airline+'|'+f.departs;if(seen.has(k))return false;seen.add(k);return true});
+  if(!F.length){box.innerHTML='<div class="pm-l">Recent fares</div><div class="fl">No recent fares found for this route. Check live prices below.</div>';return}
+  const nm=f=>esc(f.airlineName||f.airline||'');
+  const when=f=>fday(f.departs)+(R&&f.returns?' → '+fday(f.returns):'');
+  const from=f=>f.from&&f.from!==PM.from?' · from '+esc(f.from):'';
+  const b=F[0],mon=new Date(d1+'T12:00:00Z').toLocaleDateString('en-GB',{month:'long',timeZone:'UTC'});
+  box.innerHTML='<div class="pm-l">Recent fares <span>per adult · '+(R?'return':'one-way')+'</span></div>'+
+    '<div class="fp"><b>'+money(b.price,j.currency)+'</b><em>'+(j.match==='exact'?'on your dates':'cheapest in '+mon)+'</em></div>'+
+    '<div class="fd">'+nm(b)+' · '+fstops(b.stops)+' · '+when(b)+from(b)+'</div>'+
+    (F.length>1?'<ul>'+F.slice(1,4).map(f=>'<li><span>'+nm(f)+' · '+fstops(f.stops)+' · '+when(f)+from(f)+'</span><b>'+money(f.price,j.currency)+'</b></li>').join('')+'</ul>':'')+
+    '<div class="fn">'+(j.match==='exact'?'':'No fares were seen for your exact dates, so these are the cheapest seen that month. ')+'Fares other travellers found on Aviasales in the last few days. The live price on Almosafer or MakeMyTrip may differ.</div>';
+}
 function priceURL(){
   const d1=$('#pm-d1').value,d2=$('#pm-d2').value,R=PM.trip==='R';
   if(PM.site==='almosafer'){
@@ -503,10 +547,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('.cp');if(!b)retu
 $('#pm-x').addEventListener('click',closePrice);
 $('#pm').addEventListener('click',e=>{if(e.target.id==='pm')closePrice()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#pm').hidden)closePrice()});
-$('#pm-trip').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;PM.trip=b.dataset.v;pmSync()});
+$('#pm-trip').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;PM.trip=b.dataset.v;pmSync();queueFares()});
 $('#pm-sites').addEventListener('click',e=>{const b=e.target.closest('.site');if(!b)return;PM.site=b.dataset.s;pmSync()});
 $('#pm').addEventListener('click',e=>{const b=e.target.closest('.st button');if(!b)return;PM[b.dataset.p]+=+b.dataset.d;if(PM.i>PM.a)PM.i=PM.a;pmSync()});
-$('#pm-d1').addEventListener('change',()=>{if($('#pm-d2').value<$('#pm-d1').value)$('#pm-d2').value=$('#pm-d1').value;pmSync()});
+$('#pm-d1').addEventListener('change',()=>{if($('#pm-d2').value<$('#pm-d1').value)$('#pm-d2').value=$('#pm-d1').value;pmSync();queueFares()});
+$('#pm-d2').addEventListener('change',queueFares);
 $('#pm-go').addEventListener('click',()=>{
   const d1=$('#pm-d1').value,d2=$('#pm-d2').value,today=iso(new Date());
   if(!d1||d1<today){$('#pm-err').textContent='Pick an onward date from today onwards.';return}
