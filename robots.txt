@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sarfaraz27.vercel.app/sitemap.xml
