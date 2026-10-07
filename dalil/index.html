@@ -359,7 +359,7 @@ function parse(text, prev){
   if (has(/bedroom|kitchen|small room|غرفة النوم|المطبخ|غرفة صغيرة/)) addUse("bedroom");
   if (has(/fold|flip|قابل للطي|فولد|فليب/)) addUse("foldable");
   if (has(/gift|present|هدية/)) addUse("gift");
-  if (has(/basic|simple|browsing|youtube|email|grand|parent|mother|father|mum|dad|بسيط|تصفح|يوتيوب|لأمي|لابوي|لوالدي|لوالدتي|امي|ابوي/)) addUse("basic");
+  if (has(/basic|simple|browsing|youtube|email|grand|parent|mother|father|mum|dad|بسيط|تصفح|يوتيوب|لأمي|لابوي|لوالدي|لوالدتي/) || /(^|\s)(امي|أمي|ابوي|أبوي)(\s|$)/.test(q)) addUse("basic");
 
   if (has(/iphone|apple|ايفون|آيفون|ابل|أبل|mac/)) st.brand = "Apple";
   else if (has(/samsung|galaxy|سامسونج|جالكسي/)) st.brand = "Samsung";
