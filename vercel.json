@@ -6,6 +6,8 @@
     { "source": "/nabat/:path*", "destination": "/plant-monitor", "permanent": true },
     { "source": "/work/nabat", "destination": "/work/plant-monitor", "permanent": true },
     { "source": "/plane-route-jump", "destination": "/flights-waypoint", "permanent": true },
-    { "source": "/work/plane-route-jump", "destination": "/work/flights-waypoint", "permanent": true }
+    { "source": "/work/plane-route-jump", "destination": "/work/flights-waypoint", "permanent": true },
+    { "source": "/dalil", "destination": "/worth-it", "permanent": true },
+    { "source": "/work/dalil", "destination": "/work/worth-it", "permanent": true }
   ]
 }
