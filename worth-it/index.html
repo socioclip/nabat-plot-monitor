@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Worth It · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="Worth It: an English and Arabic shopping guide for electronics that explains the best fit, a cheaper option and the trade-off. Concept prototype by Syed Sarfaraz Ahmed.">
+<meta property="og:title" content="Worth It · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="An English and Arabic shopping guide for electronics. Concept prototype.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/worth-it">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/worth-it">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single conversation column like a sales-floor counter; product cards read as spec tags; notes tab is a one-page product brief. */
+:root{
+  --bg:#F3F5F6; --surface:#FFFFFF; --ink:#16212A; --muted:#5B6873; --line:#DCE2E6;
+  --accent:#0B6E6A; --accent-ink:#FFFFFF; --accent-soft:#E2F1EF;
+  --tag:#B45A0A; --tag-soft:#FBEBDD; --warn:#8A5A00; --warn-soft:#FFF4D9;
+  --user:#16212A; --user-ink:#F3F5F6;
+  --display:"Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --arabic:"IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F161B; --surface:#172129; --ink:#E6ECEF; --muted:#97A5AF; --line:#2A3740;
+  --accent:#3FB8AE; --accent-ink:#06201E; --accent-soft:#16312F;
+  --tag:#F0A35E; --tag-soft:#3A2715; --warn:#F2C56B; --warn-soft:#33290F;
+  --user:#E6ECEF; --user-ink:#0F161B; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F161B; --surface:#172129; --ink:#E6ECEF; --muted:#97A5AF; --line:#2A3740;
+  --accent:#3FB8AE; --accent-ink:#06201E; --accent-soft:#16312F;
+  --tag:#F0A35E; --tag-soft:#3A2715; --warn:#F2C56B; --warn-soft:#33290F;
+  --user:#E6ECEF; --user-ink:#0F161B; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+img{max-width:100%}
+.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:12px}
+.back:hover{color:var(--accent)}
+.sub a{color:var(--accent)}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding-inline:16px;padding-block:20px 0;min-height:100%;display:flex;flex-direction:column}
+[dir="rtl"], .ar{font-family:var(--arabic)}
+
+header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-.02em;margin:0;line-height:1}
+.brand .arname{font-family:var(--arabic);font-weight:600;font-size:24px;color:var(--accent)}
+.sub{color:var(--muted);margin:6px 0 0;font-size:14px;max-width:60ch}
+.mode{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 4px 4px 12px;font-size:13px;color:var(--muted)}
+.mode .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.mode.ai .dot{background:var(--accent)}
+.seg{display:inline-flex;background:var(--bg);border-radius:999px;padding:2px}
+.seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+
+nav.tabs{display:flex;gap:4px;margin:18px 0 0;border-bottom:1px solid var(--line)}
+nav.tabs button{border:0;background:none;font:inherit;font-weight:500;color:var(--muted);padding:10px 12px;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+button:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Thread */
+#thread{display:flex;flex-direction:column;gap:18px;padding-block:20px 12px;flex:1}
+.ex-label{align-self:center;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:2px 10px}
+.msg{display:flex;flex-direction:column;gap:10px;min-width:0}
+.msg.user{align-items:flex-end}
+.bubble{max-width:min(560px,88%);padding:10px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.user .bubble{background:var(--user);color:var(--user-ink);border-bottom-right-radius:4px}
+.bot .bubble{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bot .bubble.thinking{color:var(--muted);font-style:italic}
+.note{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Product cards: styled as shelf price tags */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0;position:relative}
+.card.best{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.role{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card.best .role{color:var(--accent)}
+.pname{font-weight:600;line-height:1.3;text-wrap:balance}
+.pname .b{display:block;font-weight:500;color:var(--muted);font-size:13px}
+.price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.price .now{font-size:19px;font-weight:500}
+.price .was{color:var(--muted);text-decoration:line-through;font-size:13px}
+.save{font-family:var(--mono);font-size:11.5px;background:var(--tag-soft);color:var(--tag);padding:1px 7px;border-radius:4px}
+ul.why{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+ul.why li{padding-inline-start:16px;position:relative}
+ul.why li::before{content:"";position:absolute;inset-inline-start:2px;top:.6em;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.trade{font-size:13px;background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:6px 9px}
+.cmp{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+.cmp[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* Composer */
+.dock{position:sticky;bottom:0;background:linear-gradient(to bottom, transparent, var(--bg) 18px);padding-block:18px calc(14px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:8px}
+.tray{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:8px 8px 8px 14px;font-size:13.5px}
+.tray .btns{display:flex;gap:6px}
+form.composer{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px}
+form.composer input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:15px;padding:8px 10px}
+form.composer input:focus{outline:none}
+form.composer:focus-within{border-color:var(--accent)}
+.btn{border:0;border-radius:8px;font:inherit;font-weight:600;font-size:14px;padding:8px 14px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--muted);font-weight:500}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:12px;color:var(--muted);text-align:center}
+
+/* Compare sheet */
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sheet h2{font-family:var(--display);font-size:20px;margin:0}
+.tablewrap{overflow-x:auto}
+table.cmpt{border-collapse:collapse;width:100%;min-width:480px;font-size:13.5px}
+table.cmpt th, table.cmpt td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.cmpt thead th{font-weight:600}
+table.cmpt tbody th{color:var(--muted);font-weight:500;white-space:nowrap}
+table.cmpt td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* Notes */
+#notes{padding-block:24px 40px;display:flex;flex-direction:column;gap:28px}
+#notes h2{font-family:var(--display);font-size:22px;letter-spacing:-.01em;margin:0 0 8px;text-wrap:balance}
+#notes p{margin:0 0 10px;max-width:66ch}
+#notes .lede{font-size:17px;max-width:62ch}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.box h3{margin:0 0 6px;font-size:15px}
+.box p, .box li{font-size:14px;color:var(--muted)}
+.box ul{margin:0;padding-inline-start:18px}
+.specstring{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere;color:var(--muted)}
+table.metrics{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+table.metrics th, table.metrics td{text-align:start;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.metrics thead th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+ol.phases{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+ol.phases li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:14px}
+ol.phases b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;font-weight:500}
+ol.questions{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;max-width:66ch}
+
+footer.disc{border-top:1px solid var(--line);padding-block:14px 20px;font-size:12px;color:var(--muted)}
+@media (max-width:520px){ .brand h1{font-size:26px} .cards{grid-template-columns:1fr} }
+@media (prefers-reduced-motion: no-preference){ .msg{animation:rise .25s ease-out both} @keyframes rise{from{transform:translateY(4px);opacity:.6}to{transform:none;opacity:1}} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/#work">&larr; Syed Sarfaraz Ahmed · All work</a>
+  <header class="top">
+    <div>
+      <div class="brand"><h1>Worth It</h1><span class="arname" lang="ar">يستاهل؟</span></div>
+      <p class="sub">An English and Arabic shopping guide for electronics. Tell it who the product is for and your budget, and it explains the best fit, a cheaper option and the trade-off. <a href="/work/worth-it">Read the case study</a></p>
+    </div>
+    <div class="mode" id="mode" aria-live="polite" hidden>
+      <span class="dot"></span><span id="modeLabel">Rule-based</span>
+      <span class="seg" role="group" aria-label="Answer engine">
+        <button type="button" id="mAI" aria-pressed="false" disabled>AI</button>
+        <button type="button" id="mRule" aria-pressed="true">Rules</button>
+      </span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tabA" aria-selected="true" aria-controls="assistant">Assistant</button>
+    <button role="tab" id="tabN" aria-selected="false" aria-controls="notes">Product notes</button>
+  </nav>
+
+  <section id="assistant" role="tabpanel" aria-labelledby="tabA" style="display:flex;flex-direction:column;flex:1">
+    <div id="thread" aria-live="polite"></div>
+    <div id="compareSheet" hidden></div>
+    <div class="dock">
+      <div class="tray" id="tray" hidden>
+        <span id="trayText"></span>
+        <span class="btns"><button class="btn ghost" type="button" id="trayClear">Clear</button><button class="btn" type="button" id="trayGo">Compare</button></span>
+      </div>
+      <form class="composer" id="composer" autocomplete="off">
+        <input id="q" name="q" dir="auto" placeholder="e.g. A TV for a sunny living room, about AED 3,500 · أو اكتب بالعربي" aria-label="Your question">
+        <button class="btn" id="send" type="submit">Ask</button>
+      </form>
+      <div class="hint" id="hint">Prices sampled from public listings on 7 Oct 2026, 44 products. Concept only.</div>
+    </div>
+  </section>
+
+  <section id="notes" role="tabpanel" aria-labelledby="tabN" hidden>
+    <div>
+      <div class="eyebrow">Concept brief</div>
+      <h2>Helping shoppers choose with confidence, in their language</h2>
+      <p class="lede">Electronics are high-consideration purchases. Many shoppers know what they need the product for, but not which specification gives them that. This prototype tests one idea: a short conversation that turns a need into two or three well-explained choices.</p>
+    </div>
+
+    <div>
+      <div class="eyebrow">The problem</div>
+      <h2>Spec strings are written for experts</h2>
+      <p>A typical listing title looks like this:</p>
+      <div class="specstring">Lenovo ThinkPad E14 Gen 7 (Intel) (2026) Copilot+ PC - 2nd Series / Intel Core Ultra 5-228V / 14inch WUXGA / 512GB SSD / 32GB RAM / Shared Intel Arc 130V / Windows 11 Pro / English &amp; Arabic Keyboard</div>
+      <p style="margin-top:10px">Category pages already carry good buying guides and a laptop finder. The gap I see is a guide that works across categories, speaks Arabic as well as English, asks a clarifying question when it needs one, and is honest about the trade-off of each option.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="box"><h3>Who it is for</h3><ul><li>Parents buying for children at school or university</li><li>Gift buyers</li><li>Arabic-first shoppers</li><li>Anyone comparing two similar models</li></ul></div>
+      <div class="box"><h3>How it behaves</h3><ul><li>Answers only from the product feed: never invents a model or a price</li><li>Always shows a cheaper option next to the best fit</li><li>Names one trade-off per product, such as an international version or an English-only keyboard</li><li>Replies in the shopper's language</li></ul></div>
+    </div>
+
+    <div>
+      <div class="eyebrow">How I would measure it</div>
+      <h2>Success metrics</h2>
+      <div class="tablewrap">
+        <table class="metrics">
+          <thead><tr><th>Type</th><th>Metric</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr><td>Primary</td><td>Add-to-cart rate for sessions that use the guide, against a control group</td><td>Shows whether guidance turns browsing into buying</td></tr>
+            <tr><td>Secondary</td><td>Time from first question to add-to-cart</td><td>Less time spent comparing spec sheets</td></tr>
+            <tr><td>Secondary</td><td>Returns marked "not as expected"</td><td>Better choices should mean fewer returns</td></tr>
+            <tr><td>Secondary</td><td>Share of conversations in Arabic</td><td>Tests the value of Arabic support</td></tr>
+            <tr><td>Guardrail</td><td>Price and stock accuracy: 100% matched to the live feed</td><td>Trust is lost with one wrong price</td></tr>
+            <tr><td>Guardrail</td><td>Average order value does not drop</td><td>The cheaper option should not cannibalise revenue</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow">Risks</div>
+      <h2>What could go wrong, and the mitigation</h2>
+      <div class="grid2">
+        <div class="box"><h3>Wrong price or stock</h3><p>Read prices and stock from the live feed at answer time, and show when each price was last checked.</p></div>
+        <div class="box"><h3>Weak Arabic answers</h3><p>Build a test set of 200 real Arabic and Gulf-dialect questions, reviewed by native speakers before launch.</p></div>
+        <div class="box"><h3>Cost per conversation</h3><p>Use rules or a small model for simple questions; call a larger model only for comparisons and follow-ups.</p></div>
+        <div class="box"><h3>Shopper privacy</h3><p>Do not store personal details from the chat; keep only anonymous intent and outcome data for learning.</p></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow">Rollout</div>
+      <h2>A careful path to scale</h2>
+      <ol class="phases">
+        <li><b>Phase 1</b>Laptops only, on web, for 10% of traffic as an A/B test. High consideration and high basket value.</li>
+        <li><b>Phase 2</b>Add TVs and phones, Arabic launch, and the app.</li>
+        <li><b>Phase 3</b>Tablet mode for store staff, and hand-off to the store with "reserve and try in store".</li>
+      </ol>
+    </div>
+
+    <div>
+      <div class="eyebrow">Questions I would ask the team first</div>
+      <ol class="questions">
+        <li>Where do shoppers drop off most today: search, the category page or the product page?</li>
+        <li>What share of sessions use Arabic, and how does conversion compare?</li>
+        <li>What are the most common return reasons for laptops and TVs?</li>
+        <li>How are online leads shared with store teams today?</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="disc">Independent concept prototype by Syed Sarfaraz Ahmed. Not affiliated with or endorsed by any retailer or brand. Product names and prices were sampled from public UAE listings on 7 October 2026 and may have changed. Answers come from rules that run in your browser; nothing you type is sent anywhere.</footer>
+</div>
+
+<script>
+/* ===== Catalogue: sampled from public listings, 7 Oct 2026 ===== */
+const CATALOGUE = [
+  // ---- Laptops ----
+  {id:"L01",cat:"laptop",brand:"ASUS",name:"Vivobook Go 15 (2026)",price:1450,was:1699,s:{cpu:"Intel N150",ram:8,storage:128,screen:'15.6" FHD',gpu:"Integrated",kb:"EN/AR",ver:"Middle East"},t:["budget","basic"]},
+  {id:"L02",cat:"laptop",brand:"HP",name:"15 (2026) Ryzen 5",price:2199,was:2999,s:{cpu:"AMD Ryzen 5 7530U",ram:8,storage:512,screen:'15.6" FHD',gpu:"Integrated",kb:"EN/AR",ver:"Middle East"},t:["budget","basic","office"]},
+  {id:"L03",cat:"laptop",brand:"Lenovo",name:"IdeaPad Slim 3 15IRH10 (2026)",price:2625,was:2999,s:{cpu:"Intel Core i5-13420H",ram:16,storage:512,screen:'15.3" WUXGA',gpu:"Integrated",kb:"EN/AR",ver:"Middle East"},t:["student","office"]},
+  {id:"L04",cat:"laptop",brand:"Acer",name:"Aspire Lite (2026) Ryzen 5",price:2799,was:2999,s:{cpu:"AMD Ryzen 5 7430U",ram:16,storage:512,screen:'15.6" FHD',gpu:"Integrated",kb:"EN/AR",ver:"Middle East"},t:["student","office"]},
+  {id:"L05",cat:"laptop",brand:"Dell",name:"15 (2025) Core i7",price:2950,was:3599,s:{cpu:"Intel Core i7-1355U",ram:16,storage:512,screen:'15.6" FHD',gpu:"Integrated",kb:"EN only",ver:"International"},t:["student","office"]},
+  {id:"L06",cat:"laptop",brand:"Lenovo",name:"IdeaPad 5 2-in-1 (2026)",price:3199,was:3599,s:{cpu:"AMD Ryzen 5 230",ram:16,storage:512,screen:'14" WUXGA touch, folds into a tablet',gpu:"Radeon 760M",kb:"EN/AR",ver:"Middle East"},t:["student","notes","light"]},
+  {id:"L07",cat:"laptop",brand:"ASUS",name:"Vivobook 14 Snapdragon X (2026)",price:3299,was:null,s:{cpu:"Snapdragon X",ram:16,storage:512,screen:'14" WUXGA',gpu:"Adreno",kb:"EN/AR",ver:"Middle East"},t:["student","battery","light"]},
+  {id:"L08",cat:"laptop",brand:"ASUS",name:"Vivobook S14 Snapdragon X (2026)",price:3999,was:null,s:{cpu:"Snapdragon X",ram:16,storage:512,screen:'14" WUXGA',gpu:"Adreno",kb:"EN/AR",ver:"Middle East"},t:["battery","light","office"]},
+  {id:"L09",cat:"laptop",brand:"Lenovo",name:"LOQ Essential 15 (2025)",price:4449,was:4939,s:{cpu:"AMD Ryzen 7 170",ram:16,storage:512,screen:'15.6" FHD',gpu:"RTX 5050 8GB",kb:"EN only",ver:"International"},t:["gaming"]},
+  {id:"L10",cat:"laptop",brand:"Apple",name:"MacBook Air M5 13-inch (2026)",price:5249,was:5499,s:{cpu:"Apple M5, 10-core",ram:16,storage:512,screen:'13" Liquid Retina',gpu:"8-core",kb:"EN/AR",ver:"Middle East",os:"macOS"},t:["battery","light","creative","student","mac"]},
+  {id:"L11",cat:"laptop",brand:"Lenovo",name:"ThinkPad E14 Gen 7 (2026)",price:5399,was:null,s:{cpu:"Intel Core Ultra 5 228V",ram:32,storage:512,screen:'14" WUXGA',gpu:"Arc 130V",kb:"EN/AR",ver:"Middle East",os:"Windows 11 Pro"},t:["business","office"]},
+  {id:"L12",cat:"laptop",brand:"ASUS",name:"TUF Gaming A16 (2026)",price:6500,was:null,s:{cpu:"AMD Ryzen 7 260",ram:16,storage:512,screen:'16" FHD+ 144Hz',gpu:"RTX 5050 8GB",kb:"EN/AR",ver:"Middle East"},t:["gaming"]},
+  {id:"L13",cat:"laptop",brand:"HP",name:"HyperX OMEN 15 (2026)",price:6699,was:7499,s:{cpu:"AMD Ryzen 7 8745HX",ram:16,storage:512,screen:'15.3" 2K',gpu:"RTX 5050 8GB",kb:"EN/AR",ver:"Middle East"},t:["gaming"]},
+  {id:"L14",cat:"laptop",brand:"Lenovo",name:"ThinkPad T14 Gen 6 (2026)",price:8600,was:null,s:{cpu:"Intel Core Ultra 7 258V",ram:32,storage:512,screen:'14" WUXGA',gpu:"Arc 140V",kb:"EN/AR",ver:"Middle East",os:"Windows 11 Pro"},t:["business","office","battery"]},
+  {id:"L15",cat:"laptop",brand:"HP",name:"OmniBook X (2026)",price:8999,was:9399,s:{cpu:"Intel Core Ultra 7 356H",ram:32,storage:1024,screen:'14" 2K',gpu:"Integrated",kb:"EN/AR",ver:"Middle East"},t:["business","light","creative"]},
+  {id:"L16",cat:"laptop",brand:"ASUS",name:"ROG Strix G16 (2026) RTX 5060",price:9599,was:null,s:{cpu:"AMD Ryzen 9 8940HX",ram:16,storage:1024,screen:'16" 2.5K',gpu:"RTX 5060 8GB",kb:"EN/AR",ver:"Middle East"},t:["gaming"]},
+  {id:"L17",cat:"laptop",brand:"ASUS",name:"ROG Strix G16 (2026) RTX 5070",price:11999,was:13499,s:{cpu:"Intel Core i9-14900HX",ram:32,storage:1024,screen:'16" WQXGA',gpu:"RTX 5070 8GB",kb:"EN/AR",ver:"Middle East"},t:["gaming","creative"]},
+  {id:"L18",cat:"laptop",brand:"Apple",name:"MacBook Pro 14 M5 Pro (2026)",price:12149,was:12749,s:{cpu:"Apple M5 Pro, 15-core",ram:24,storage:2048,screen:'14" Liquid Retina XDR',gpu:"16-core",kb:"EN only",ver:"Middle East",os:"macOS"},t:["creative","mac","battery"]},
+  // ---- TVs ----
+  {id:"T01",cat:"tv",brand:"Tornado",name:'32" Full HD Google TV (2025)',price:449,was:599,s:{size:32,res:"Full HD",panel:"LED",os:"Google TV"},t:["bedroom","budget"]},
+  {id:"T02",cat:"tv",brand:"Hisense",name:'50" 4K Smart TV 50A61N (2024)',price:838,was:999,s:{size:50,res:"4K",panel:"LED",os:"VIDAA"},t:["budget"]},
+  {id:"T03",cat:"tv",brand:"Hisense",name:'55" E6S 4K (2026)',price:1419,was:null,s:{size:55,res:"4K",panel:"LED",os:"VIDAA"},t:["budget"]},
+  {id:"T04",cat:"tv",brand:"Hisense",name:'65" E6Q 4K (2026)',price:1424,was:1449,s:{size:65,res:"4K",panel:"LED",os:"VIDAA"},t:["budget","big"]},
+  {id:"T05",cat:"tv",brand:"TCL",name:'55" P71L QLED Google TV (2026)',price:1599,was:null,s:{size:55,res:"4K",panel:"QLED",os:"Google TV"},t:["value"]},
+  {id:"T06",cat:"tv",brand:"LG",name:'55" QNED72B Mini LED (2026)',price:1685,was:2299,s:{size:55,res:"4K",panel:"Mini LED",os:"webOS"},t:["bright","value"]},
+  {id:"T07",cat:"tv",brand:"Philips",name:'55" 8500 Series QLED (2025)',price:1906,was:1999,s:{size:55,res:"4K",panel:"QLED",os:"Google TV"},t:["value"]},
+  {id:"T08",cat:"tv",brand:"TCL",name:'75" T6D QLED Google TV (2026)',price:2650,was:2699,s:{size:75,res:"4K",panel:"QLED",os:"Google TV"},t:["big","value"]},
+  {id:"T09",cat:"tv",brand:"Samsung",name:'65" M80H Mini LED (2026)',price:3499,was:3999,s:{size:65,res:"4K",panel:"Mini LED",os:"Tizen"},t:["bright","gaming","sports"]},
+  {id:"T10",cat:"tv",brand:"LG",name:'65" QNED84B Mini LED (2026)',price:3689,was:null,s:{size:65,res:"4K",panel:"Mini LED",os:"webOS"},t:["bright","sports"]},
+  {id:"T11",cat:"tv",brand:"LG",name:'75" NANO NU85 (2026)',price:3691,was:null,s:{size:75,res:"4K",panel:"LED (NanoCell)",os:"webOS"},t:["big"]},
+  {id:"T12",cat:"tv",brand:"Samsung",name:'65" S90F OLED (2025)',price:4588,was:6171,s:{size:65,res:"4K",panel:"OLED",os:"Tizen"},t:["movies","gaming","dark"]},
+  {id:"T13",cat:"tv",brand:"TCL",name:'85" P7L QLED (2026)',price:4799,was:4999,s:{size:85,res:"4K",panel:"QLED",os:"Google TV"},t:["big","sports"]},
+  {id:"T14",cat:"tv",brand:"LG",name:'77" OLED B6 (2026)',price:9249,was:10117,s:{size:77,res:"4K",panel:"OLED",os:"webOS"},t:["movies","gaming","dark","big"]},
+  {id:"T15",cat:"tv",brand:"Samsung",name:'100" M90H Mini LED (2026)',price:9299,was:9978,s:{size:100,res:"4K",panel:"Mini LED",os:"Tizen"},t:["big","bright","sports"]},
+  // ---- Phones ----
+  {id:"P01",cat:"phone",brand:"Nothing",name:"Phone (3a) Lite 5G",price:799,was:null,s:{storage:128,ram:8,net:"5G",os:"Android"},t:["budget"]},
+  {id:"P02",cat:"phone",brand:"Huawei",name:"Nova 15 Max",price:1119,was:1499,s:{storage:256,ram:8,net:"4G",os:"HarmonyOS / no Google apps"},t:["budget"]},
+  {id:"P03",cat:"phone",brand:"Oppo",name:"A7 Pro 5G",price:1649,was:1896,s:{storage:256,ram:6,net:"5G",os:"Android"},t:["budget","battery"]},
+  {id:"P04",cat:"phone",brand:"Nothing",name:"Phone 4a Pro 5G + CMF Buds 2 + Watch 3 Pro",price:2399,was:null,s:{storage:256,ram:12,net:"5G",os:"Android",extra:"Earbuds and watch included"},t:["value","gift"]},
+  {id:"P05",cat:"phone",brand:"Samsung",name:"Galaxy S26 Ultra",price:3397,was:5299,s:{storage:256,ram:12,net:"5G",os:"Android",extra:"S Pen, flagship zoom camera"},t:["camera","flagship","business"]},
+  {id:"P06",cat:"phone",brand:"Samsung",name:"Galaxy Z Flip8",price:3662,was:4699,s:{storage:256,ram:12,net:"5G",os:"Android",extra:"Folds to pocket size"},t:["foldable","style"]},
+  {id:"P07",cat:"phone",brand:"Apple",name:"iPhone 17 Pro",price:4199,was:4699,s:{storage:256,ram:null,net:"5G",os:"iOS",extra:"Pro camera system"},t:["camera","flagship","iphone"]},
+  {id:"P08",cat:"phone",brand:"Apple",name:"iPhone 17 Pro Max",price:4559,was:5099,s:{storage:256,ram:null,net:"5G",os:"iOS",extra:"Largest iPhone screen and battery"},t:["camera","flagship","iphone","battery"]},
+  {id:"P09",cat:"phone",brand:"Apple",name:"iPhone 18 Pro",price:5099,was:null,s:{storage:256,ram:null,net:"5G",os:"iOS",extra:"New launch"},t:["camera","flagship","iphone","new"]},
+  {id:"P10",cat:"phone",brand:"Samsung",name:"Galaxy Z Fold8",price:5398,was:7199,s:{storage:256,ram:12,net:"5G",os:"Android",extra:"Opens into a small tablet"},t:["foldable","business","flagship"]},
+  {id:"P11",cat:"phone",brand:"Apple",name:"iPhone 18 Pro Max",price:5499,was:null,s:{storage:256,ram:null,net:"5G",os:"iOS",extra:"New launch, largest battery"},t:["camera","flagship","iphone","battery","new"]},
+];
+
+/* ===== Helpers ===== */
+const fmt = n => "AED " + Math.round(n).toLocaleString("en-US");
+const fmtAr = n => Math.round(n).toLocaleString("en-US") + " درهم";
+const isArabic = s => /[؀-ۿ]/.test(s);
+const gb = n => n >= 1024 ? (n/1024) + "TB" : n + "GB";
+const byId = id => CATALOGUE.find(p => p.id === id);
+
+/* ===== Understanding the request ===== */
+function toLatinDigits(s){ return s.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)); }
+
+function parse(text, prev){
+  const raw = toLatinDigits(text);
+  const q = raw.toLowerCase();
+  const st = Object.assign({cat:null,budget:null,uses:[],size:null,brand:null}, prev ? JSON.parse(JSON.stringify(prev)) : {});
+  const has = re => re.test(q);
+
+  let cat = null;
+  if (has(/laptop|notebook|macbook|thinkpad|lap top|لابتوب|لاب توب|حاسوب|كمبيوتر محمول|كمبيوتر|جهاز للجامعة/)) cat = "laptop";
+  else if (has(/\btv\b|television|oled|qled|telly|تلفزيون|تلفاز|شاشة/)) cat = "tv";
+  else if (has(/phone|mobile|iphone|galaxy|smartphone|موبايل|جوال|هاتف|تلفون|ايفون|آيفون|جالكسي/)) cat = "phone";
+  if (cat && cat !== st.cat) { st.cat = cat; st.uses = []; st.size = null; st.brand = null; st.budget = null; }
+
+  // budget
+  const nums = [...q.matchAll(/(\d[\d,]*(?:\.\d+)?)\s*(k\b|الف|ألف|آلاف|الاف)?/g)]
+    .map(x => { let v = parseFloat(x[1].replace(/,/g,"")); if (x[2]) v *= 1000; return v; });
+  const money = nums.filter(v => v >= 300);
+  if (money.length) st.budget = Math.max(...money);
+  if (has(/cheaper|less expensive|lower price|أرخص|ارخص|اقل سعر|أقل سعر/)) {
+    st.budget = Math.round((st.lastBestPrice || st.budget || 3000) * 0.85);
+  }
+  if (has(/no budget|money is no|best possible|top of the line|أفضل شي|افضل شي|بدون ميزانية/)) st.budget = 99999;
+
+  // size (TV)
+  const sz = q.match(/(\d{2,3})\s*(?:"|inch|in\b|”|بوصة|انش|إنش)/);
+  if (sz) st.size = +sz[1];
+
+  const addUse = u => { if (!st.uses.includes(u)) st.uses.push(u); };
+  if (has(/gam|ps5|xbox|fortnite|valorant|العاب|ألعاب|قيمنق|جيمنج|بلايستيشن/)) addUse("gaming");
+  if (has(/student|university|college|school|study|son|daughter|kid|طالب|جامعة|الجامعة|دراسة|مدرسة|ابني|بنتي|ولدي|ابنتي|للدراسة/)) addUse("student");
+  if (has(/work|business|office|excel|corporate|عمل|شغل|مكتب|الدوام|بزنس/)) addUse("business");
+  if (has(/battery|all day|travel|light|portable|carry|بطارية|خفيف|سفر|تنقل/)) addUse("battery");
+  if (has(/design|video edit|photo edit|creative|editing|مونتاج|تصميم|تعديل الصور/)) addUse("creative");
+  if (has(/camera|photos|pictures|selfie|كاميرا|تصوير|صور/)) addUse("camera");
+  if (has(/bright|sunny|sunlight|window|daylight|مضيئة|مشمسة|شمس|نور|اضاءة|إضاءة/)) addUse("bright");
+  if (has(/movie|film|netflix|cinema|dark room|أفلام|افلام|سينما|نتفلكس/)) addUse("movies");
+  if (has(/sport|football|match|كرة|مباريات|مباراة|رياضة/)) addUse("sports");
+  if (has(/bedroom|kitchen|small room|غرفة النوم|المطبخ|غرفة صغيرة/)) addUse("bedroom");
+  if (has(/fold|flip|قابل للطي|فولد|فليب/)) addUse("foldable");
+  if (has(/gift|present|هدية/)) addUse("gift");
+  if (has(/basic|simple|browsing|youtube|email|grand|parent|mother|father|mum|dad|بسيط|تصفح|يوتيوب|لأمي|لابوي|لوالدي|لوالدتي/) || /(^|\s)(امي|أمي|ابوي|أبوي)(\s|$)/.test(q)) addUse("basic");
+
+  if (has(/iphone|apple|ايفون|آيفون|ابل|أبل|mac/)) st.brand = "Apple";
+  else if (has(/samsung|galaxy|سامسونج|جالكسي/)) st.brand = "Samsung";
+  else if (has(/\blg\b|ال جي/)) st.brand = "LG";
+  else if (has(/lenovo|لينوفو/)) st.brand = "Lenovo";
+  else if (has(/\bhp\b|اتش بي/)) st.brand = "HP";
+  else if (has(/asus|اسوس|أسus/)) st.brand = "ASUS";
+  if (has(/any brand|doesn.?t matter|اي ماركة|أي ماركة|مو مهم/)) st.brand = null;
+
+  return st;
+}
+
+/* ===== Scoring ===== */
+function score(p, st){
+  let sc = 0; const u = st.uses, s = p.s;
+  if (st.brand) sc += p.brand === st.brand ? 6 : -4;
+  if (p.cat === "laptop"){
+    const dgpu = /RTX/.test(s.gpu);
+    if (u.includes("gaming")) sc += dgpu ? 8 + (/507|506/.test(s.gpu)?1:0) : -10;
+    else if (dgpu) sc -= 4;
+    if (u.includes("student")) sc += (s.ram>=16?3:-2) + (s.storage>=512?2:-2) + (p.t.includes("student")?2:0) + (s.kb==="EN/AR"?1:0);
+    if (u.includes("business")) sc += (p.t.includes("business")?5:0) + (s.ram>=32?2:0) + (/Pro/.test(s.os||"")?1:0);
+    if (u.includes("battery")) sc += p.t.includes("battery")?5:(p.t.includes("light")?2:0);
+    if (u.includes("creative")) sc += (p.t.includes("creative")?5:0) + (s.ram>=24?1:0);
+    if (u.includes("basic")) sc += (s.storage>=256?2:-1) + (p.price<2500?2:0);
+    if (!u.length) sc += (s.ram>=16?2:0) + (s.storage>=512?1:0) + (s.kb==="EN/AR"?1:0);
+    if (s.ram < 16 && !u.includes("basic")) sc -= 1;
+  }
+  if (p.cat === "tv"){
+    if (st.size) sc += Math.max(-6, 5 - Math.abs(s.size - st.size)/3);
+    if (u.includes("bright")) sc += /Mini LED/.test(s.panel)?6:/QLED/.test(s.panel)?3:/OLED/.test(s.panel)?-1:0;
+    if (u.includes("movies")) sc += /OLED/.test(s.panel)&&!/QLED/.test(s.panel)?6:/Mini LED/.test(s.panel)?3:0;
+    if (u.includes("gaming")) sc += p.t.includes("gaming")?5:/QLED|Mini/.test(s.panel)?1:0;
+    if (u.includes("sports")) sc += p.t.includes("sports")?4:(s.size>=65?1:0);
+    if (u.includes("bedroom")) sc += s.size<=50?5:-3;
+    if (!u.length) sc += /QLED|Mini LED|OLED/.test(s.panel)?2:0;
+  }
+  if (p.cat === "phone"){
+    if (u.includes("camera")) sc += p.t.includes("camera")?6:-2;
+    if (u.includes("foldable")) sc += p.t.includes("foldable")?8:-6;
+    if (u.includes("business")) sc += p.t.includes("business")?4:0;
+    if (u.includes("battery")) sc += p.t.includes("battery")?4:0;
+    if (u.includes("gift")) sc += p.t.includes("gift")?3:0;
+    if (u.includes("basic")) sc += p.price<1800?3:0;
+    if (u.includes("student")) sc += p.price<2500?2:0;
+    if (/no Google/.test(s.os)) sc -= 2;
+    if (!u.length) sc += p.t.includes("value")?2:0;
+  }
+  if (p.was) sc += Math.min(2, (p.was - p.price)/p.was * 6);
+  // within budget, prefer using a good share of it (more capability), not the cheapest junk
+  if (st.budget && st.budget < 99999){
+    const r = p.price / st.budget;
+    if (r <= 1) sc += r >= 0.6 ? 2 : r >= 0.4 ? 1 : 0;
+  } else if (st.budget === 99999) sc += p.price/3000;
+  return sc;
+}
+
+function recommend(st){
+  const pool = CATALOGUE.filter(p => p.cat === st.cat);
+  const scored = pool.map(p => ({p, sc: score(p, st)})).sort((a,b) => b.sc - a.sc || a.p.price - b.p.price);
+  const B = st.budget && st.budget < 99999 ? st.budget : null;
+  const within = B ? scored.filter(x => x.p.price <= B) : scored;
+  const picks = [];
+  let best = within[0];
+  let overBudget = false;
+  if (!best){ best = scored.slice().sort((a,b)=>a.p.price-b.p.price)[0]; overBudget = true; }
+  picks.push({role:"best", ...best});
+  // spend less: good score, at least 15% cheaper
+  const cheaper = within.filter(x => x.p.id!==best.p.id && x.p.price <= best.p.price*0.85 && x.sc >= best.sc - 6 && x.sc > 0).sort((a,b)=>b.sc-a.sc)[0];
+  if (cheaper) picks.push({role:"cheaper", ...cheaper});
+  // worth stretching: above budget (or above best) by up to 30%, clearly better fit or class
+  const ceil = (B || best.p.price) * 1.3;
+  const stretch = scored.filter(x => x.p.price > (B || best.p.price) && x.p.price <= ceil && x.sc >= best.sc - 3 && x.sc > 0 && !picks.some(y=>y.p.id===x.p.id)).sort((a,b)=>b.sc-a.sc)[0];
+  if (stretch) picks.push({role:"stretch", ...stretch});
+  if (picks.length < 3){
+    const alt = within.find(x => !picks.some(y=>y.p.id===x.p.id) && x.sc >= best.sc - 6 && x.sc > 0);
+    if (alt) picks.push({role:"alt", ...alt});
+  }
+  return {picks: picks.slice(0,3), overBudget};
+}
+
+/* ===== Plain-language reasons ===== */
+function reasons(p, st){
+  const s = p.s, u = st.uses, why = [], trade = [];
+  const W = (en, ar) => why.push({en, ar});
+  const T = (en, ar) => trade.push({en, ar});
+  if (p.cat === "laptop"){
+    if (/RTX/.test(s.gpu)) W(`${s.gpu.replace(" 8GB","")} graphics card runs popular games at 1080p`, `كرت شاشة ${s.gpu.replace(" 8GB","")} يشغّل الألعاب الشائعة بدقة 1080p`);
+    if (s.ram >= 16) W(`${s.ram}GB RAM keeps many tabs and apps smooth`, `ذاكرة ${s.ram} جيجابايت تكفي لفتح تطبيقات وصفحات كثيرة بسلاسة`);
+    if (p.t.includes("battery")) W(p.id === "L10" ? "Very long battery life (Apple quotes up to 18 hours)" : "Efficient chip, built for all-day battery", p.id === "L10" ? "بطارية طويلة جداً (حتى 18 ساعة حسب Apple)" : "معالج موفّر للطاقة يدوم يوماً كاملاً");
+    if (/tablet/.test(s.screen)) W("Touch screen folds into a tablet for taking notes", "شاشة لمس تنطوي لتصبح تابلت لتدوين الملاحظات");
+    if (s.storage >= 512) W(`${gb(s.storage)} SSD: room for files and apps`, `تخزين ${gb(s.storage)} SSD يكفي للملفات والبرامج`);
+    if (p.t.includes("business")) W("Business build with Windows Pro security features", "تصميم للأعمال مع ميزات الأمان في Windows Pro");
+    if (s.kb === "EN/AR") W("Arabic and English keyboard", "لوحة مفاتيح عربي وإنجليزي");
+    if (s.ram < 16) T(`${s.ram}GB RAM can feel slow with many tabs open`, `ذاكرة ${s.ram} جيجابايت قد تكون بطيئة مع صفحات كثيرة`);
+    if (s.storage < 256) T(`${s.storage}GB storage fills up quickly`, `مساحة ${s.storage} جيجابايت تمتلئ بسرعة`);
+    if (s.ver === "International") T("International version with English-only keyboard: check warranty terms", "نسخة دولية بلوحة إنجليزية فقط: تأكد من شروط الضمان");
+    else if (s.kb === "EN only") T("English-only keyboard", "لوحة مفاتيح إنجليزية فقط");
+    if (/RTX/.test(s.gpu)) T("Gaming laptops are heavier to carry and shorter on battery", "لابتوبات الألعاب أثقل في الحمل وبطاريتها أقصر");
+    if (/Snapdragon/.test(s.cpu)) T("Arm chip: a few older Windows apps may not run, check any special software", "معالج Arm: بعض برامج Windows القديمة قد لا تعمل، تأكد من البرامج الخاصة");
+    if (s.os === "macOS" && u.includes("gaming")) T("Limited game library on Mac", "ألعاب محدودة على Mac");
+  }
+  if (p.cat === "tv"){
+    W(`${s.size}-inch ${s.res}`, `${s.size} بوصة بدقة ${s.res === "4K" ? "4K" : "Full HD"}`);
+    if (/Mini LED/.test(s.panel)) W("Mini LED gets very bright: good for sunny UAE living rooms", "تقنية Mini LED سطوعها عالٍ: مناسبة للصالات المشمسة");
+    else if (/OLED/.test(s.panel) && !/QLED/.test(s.panel)) W("OLED gives perfect blacks for movies and gaming", "شاشة OLED تعطي أسود مثالي للأفلام والألعاب");
+    else if (/QLED/.test(s.panel)) W("QLED gives richer colour than a basic LED panel", "تقنية QLED ألوانها أغنى من شاشات LED العادية");
+    if (s.os === "Google TV") W("Google TV: all the main streaming apps built in", "نظام Google TV: كل تطبيقات البث موجودة");
+    if (/OLED/.test(s.panel) && !/QLED/.test(s.panel)) T("Less bright than Mini LED in a very sunny room", "أقل سطوعاً من Mini LED في غرفة مشمسة جداً");
+    if (s.panel === "LED") T("Basic LED panel: weaker contrast at night", "شاشة LED عادية: تباين أضعف في الإضاءة الخافتة");
+    if (s.size >= 75) T("Measure your wall: you will want to sit at least 3 metres away", "قِس الجدار: الأفضل الجلوس على بعد 3 أمتار تقريباً");
+  }
+  if (p.cat === "phone"){
+    if (s.extra) W(s.extra, ({"S Pen, flagship zoom camera":"قلم S Pen وكاميرا تقريب احترافية","Folds to pocket size":"ينطوي ليصبح بحجم الجيب","Pro camera system":"نظام كاميرات احترافي","Largest iPhone screen and battery":"أكبر شاشة وبطارية في آيفون","New launch":"إصدار جديد","Opens into a small tablet":"ينفتح ليصبح تابلت صغير","New launch, largest battery":"إصدار جديد بأكبر بطارية","Earbuds and watch included":"سماعات وساعة ضمن العرض"})[s.extra] || s.extra);
+    W(`${s.storage}GB storage${s.ram ? ", " + s.ram + "GB RAM" : ""}, ${s.net}`, `تخزين ${s.storage} جيجابايت${s.ram ? " وذاكرة " + s.ram + " جيجابايت" : ""}، ${s.net}`);
+    if (/no Google/.test(s.os)) T("No Google apps (Maps, Gmail, Play Store): check the apps you rely on", "لا يدعم تطبيقات Google (الخرائط، Gmail، المتجر): تأكد من تطبيقاتك");
+    if (s.net === "4G") T("4G only, no 5G", "يدعم 4G فقط بدون 5G");
+    if (s.storage <= 128) T("128GB fills quickly with photos and videos", "مساحة 128 جيجابايت تمتلئ بسرعة بالصور والفيديو");
+    if (p.t.includes("foldable")) T("Foldable screens need a little more care", "الشاشات القابلة للطي تحتاج عناية أكثر");
+  }
+  if (p.was) W(`Save ${fmt(p.was - p.price)} on the listed price`, `توفير ${fmtAr(p.was - p.price)} من السعر الأصلي`);
+  return {why: why.slice(0,3), trade: trade.slice(0,1)};
+}
+
+const ROLE = {
+  best:   {en:"Best fit", ar:"الأنسب لك"},
+  cheaper:{en:"Spend less", ar:"خيار أوفر"},
+  stretch:{en:"Worth stretching", ar:"يستاهل الزيادة"},
+  alt:    {en:"Also good", ar:"خيار آخر"},
+};
+
+const CAT_NAME = {laptop:{en:"laptop",ar:"لابتوب",def:"اللابتوب"}, tv:{en:"TV",ar:"تلفزيون",def:"التلفزيونات"}, phone:{en:"phone",ar:"جوال",def:"الجوالات"}};
+
+/* ===== Local reply (works without AI) ===== */
+function localReply(text, prev){
+  const ar = isArabic(text);
+  const L = (en, a) => ar ? a : en;
+  const st = parse(text, prev);
+  if (!st.cat){
+    return {state: st, ar, reply: L("Happy to help. What are you shopping for today?", "أهلاً بك، يسعدني مساعدتك. ماذا تبحث عنه اليوم؟"),
+      picks: [], chips: ar ? ["لابتوب للجامعة","تلفزيون للصالة","جوال بكاميرا ممتازة"] : ["A laptop for university","A TV for the living room","A phone with a great camera"]};
+  }
+  const {picks, overBudget} = recommend(st);
+  st.lastBestPrice = picks[0] && picks[0].p.price;
+  const cn = CAT_NAME[st.cat][ar?"ar":"en"];
+  const B = st.budget && st.budget < 99999 ? st.budget : null;
+  let reply;
+  if (overBudget) reply = L(`I could not find a ${cn} under ${fmt(B)} in this sample. The closest is ${fmt(picks[0].p.price)}.`, `لم أجد ${cn} بأقل من ${fmtAr(B)} في هذه العينة. أقرب خيار بسعر ${fmtAr(picks[0].p.price)}.`);
+  else {
+    const useTxt = {gaming:["gaming","للألعاب"],student:["studies","للدراسة"],business:["work","للعمل"],battery:["long battery and carrying around","لبطارية طويلة وسهولة الحمل"],creative:["creative work","للتصميم والمونتاج"],camera:["photos","للتصوير"],bright:["a bright room","لغرفة مضيئة"],movies:["movies","للأفلام"],sports:["sports","للرياضة"],bedroom:["a smaller room","لغرفة صغيرة"],foldable:["a foldable","قابل للطي"],gift:["a gift","كهدية"],basic:["everyday basics","للاستخدام اليومي البسيط"]};
+    const uses = st.uses.map(u => useTxt[u] ? useTxt[u][ar?1:0] : u);
+    const enUses = uses.length ? " for " + uses.join(" and ") : "";
+    const arUses = uses.length ? " " + uses.join(" و") : "";
+    reply = L(
+      `Here are my picks for a ${cn}${enUses}${B ? ", up to " + fmt(B) : ""}. I put the best fit first, and a cheaper or stronger option next to it so you can see the trade-off.`,
+      `اخترت لك أفضل خيارات ${CAT_NAME[st.cat].def}${arUses}${B ? " بميزانية حتى " + fmtAr(B) : ""}. وضعت الأنسب أولاً، ومعه خيار أوفر أو أقوى حتى تقارن بوضوح.`);
+  }
+  let chips = [];
+  if (!B) chips.push(ar ? "ميزانيتي 3000 درهم" : "My budget is AED 3,000");
+  if (st.cat === "laptop") chips.push(...(ar ? ["للألعاب أيضاً","أرخص من ذلك","بطارية أطول"] : ["Also for gaming","Something cheaper","Longer battery"]));
+  if (st.cat === "tv") chips.push(...(ar ? ["الغرفة مشمسة","للأفلام في غرفة مظلمة","65 بوصة"] : ["The room is very sunny","For movies in a dark room",'65 inch']));
+  if (st.cat === "phone") chips.push(...(ar ? ["أهم شي الكاميرا","أفضّل آيفون","أرخص من ذلك"] : ["Camera matters most","I prefer iPhone","Something cheaper"]));
+  return {state: st, ar, reply, picks: picks.map(x => ({id: x.p.id, role: x.role, ...reasons(x.p, st)})), chips: chips.slice(0,3)};
+}
+
+/* ===== UI ===== */
+const $ = s => document.querySelector(s);
+const thread = $("#thread");
+let state = null;            // rules-engine context
+let turns = [];              // AI conversation turns
+let sample = null;
+let useAI = false;
+let busy = false;
+let ctl = null;
+const selected = new Set();
+
+function el(tag, attrs = {}, ...kids){
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)){
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+
+function addUser(text){
+  const m = el("div",{class:"msg user"}, el("div",{class:"bubble",dir:"auto",text}));
+  thread.append(m); return m;
+}
+
+function card(pick, ar){
+  const p = byId(pick.id); if (!p) return null;
+  const roleTxt = (ROLE[pick.role] || ROLE.alt)[ar ? "ar" : "en"];
+  const pressed = selected.has(p.id);
+  const why = (pick.why || []).map(w => typeof w === "string" ? w : (ar ? w.ar : w.en));
+  const trade = (pick.trade || []).map(w => typeof w === "string" ? w : (ar ? w.ar : w.en)).filter(Boolean);
+  const c = el("article",{class:"card" + (pick.role === "best" ? " best" : ""), dir: ar ? "rtl" : "ltr"},
+    el("div",{class:"role",text:roleTxt}),
+    el("div",{class:"pname", dir:"ltr"}, el("span",{class:"b",text:p.brand}), p.name),
+    el("div",{class:"price", dir:"ltr"},
+      el("span",{class:"now",text:fmt(p.price)}),
+      p.was ? el("span",{class:"was",text:fmt(p.was)}) : null,
+      p.was ? el("span",{class:"save",text:"−" + Math.round((p.was-p.price)/p.was*100) + "%"}) : null),
+    why.length ? el("ul",{class:"why"}, ...why.map(w => el("li",{text:w}))) : null,
+    trade.length ? el("div",{class:"trade",text:(ar ? "انتبه: " : "Keep in mind: ") + trade[0]}) : null,
+    el("button",{class:"cmp",type:"button","aria-pressed":String(pressed),"data-id":p.id,onclick:toggleCompare},
+      pressed ? (ar ? "✓ للمقارنة" : "✓ Comparing") : (ar ? "+ قارن" : "+ Compare"))
+  );
+  return c;
+}
+
+function addBot(res, opts = {}){
+  const ar = res.ar;
+  const m = el("div",{class:"msg bot"});
+  m.append(el("div",{class:"bubble",dir:"auto",text:res.reply}));
+  const cards = (res.picks || []).map(pk => card(pk, ar)).filter(Boolean);
+  if (cards.length) m.append(el("div",{class:"cards"}, ...cards));
+  if (opts.note) m.append(el("div",{class:"note",text:opts.note}));
+  if (res.chips && res.chips.length) m.append(el("div",{class:"chips"}, ...res.chips.map(c => el("button",{class:"chip",type:"button",dir:"auto",text:c,onclick:()=>ask(c)}))));
+  thread.append(m);
+  return m;
+}
+
+/* ----- Compare ----- */
+function toggleCompare(e){
+  const b = e.currentTarget, id = b.dataset.id;
+  if (selected.has(id)) selected.delete(id);
+  else { if (selected.size >= 3) { const first = selected.values().next().value; selected.delete(first); } selected.add(id); }
+  syncCompare();
+}
+function syncCompare(){
+  document.querySelectorAll(".cmp").forEach(b => {
+    const on = selected.has(b.dataset.id); const ar = b.closest("[dir=rtl]");
+    b.setAttribute("aria-pressed", String(on));
+    b.textContent = on ? (ar ? "✓ للمقارنة" : "✓ Comparing") : (ar ? "+ قارن" : "+ Compare");
+  });
+  const tray = $("#tray");
+  tray.hidden = selected.size === 0;
+  $("#trayText").textContent = selected.size === 1 ? "1 product selected. Pick one more to compare." : `${selected.size} products selected`;
+  $("#trayGo").disabled = selected.size < 2;
+  if (selected.size < 2) $("#compareSheet").hidden = true;
+}
+const ROWS = [
+  ["Price", p => fmt(p.price), true],
+  ["Was", p => p.was ? fmt(p.was) : "–", true],
+  ["Processor", p => p.s.cpu],
+  ["Memory", p => p.s.ram ? p.s.ram + "GB" : null, true],
+  ["Storage", p => p.s.storage ? gb(p.s.storage) : null, true],
+  ["Screen", p => p.s.screen || (p.s.size ? p.s.size + '"' : null)],
+  ["Panel", p => p.s.panel],
+  ["Resolution", p => p.s.res],
+  ["Graphics", p => p.s.gpu],
+  ["Network", p => p.s.net],
+  ["System", p => p.s.os],
+  ["Keyboard", p => p.s.kb],
+  ["Version", p => p.s.ver],
+  ["Extras", p => p.s.extra],
+];
+function showCompare(){
+  const items = [...selected].map(byId).filter(Boolean);
+  const rows = ROWS.filter(([,f]) => items.some(p => f(p) != null));
+  const sheet = $("#compareSheet");
+  sheet.className = "sheet"; sheet.replaceChildren(
+    el("div",{style:"display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"},
+      el("h2",{text:"Side by side"}),
+      el("button",{class:"btn ghost",type:"button",onclick:()=>{sheet.hidden=true}},"Close")),
+    el("div",{class:"tablewrap"}, el("table",{class:"cmpt"},
+      el("thead",{}, el("tr",{}, el("th",{text:""}), ...items.map(p => el("th",{text:p.brand + " " + p.name})))),
+      el("tbody",{}, ...rows.map(([label,f,num]) => el("tr",{}, el("th",{scope:"row",text:label}), ...items.map(p => el("td",{class:num?"num":null,text:f(p) ?? "–"})))))
+    ))
+  );
+  sheet.hidden = false;
+  sheet.scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("#trayGo").onclick = showCompare;
+$("#trayClear").onclick = () => { selected.clear(); syncCompare(); };
+
+/* ----- AI mode ----- */
+const CAT_LINES = CATALOGUE.map(p => {
+  const s = Object.entries(p.s).filter(([,v]) => v != null).map(([k,v]) => k + "=" + v).join("; ");
+  return `${p.id} | ${p.cat} | ${p.brand} ${p.name} | AED ${p.price}${p.was ? " (was " + p.was + ")" : ""} | ${s}`;
+}).join("\n");
+
+const RULES = `You are Worth It, a calm, helpful electronics shopping guide for shoppers in the UAE. You may ONLY recommend products from this catalogue (id | category | name | price | specs). Never invent products, prices or specs.
+
+CATALOGUE
+${CAT_LINES}
+
+How to answer:
+- Reply in the same language as the shopper's latest message (Arabic, Gulf dialect is fine, or English). Keep product names in English.
+- If you do not know the category, or the need is very unclear, ask ONE short clarifying question and return no picks.
+- Otherwise return 2-3 picks: role "best" (best fit within budget), then "cheaper" (a good option that costs less) and/or "stretch" (worth paying a bit more, max ~30% above budget). Use "alt" for another good option.
+- For each pick give up to 3 short "why" points in plain words tied to the shopper's need, and at most 1 honest "trade" (a downside, e.g. international version with English-only keyboard, 8GB RAM, no Google apps, heavy gaming laptop, OLED less bright in sunny rooms).
+- "reply": 1-3 short sentences, warm and plain, no hype.
+- "chips": up to 3 short follow-ups the shopper might tap, in their language.
+
+Reply with only JSON in this shape:
+{"reply": "...", "picks": [{"id": "L03", "role": "best", "why": ["..."], "trade": ["..."]}], "chips": ["..."]}`;
+
+async function askAI(text){
+  turns.push({role:"user", content:text});
+  if (turns.length > 10) turns = turns.slice(-10);
+  if (turns[0].role !== "user") turns.shift();
+  ctl = new AbortController();
+  const out = await sample.json([{role:"user",content:RULES}, ...turns], {cache:false, signal:ctl.signal, modelTier:"quick"});
+  if (!out || typeof out.reply !== "string") throw {code:"invalid_json"};
+  const picks = Array.isArray(out.picks) ? out.picks.filter(p => p && byId(String(p.id))).slice(0,3).map(p => ({
+    id:String(p.id), role: ROLE[p.role] ? p.role : "alt",
+    why: Array.isArray(p.why) ? p.why.map(String).slice(0,3) : [],
+    trade: Array.isArray(p.trade) ? p.trade.map(String).slice(0,1) : []})) : [];
+  turns.push({role:"assistant", content: out.reply + (picks.length ? " [Showed: " + picks.map(p => p.id).join(", ") + "]" : "")});
+  return {reply: out.reply, picks, chips: Array.isArray(out.chips) ? out.chips.map(String).slice(0,3) : [], ar: isArabic(out.reply)};
+}
+
+/* ----- Ask ----- */
+async function ask(text){
+  text = (text || "").trim();
+  if (!text || busy) return;
+  busy = true; $("#send").disabled = true; $("#q").value = "";
+  addUser(text);
+  const ar = isArabic(text);
+  if (useAI && sample){
+    const thinking = el("div",{class:"msg bot"}, el("div",{class:"bubble thinking",text: ar ? "أبحث لك…" : "Looking through the catalogue…"}));
+    thread.append(thinking); thinking.scrollIntoView({behavior:"smooth",block:"end"});
+    try {
+      const res = await askAI(text);
+      thinking.remove();
+      addBot(res);
+      // keep the rules engine in step, so switching modes keeps context
+      state = parse(text, state);
+    } catch (e) {
+      thinking.remove();
+      if (turns.length && turns[turns.length-1].role === "user") turns.pop();
+      const code = e && e.code;
+      if (["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)) { setAI(false, true); }
+      const res = localReply(text, state); state = res.state;
+      const note = code === "cancelled" ? null : code === "rate_limited" ? "AI is busy right now, so this answer came from the built-in rules." : "AI was not available for this question, so this answer came from the built-in rules.";
+      addBot(res, {note});
+    }
+  } else {
+    const res = localReply(text, state); state = res.state;
+    addBot(res);
+  }
+  busy = false; $("#send").disabled = false;
+  thread.lastElementChild.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("#composer").addEventListener("submit", e => { e.preventDefault(); ask($("#q").value); });
+
+/* ----- Mode ----- */
+function setAI(on, lock){
+  useAI = !!(on && sample);
+  $("#mAI").setAttribute("aria-pressed", String(useAI));
+  $("#mRule").setAttribute("aria-pressed", String(!useAI));
+  if (lock) $("#mAI").disabled = true;
+  $("#mode").classList.toggle("ai", useAI);
+  $("#modeLabel").textContent = useAI ? "AI answers" : "Rule-based";
+}
+$("#mAI").onclick = () => setAI(true);
+$("#mRule").onclick = () => setAI(false);
+
+/* ----- Tabs ----- */
+function tab(which){
+  const a = which === "assistant";
+  $("#tabA").setAttribute("aria-selected", String(a)); $("#tabN").setAttribute("aria-selected", String(!a));
+  $("#assistant").hidden = !a; $("#assistant").style.display = a ? "flex" : "none"; $("#notes").hidden = a;
+  try { history.replaceState(null, "", a ? "#" : "#notes"); } catch(_){}
+}
+$("#tabA").onclick = () => tab("assistant");
+$("#tabN").onclick = () => tab("notes");
+if (location.hash === "#notes") tab("notes");
+
+/* ----- First frame: a worked example ----- */
+(function seed(){
+  thread.append(el("div",{class:"ex-label",text:"Example"}));
+  const q1 = "Laptop for my son's university, under AED 3,000";
+  addUser(q1);
+  const r1 = localReply(q1, null); state = r1.state;
+  addBot(r1);
+})();
+
+/* ----- Light up AI when the viewer's Claude is available ----- */
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const s = await window.claude.use("sample");
+    if (!s) return;
+    sample = s;
+    $("#mAI").disabled = false; $("#mode").hidden = false;
+    setAI(true);
+    $("#hint").textContent = "AI answers use your Claude account and ask your permission first. Switch to Rules any time.";
+  } catch(_) {}
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
