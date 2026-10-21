@@ -491,7 +491,7 @@ async function ask() {
       })
     });
     const data = await r.json().catch(() => ({ error: 'Unexpected response from the server.' }));
-    if (!r.ok) throw Object.assign(new Error(data.error || 'Something went wrong.'), { detail: data.detail });
+    if (!r.ok) { console.warn('Ask the satellite:', data.detail, data.attempts); throw new Error(data.error || 'Something went wrong.'); }
     renderResult(data);
   } catch (e) {
     if (e.name === 'AbortError') e = { message: 'The analysis took too long.', detail: 'The AI service may be busy. Please try again.' };

@@ -5,7 +5,8 @@
 // The browser sends one or two JPEG snapshots (base64) of the same area, plus the
 // capture dates and the question. Gemini returns a structured, analyst-style note.
 
-const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-2.5-flash'];
+// gemini-2.5-flash was retired for new API users, so it is no longer a fallback.
+const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-3.8-flash'];
 const MAX_QUESTION_CHARS = 400;
 const MAX_IMAGE_B64 = 1_800_000; // ~1.3 MB per JPEG
 const MAX_LABEL_CHARS = 120;
@@ -138,32 +139,34 @@ module.exports = async (req, res) => {
   parts.push({ text: `Question: ${question}` });
 
   const models = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : FALLBACK_MODELS;
+  // Alternate between models (A, B, A, B...) so an overloaded, rate-limited or
+  // stalled model gets a short rest while the other one is tried.
+  const plan = [];
+  for (let round = 0; round < 3; round++) plan.push(...models);
+  const dead = new Set();
   const started = Date.now();
-  let out = null, lastErr = '', lastStatus = 0;
+  let out = null, lastErr = '', lastStatus = 0, tries = 0;
   const log = [];
-  outer:
-  for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const left = TOTAL_BUDGET_MS - (Date.now() - started);
-      if (left < 4000) break outer;
-      const t0 = Date.now();
-      const { status, data } = await callGemini(key, model, parts, Math.min(ATTEMPT_TIMEOUT_MS, left));
-      lastStatus = status;
-      log.push(`${model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-      if (status === 200) {
-        const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-        try { out = JSON.parse(text); out.model = model; break outer; } catch { lastErr = 'The model returned an unreadable answer.'; continue; }
-      }
-      lastErr = data?.error?.message || `Model error (${status}).`;
-      if (status === 401 || status === 403) break outer; // bad key: other models won't help
-      if (status === 400 || status === 404) break;       // this model can't take the request: try the next one
-      if (status === 504) break;                         // stalled: move straight to the next model
-      if (status === 429 || status >= 500 || status === 0) { await sleep(attempt === 0 ? 1200 : 0); continue; }
-      break;
+  for (const model of plan) {
+    if (dead.has(model)) continue;
+    const left = TOTAL_BUDGET_MS - (Date.now() - started);
+    if (left < 4000) break;
+    if (tries > 0 && (lastStatus === 429 || lastStatus === 503 || lastStatus === 500)) await sleep(Math.min(1000 * tries, 3000));
+    tries++;
+    const t0 = Date.now();
+    const { status, data } = await callGemini(key, model, parts, Math.min(ATTEMPT_TIMEOUT_MS, TOTAL_BUDGET_MS - (Date.now() - started)));
+    lastStatus = status;
+    log.push(`${model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    if (status === 200) {
+      const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+      try { out = JSON.parse(text); out.model = model; break; } catch { lastErr = 'The model returned an unreadable answer.'; continue; }
     }
+    lastErr = data?.error?.message || `Model error (${status}).`;
+    if (status === 401 || status === 403) break;           // bad key: nothing else will help
+    if (status === 400 || status === 404) dead.add(model); // this model can't take the request
   }
   if (!out) {
-    const busy = lastStatus === 429 || /quota|rate|exhaust/i.test(lastErr);
+    const busy = lastStatus === 429 || lastStatus === 503 || /quota|rate|exhaust|overload/i.test(lastErr);
     const slow = lastStatus === 504;
     return res.status(busy ? 429 : slow ? 504 : 502).json({
       error: busy ? 'The AI service is busy right now. Try again in a minute.' : slow ? 'The AI service is slow right now. Try again in a moment.' : 'The AI service failed to answer. Try again.',
