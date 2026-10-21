@@ -474,9 +474,11 @@ async function ask() {
   state.busy = true; updateGo();
   $('#empty').hidden = true; $('#result').hidden = true; $('#loading').hidden = false;
   const mpp = metresPerPx(state.frame.lat, state.frame.z);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 65000);
   try {
     const r = await fetch('/api/orbit', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
+      method: 'POST', headers: { 'content-type': 'application/json' }, signal: ctrl.signal,
       body: JSON.stringify({
         question, site: state.site || 'Selected area',
         footprint: `about ${fmtKm(W * mpp)} wide, roughly ${mpp.toFixed(1)} m per pixel`,
@@ -488,9 +490,11 @@ async function ask() {
     if (!r.ok) throw Object.assign(new Error(data.error || 'Something went wrong.'), { detail: data.detail });
     renderResult(data);
   } catch (e) {
+    if (e.name === 'AbortError') e = { message: 'The analysis took too long.', detail: 'The AI service may be busy. Please try again.' };
     $('#result').innerHTML = `<div class="errbox">${esc(e.message || 'Something went wrong.')}<small>${e.detail ? esc(e.detail) : 'Please try again.'}</small></div>`;
     $('#result').hidden = false;
   } finally {
+    clearTimeout(timer);
     $('#loading').hidden = true; state.busy = false; updateGo();
   }
 }

@@ -70,18 +70,34 @@ function cleanImage(img) {
   return { mime, data: data.replace(/\s+/g, ''), label: String(img.label || '').slice(0, MAX_LABEL_CHARS) };
 }
 
-async function callGemini(key, model, parts) {
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents: [{ role: 'user', parts }],
-      generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA }
-    })
-  });
-  const data = await r.json().catch(() => ({}));
-  return { status: r.status, data };
+// Gemini sometimes hangs or returns 429/500/503 under load. Each attempt gets a
+// hard timeout, transient errors are retried once with a short pause, and then
+// the next model in the list is tried, all inside a total time budget.
+const ATTEMPT_TIMEOUT_MS = 22000;
+const TOTAL_BUDGET_MS = 50000;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function callGemini(key, model, parts, timeoutMs) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM }] },
+        contents: [{ role: 'user', parts }],
+        generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA }
+      })
+    });
+    const data = await r.json().catch(() => ({}));
+    return { status: r.status, data };
+  } catch (e) {
+    return { status: e.name === 'AbortError' ? 504 : 0, data: { error: { message: e.name === 'AbortError' ? 'The model took too long to answer.' : 'Could not reach the AI service.' } } };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 const arr = (v, n) => (Array.isArray(v) ? v : []).slice(0, n);
@@ -118,21 +134,33 @@ module.exports = async (req, res) => {
   parts.push({ text: `Question: ${question}` });
 
   const models = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : FALLBACK_MODELS;
-  let out = null, lastErr = '';
+  const started = Date.now();
+  let out = null, lastErr = '', lastStatus = 0;
+  outer:
   for (const model of models) {
-    try {
-      const { status, data } = await callGemini(key, model, parts);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const left = TOTAL_BUDGET_MS - (Date.now() - started);
+      if (left < 4000) break outer;
+      const { status, data } = await callGemini(key, model, parts, Math.min(ATTEMPT_TIMEOUT_MS, left));
+      lastStatus = status;
       if (status === 200) {
         const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-        try { out = JSON.parse(text); out.model = model; break; } catch { lastErr = 'The model returned an unreadable answer.'; continue; }
+        try { out = JSON.parse(text); out.model = model; break outer; } catch { lastErr = 'The model returned an unreadable answer.'; continue; }
       }
       lastErr = data?.error?.message || `Model error (${status}).`;
-      if (status === 401 || status === 403) break; // bad key: other models won't help
-    } catch (e) { lastErr = 'Could not reach the AI service.'; }
+      if (status === 401 || status === 403) break outer; // bad key: other models won't help
+      if (status === 400 || status === 404) break;       // this model can't take the request: try the next one
+      if (status === 429 || status >= 500 || status === 0) { await sleep(attempt === 0 ? 1200 : 0); continue; }
+      break;
+    }
   }
   if (!out) {
-    const busy = /quota|rate|exhaust|429/i.test(lastErr);
-    return res.status(busy ? 429 : 502).json({ error: busy ? 'The demo is busy right now. Try again in a minute.' : 'The AI service failed to answer. Try again.', detail: lastErr.slice(0, 300) });
+    const busy = lastStatus === 429 || /quota|rate|exhaust/i.test(lastErr);
+    const slow = lastStatus === 504;
+    return res.status(busy ? 429 : slow ? 504 : 502).json({
+      error: busy ? 'The AI service is busy right now. Try again in a minute.' : slow ? 'The AI service is slow right now. Try again in a moment.' : 'The AI service failed to answer. Try again.',
+      detail: lastErr.slice(0, 300)
+    });
   }
 
   res.status(200).json({
