@@ -1,4 +1,4 @@
-// Orbit: ask questions about satellite imagery of a place at two dates.
+// Ask the satellite: questions about satellite imagery of a place at two dates.
 // Vercel serverless function. Needs the GEMINI_API_KEY environment variable.
 // Optional: GEMINI_MODEL to pin a specific model.
 //
@@ -49,7 +49,7 @@ const SCHEMA = {
   required: ['answer', 'observations', 'changes', 'counts', 'confidence', 'confidenceReason', 'limitations', 'followUps']
 };
 
-const SYSTEM = `You are Orbit, an imagery analyst assistant. You look at satellite images of one place and answer the user's question like a careful analyst writing a short note.
+const SYSTEM = `You are an imagery analyst assistant. You look at satellite images of one place and answer the user's question like a careful analyst writing a short note.
 Rules:
 - Describe only what is visible in the images. Do not use outside knowledge about the place to fill gaps, beyond naming the general type of site.
 - Counts are estimates. Give ranges (e.g. "10-12"), never false precision. If objects are too small or blurred to count, say so.

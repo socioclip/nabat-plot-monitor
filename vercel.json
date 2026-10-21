@@ -36,10 +36,20 @@
       "source": "/work/dalil",
       "destination": "/work/worth-it",
       "permanent": true
+    },
+    {
+      "source": "/orbit",
+      "destination": "/ask-the-satellite",
+      "permanent": true
+    },
+    {
+      "source": "/work/orbit",
+      "destination": "/work/ask-the-satellite",
+      "permanent": true
     }
   ],
   "functions": {
-    "api/orbit.js": {
+    "api/ask-the-satellite.js": {
       "maxDuration": 60
     }
   }

@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Orbit · Ask the satellite</title>
-<meta name="description" content="Orbit: pick a place in the UAE, compare it from orbit at two dates and ask a question in plain English. Answers come back like an analyst's note, with confidence and limits. A live demo by Syed Sarfaraz Ahmed.">
-<meta property="og:title" content="Orbit · Ask the satellite">
+<title>Ask the satellite · Satellite imagery, answered</title>
+<meta name="description" content="Ask the satellite: pick a place in the UAE, compare it from orbit at two dates and ask a question in plain English. Answers come back like an analyst's note, with confidence and limits. A live demo by Syed Sarfaraz Ahmed.">
+<meta property="og:title" content="Ask the satellite">
 <meta property="og:description" content="Compare a place from orbit at two dates and ask what changed. Analyst-style answers with confidence and limits.">
-<meta property="og:url" content="https://sarfaraz27.vercel.app/orbit">
-<link rel="canonical" href="https://sarfaraz27.vercel.app/orbit">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/ask-the-satellite">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/ask-the-satellite">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E7C6B'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='24' cy='9' r='2.6' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -161,15 +161,15 @@ ul.lim li:before{content:"◌";color:var(--warn)}
 <body>
 <a class="strip" href="/">&larr; Part of Syed Sarfaraz Ahmed&rsquo;s AI product portfolio <span>&middot; see all work</span></a>
 <header class="top"><div class="wrap">
-  <a class="brand" href="/orbit"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-25 12 12)" stroke-width="1.4" opacity=".75"/></svg></span>Orbit</a>
-  <nav><a href="/work/orbit">Case study</a><a href="/#work">All work</a></nav>
+  <a class="brand" href="/ask-the-satellite"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-25 12 12)" stroke-width="1.4" opacity=".75"/></svg></span>Ask the satellite</a>
+  <nav><a href="/work/ask-the-satellite">Case study</a><a href="/#work">All work</a></nav>
 </div></header>
 
 <main>
 <div class="wrap">
   <section class="hero">
     <div class="eyebrow">Live demo · geospatial AI</div>
-    <h1>Ask the <em>satellite.</em></h1>
+    <h1>See what changed, <em>from orbit.</em></h1>
     <p>Pick a place in the UAE, see it from orbit at two dates, and ask a question in plain English. The answer comes back like an analyst&rsquo;s note: what&rsquo;s visible, what changed, how sure it is, and what the imagery can&rsquo;t tell you.</p>
     <div class="steps"><span><b>1</b>Pick a site or frame the map</span><span><b>2</b>Choose two capture dates</span><span><b>3</b>Ask what you want to know</span></div>
   </section>
@@ -219,7 +219,7 @@ ul.lim li:before{content:"◌";color:var(--warn)}
 <section class="notes" aria-labelledby="notesH"><div class="wrap">
   <div class="eyebrow" style="margin-top:28px">Product notes</div>
   <h2 id="notesH">Built for the analyst, not the data scientist</h2>
-  <p>Satellite data is powerful but hard to use. Most people who need answers from it (a port operations lead, a project owner, a policy team) can&rsquo;t write a query or read a spectral band. Orbit tests one idea: let them ask in plain language and get a note they can trust and act on.</p>
+  <p>Satellite data is powerful but hard to use. Most people who need answers from it (a port operations lead, a project owner, a policy team) can&rsquo;t write a query or read a spectral band. This demo tests one idea: let them ask in plain language and get a note they can trust and act on.</p>
   <div class="ngrid">
     <div class="card note"><h3>Who it&rsquo;s for</h3><ul><li>Port and logistics teams checking congestion and yard use</li><li>Project owners tracking construction progress against plan</li><li>Analysts who need a first read before ordering fresh imagery</li></ul></div>
     <div class="card note"><h3>The calls that mattered</h3><ul><li><b>Change is the signal.</b> Two dates by default, because &ldquo;what&rsquo;s different&rdquo; is usually the real question.</li><li><b>A note, not a chat.</b> Every answer has the same structure, so it&rsquo;s quick to scan and compare.</li><li><b>Confidence and limits are mandatory.</b> Counts are ranges. The model must say what the imagery can&rsquo;t show.</li><li><b>Honest about the data.</b> Real capture dates and sources on every image; archive imagery, labelled as such.</li></ul></div>
@@ -228,7 +228,7 @@ ul.lim li:before{content:"◌";color:var(--warn)}
 </div></section>
 </main>
 
-<footer class="foot"><div class="wrap"><span>Imagery: Esri World Imagery Wayback (Maxar, Earthstar Geographics and others). Archive snapshots, not live feeds. Answers are generated by Google Gemini and may be wrong.</span><span><a href="/work/orbit">Read the case study</a></span></div></footer>
+<footer class="foot"><div class="wrap"><span>Imagery: Esri World Imagery Wayback (Maxar, Earthstar Geographics and others). Archive snapshots, not live feeds. Answers are generated by Google Gemini and may be wrong.</span><span><a href="/work/ask-the-satellite">Read the case study</a></span></div></footer>
 
 <script type="module">
 import { getWaybackItems, getWaybackItemsWithLocalChanges, getMetadata } from 'https://cdn.jsdelivr.net/npm/@esri/wayback-core@1.1.0/+esm';
@@ -410,7 +410,7 @@ function fillSelects() {
   $('#selAfter').value = afterIdx; $('#selBefore').value = beforeIdx;
   $('#selAfter').disabled = $('#selBefore').disabled = o.length < 2;
   if (o.length < 2) $('#selBefore').innerHTML = '<option>Only one date for this frame</option>';
-  setStatus(o.length < 2 ? 'Only one image date is available here, so Orbit will describe it without a comparison. Try zooming out or another site.' : `${o.length} distinct capture dates found for this frame.`);
+  setStatus(o.length < 2 ? 'Only one image date is available here, so the answer will describe it without a comparison. Try zooming out or another site.' : `${o.length} distinct capture dates found for this frame.`);
 }
 ['#selBefore', '#selAfter'].forEach(s => $(s).addEventListener('change', () => {
   const a = +$('#selAfter').value, b = +$('#selBefore').value;
@@ -481,7 +481,7 @@ async function ask() {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 65000);
   try {
-    const r = await fetch('/api/orbit', {
+    const r = await fetch('/api/ask-the-satellite', {
       method: 'POST', headers: { 'content-type': 'application/json' }, signal: ctrl.signal,
       body: JSON.stringify({
         question, site: state.site || 'Selected area',
