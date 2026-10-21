@@ -145,7 +145,7 @@ module.exports = async (req, res) => {
   for (let round = 0; round < 3; round++) plan.push(...models);
   const dead = new Set();
   const started = Date.now();
-  let out = null, lastErr = '', lastStatus = 0, tries = 0;
+  let out = null, lastErr = '', lastStatus = 0, tries = 0, quotaOut = false;
   const log = [];
   for (const model of plan) {
     if (dead.has(model)) continue;
@@ -163,7 +163,11 @@ module.exports = async (req, res) => {
     }
     lastErr = data?.error?.message || `Model error (${status}).`;
     if (status === 401 || status === 403) break;           // bad key: nothing else will help
+    if (status === 429 && /exceeded your current quota/i.test(lastErr)) { quotaOut = true; break; } // whole key is out of quota
     if (status === 400 || status === 404) dead.add(model); // this model can't take the request
+  }
+  if (!out && quotaOut) {
+    return res.status(429).json({ error: 'This demo has reached its AI usage limit for now. Please try again later.', detail: lastErr.slice(0, 300), attempts: log });
   }
   if (!out) {
     const busy = lastStatus === 429 || lastStatus === 503 || /quota|rate|exhaust|overload/i.test(lastErr);
