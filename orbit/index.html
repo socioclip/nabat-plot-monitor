@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orbit · Ask the satellite</title>
+<meta name="description" content="Orbit: pick a place in the UAE, compare it from orbit at two dates and ask a question in plain English. Answers come back like an analyst's note, with confidence and limits. A live demo by Syed Sarfaraz Ahmed.">
+<meta property="og:title" content="Orbit · Ask the satellite">
+<meta property="og:description" content="Compare a place from orbit at two dates and ask what changed. Analyst-style answers with confidence and limits.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/orbit">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/orbit">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E7C6B'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='24' cy='9' r='2.6' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --bg:#FFFFFF;--bg-2:#F4F6F7;--panel:#FFFFFF;--line:#E2E7E9;--line-2:#CBD3D6;
+  --ink:#10161A;--ink-2:#46525A;--ink-3:#77838B;
+  --accent:#0E7C6B;--accent-bg:#E2F2EE;
+  --before:#B4690E;--before-bg:#FBEEDC;
+  --good:#1E8A4C;--good-bg:#E3F4EA;--warn:#A86B05;--warn-bg:#FBF0D9;--crit:#C8372D;--crit-bg:#FBE4E1;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 28px -12px rgba(16,24,40,.12);
+  --serif:'Newsreader',Georgia,serif;--sans:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0C1013;--bg-2:#131A1E;--panel:#151C20;--line:#243035;--line-2:#34434A;
+  --ink:#E9EEF0;--ink-2:#AEB9BE;--ink-3:#808D93;
+  --accent:#4FD1B5;--accent-bg:#123029;
+  --before:#F0A54A;--before-bg:#33240F;
+  --good:#5CCB8A;--good-bg:#14301F;--warn:#F0BE55;--warn-bg:#33270F;--crit:#F07A6E;--crit-bg:#3A1A17;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 12px 30px -14px rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.strip{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;background:#11171A;color:#F2F5F4;font:500 13px/1.4 var(--sans);text-decoration:none}
+.strip span{opacity:.6}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+@media (max-width:640px){.wrap{padding:0 16px}}
+header.top{border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;text-decoration:none;letter-spacing:-.01em}
+.mark{width:28px;height:28px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
+.mark svg{width:18px;height:18px}
+.top nav{margin-left:auto;display:flex;gap:4px}
+.top nav a{font-size:14px;color:var(--ink-2);text-decoration:none;padding:6px 10px;border-radius:6px}
+.top nav a:hover{background:var(--bg-2);color:var(--ink)}
+.hero{padding:40px 0 24px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+.hero h1{font:400 clamp(34px,5vw,56px)/1.05 var(--serif);letter-spacing:-.02em;margin:0}
+.hero h1 em{color:var(--accent)}
+.hero p{color:var(--ink-2);max-width:66ch;margin:14px 0 0;font-size:16.5px}
+.steps{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:13.5px;color:var(--ink-2)}
+.steps span{display:inline-flex;gap:8px;align-items:center}
+.steps b{width:20px;height:20px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:inline-grid;place-items:center;font:700 11px var(--sans)}
+.app{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.25fr);gap:20px;padding-bottom:40px;align-items:start}
+@media (max-width:980px){.app{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.card-b{padding:18px 20px}
+.lbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font:600 13px var(--sans);margin-bottom:8px}
+.lbl small{font-weight:400;color:var(--ink-3)}
+.group{margin-bottom:12px}
+.group .gname{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{appearance:none;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);font:500 12.5px var(--sans);padding:5px 11px;border-radius:999px;cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+#map{height:330px;border-radius:12px;border:1px solid var(--line);margin-top:6px;background:#0b1118;z-index:0}
+.maphint{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;color:var(--ink-3);margin:8px 0 14px;flex-wrap:wrap}
+.leaflet-container{font:12px var(--sans)}
+.dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.dates{grid-template-columns:1fr}}
+.dates label{display:block;font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.dates label.b{color:var(--before)}.dates label.a{color:var(--accent)}
+select{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13.5px}
+select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.status{font-size:12.5px;color:var(--ink-3);margin-top:8px;min-height:20px}
+.status.err{color:var(--crit)}
+.btn{appearance:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font:600 14px var(--sans);padding:10px 17px;border-radius:999px;cursor:pointer;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;color:var(--ink-2);border-color:var(--line-2)}
+.btn.sm{padding:6px 12px;font-size:12.5px}
+.actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+/* viewer */
+.viewer{position:relative;aspect-ratio:4/3;background:#0b1118;border-radius:16px 16px 0 0;overflow:hidden;user-select:none;touch-action:pan-y}
+.viewer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+#imgBefore{clip-path:inset(0 50% 0 0)}
+.divider{position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);pointer-events:none}
+.divider i{position:absolute;top:50%;left:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.35);display:grid;place-items:center;color:#10161A;font:700 13px var(--sans)}
+.viewer input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.vtag{position:absolute;top:12px;font:600 11px/1 var(--mono);letter-spacing:.05em;padding:7px 9px;border-radius:7px;color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none;max-width:46%}
+.vtag.b{left:12px;background:rgba(150,86,10,.82)}.vtag.a{right:12px;background:rgba(10,98,84,.85);text-align:right}
+.vtag small{display:block;font-weight:500;opacity:.85;margin-top:4px;letter-spacing:.02em}
+.scale{position:absolute;left:12px;bottom:12px;font:500 11px var(--mono);color:#fff;background:rgba(0,0,0,.5);padding:5px 8px;border-radius:6px;pointer-events:none}
+.vempty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#9FB0B6;padding:24px;font-size:14px}
+.vempty b{display:block;font:400 22px/1.2 var(--serif);color:#E9EEF0;margin-bottom:6px}
+.vload{position:absolute;inset:0;display:grid;place-items:center;background:rgba(11,17,24,.55);color:#E9EEF0;font-size:13.5px}
+.spin{width:22px;height:22px;border-radius:50%;border:2.5px solid rgba(255,255,255,.25);border-top-color:#fff;animation:sp .8s linear infinite;margin:0 auto 10px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ask{padding:16px 20px;border-top:1px solid var(--line)}
+.qrow{display:flex;gap:10px;align-items:stretch}
+.qrow input{flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14.5px}
+.qrow input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+@media (max-width:520px){.qrow{flex-direction:column}}
+.suggest{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+/* results */
+#out{border-top:1px solid var(--line)}
+.empty{padding:26px 22px;color:var(--ink-3);font-size:14px}
+.empty b{display:block;font:400 20px/1.3 var(--serif);color:var(--ink);margin-bottom:4px}
+.loading{padding:22px}
+.loading p{color:var(--ink-3);font-size:13px;margin:0 0 12px}
+.sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2),var(--line),var(--bg-2));background-size:200% 100%;animation:sh 1.2s infinite;margin:10px 0}
+@keyframes sh{to{background-position:-200% 0}}
+.errbox{margin:18px 20px;padding:14px 16px;border-radius:12px;background:var(--crit-bg);color:var(--crit);font-size:14px}
+.errbox small{display:block;color:var(--ink-3);margin-top:4px}
+.rmeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.rmeta .why{font-size:12.5px;color:var(--ink-3);flex:1;min-width:200px}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.good{background:var(--good-bg);color:var(--good)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.crit{background:var(--crit-bg);color:var(--crit)}
+.sec{padding:16px 20px;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.h{font:500 11.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+.answer{font:400 19px/1.55 var(--serif);margin:0}
+table.counts{width:100%;border-collapse:collapse;font-size:14px}
+.counts th,.counts td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.counts th{font:500 10.5px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.counts td.n{font:600 14px var(--mono)}
+.counts th.b,.counts td.b{color:var(--before)}.counts th.a,.counts td.a{color:var(--accent)}
+ul.plain{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ul.plain li{display:flex;gap:10px;font-size:14px;color:var(--ink)}
+ul.obs li:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:8px;flex:none}
+ul.chg li{border:1px solid var(--line);border-radius:12px;padding:10px 12px;justify-content:space-between;align-items:flex-start}
+ul.chg li span small{display:block;color:var(--ink-3);font-size:12.5px;margin-top:2px}
+ul.lim li{color:var(--ink-2)}
+ul.lim li:before{content:"◌";color:var(--warn)}
+.rfoot{padding:12px 20px;font-size:12px;color:var(--ink-3)}
+/* product notes */
+.notes{padding:20px 0 56px;border-top:1px solid var(--line)}
+.notes h2{font:400 clamp(26px,3.2vw,36px)/1.1 var(--serif);letter-spacing:-.015em;margin:8px 0 6px}
+.notes>.wrap>p{color:var(--ink-2);max-width:70ch;margin:0 0 22px}
+.ngrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.ngrid{grid-template-columns:1fr}}
+.note{padding:18px 20px}
+.note h3{font:600 15px var(--sans);margin:0 0 8px}
+.note p,.note li{font-size:14px;color:var(--ink-2);margin:0}
+.note ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.foot{border-top:1px solid var(--line);padding:22px 0 36px;color:var(--ink-3);font-size:12.5px}
+.foot .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="strip" href="/">&larr; Part of Syed Sarfaraz Ahmed&rsquo;s AI product portfolio <span>&middot; see all work</span></a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/orbit"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-25 12 12)" stroke-width="1.4" opacity=".75"/></svg></span>Orbit</a>
+  <nav><a href="/work/orbit">Case study</a><a href="/#work">All work</a></nav>
+</div></header>
+
+<main>
+<div class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Live demo · geospatial AI</div>
+    <h1>Ask the <em>satellite.</em></h1>
+    <p>Pick a place in the UAE, see it from orbit at two dates, and ask a question in plain English. The answer comes back like an analyst&rsquo;s note: what&rsquo;s visible, what changed, how sure it is, and what the imagery can&rsquo;t tell you.</p>
+    <div class="steps"><span><b>1</b>Pick a site or frame the map</span><span><b>2</b>Choose two capture dates</span><span><b>3</b>Ask what you want to know</span></div>
+  </section>
+
+  <div class="app">
+    <section class="card" aria-label="Choose a site and dates"><div class="card-b">
+      <div class="lbl">Sites <small>or pan the map to any area</small></div>
+      <div id="presets"></div>
+      <div id="map" role="application" aria-label="Satellite map. Pan and zoom to frame the area to analyse."></div>
+      <div class="maphint"><span>The dashed box is the analysis frame.</span><button class="btn ghost sm" id="refresh" hidden>Use this view</button></div>
+      <div class="dates">
+        <div><label class="b" for="selBefore">Before</label><select id="selBefore" disabled><option>Choose a site first</option></select></div>
+        <div><label class="a" for="selAfter">After</label><select id="selAfter" disabled><option>Choose a site first</option></select></div>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div></section>
+
+    <section class="card" aria-label="Imagery and answer">
+      <div class="viewer" id="viewer">
+        <img id="imgAfter" alt="" hidden>
+        <img id="imgBefore" alt="" hidden>
+        <div class="divider" id="divider" hidden><i>&#x2194;</i></div>
+        <input type="range" id="swipe" min="0" max="100" value="50" aria-label="Swipe between the before and after image" hidden>
+        <div class="vtag b" id="tagB" hidden></div>
+        <div class="vtag a" id="tagA" hidden></div>
+        <div class="scale" id="scale" hidden></div>
+        <div class="vempty" id="vempty"><div><b>Pick a site to begin</b>Imagery of the same frame at two dates appears here. Drag across it to compare.</div></div>
+        <div class="vload" id="vload" hidden><div><div class="spin"></div><span id="vloadText">Loading imagery&hellip;</span></div></div>
+      </div>
+      <div class="ask">
+        <div class="lbl"><label for="q">Your question</label><small id="qhint"></small></div>
+        <div class="qrow">
+          <input type="text" id="q" maxlength="400" autocomplete="off" placeholder="e.g. What changed between these two dates?">
+          <button class="btn" id="go" disabled>Ask <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+        </div>
+        <div class="suggest" id="suggest"></div>
+      </div>
+      <div id="out" aria-live="polite">
+        <div class="empty" id="empty"><b>Your analyst note appears here</b>A direct answer, estimated counts, what changed and where, a confidence level, and the limits of what the imagery shows.</div>
+        <div class="loading" id="loading" hidden><p>Looking at both images and writing the note&hellip;</p><div class="sk" style="width:90%"></div><div class="sk" style="width:78%"></div><div class="sk" style="width:84%"></div><div class="sk" style="width:56%;margin-top:22px"></div><div class="sk" style="width:70%"></div></div>
+        <div id="result" hidden></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="notes" aria-labelledby="notesH"><div class="wrap">
+  <div class="eyebrow" style="margin-top:28px">Product notes</div>
+  <h2 id="notesH">Built for the analyst, not the data scientist</h2>
+  <p>Satellite data is powerful but hard to use. Most people who need answers from it (a port operations lead, a project owner, a policy team) can&rsquo;t write a query or read a spectral band. Orbit tests one idea: let them ask in plain language and get a note they can trust and act on.</p>
+  <div class="ngrid">
+    <div class="card note"><h3>Who it&rsquo;s for</h3><ul><li>Port and logistics teams checking congestion and yard use</li><li>Project owners tracking construction progress against plan</li><li>Analysts who need a first read before ordering fresh imagery</li></ul></div>
+    <div class="card note"><h3>The calls that mattered</h3><ul><li><b>Change is the signal.</b> Two dates by default, because &ldquo;what&rsquo;s different&rdquo; is usually the real question.</li><li><b>A note, not a chat.</b> Every answer has the same structure, so it&rsquo;s quick to scan and compare.</li><li><b>Confidence and limits are mandatory.</b> Counts are ranges. The model must say what the imagery can&rsquo;t show.</li><li><b>Honest about the data.</b> Real capture dates and sources on every image; archive imagery, labelled as such.</li></ul></div>
+    <div class="card note"><h3>What I&rsquo;d build next</h3><ul><li>Radar (SAR) imagery so night and cloud don&rsquo;t block the answer</li><li>Watch a site and get an alert when something changes</li><li>Object detection to back counts with marked boxes, not just estimates</li><li>One-click export of the note as a signed brief</li></ul></div>
+  </div>
+</div></section>
+</main>
+
+<footer class="foot"><div class="wrap"><span>Imagery: Esri World Imagery Wayback (Maxar, Earthstar Geographics and others). Archive snapshots, not live feeds. Answers are generated by Google Gemini and may be wrong.</span><span><a href="/work/orbit">Read the case study</a></span></div></footer>
+
+<script type="module">
+import { getWaybackItems, getWaybackItemsWithLocalChanges, getMetadata } from 'https://cdn.jsdelivr.net/npm/@esri/wayback-core@1.1.0/+esm';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const PROMPTS = {
+  port: ['Roughly how many large vessels are at berth in each image?', 'How has the container yard changed between the two dates?', 'What new infrastructure appeared between these dates?'],
+  sea: ['How many ships are at anchor in each image?', 'Is the area busier in the later image?', 'What kinds of vessels can you tell apart?'],
+  build: ['What has been built between these dates?', 'Which parts of the site still look under construction?', 'Are there new roads or access points?'],
+  any: ['What changed between these two dates?', 'Describe what this area is used for.', 'What looks newly built?']
+};
+const SITES = [
+  { group: 'UAE ports', items: [
+    { name: 'Jebel Ali Port', lat: 25.0110, lon: 55.0600, z: 14, kind: 'port' },
+    { name: 'Khalifa Port', lat: 24.8105, lon: 54.6480, z: 14, kind: 'port' },
+    { name: 'Port Rashid', lat: 25.2680, lon: 55.2770, z: 15, kind: 'port' } ] },
+  { group: 'Strait of Hormuz coast', items: [
+    { name: 'Fujairah anchorage', lat: 25.1500, lon: 56.3900, z: 13, kind: 'sea' },
+    { name: 'Khor Fakkan Port', lat: 25.3480, lon: 56.3600, z: 15, kind: 'port' } ] },
+  { group: 'UAE megaprojects', items: [
+    { name: 'Expo City Dubai', lat: 24.9630, lon: 55.1500, z: 15, kind: 'build' },
+    { name: 'Al Maktoum International', lat: 24.8960, lon: 55.1610, z: 13, kind: 'build' } ] }
+];
+
+const TILE = 256, W = 1024, H = 768;
+const state = { site: null, kind: 'any', frame: null, options: [], before: null, after: null, loadId: 0, ready: false, busy: false };
+
+/* ---------- helpers ---------- */
+const project = (lat, lon, z) => {
+  const n = 2 ** z, r = lat * Math.PI / 180;
+  return { x: (lon + 180) / 360 * n, y: (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n };
+};
+const unproject = (x, y, z) => {
+  const n = 2 ** z;
+  return [Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI, x / n * 360 - 180];
+};
+const captureZoom = mapZoom => Math.max(13, Math.min(18, Math.round(mapZoom) + 1));
+const frameBounds = (lat, lon, z) => {
+  const { x, y } = project(lat, lon, z);
+  const dx = W / 2 / TILE, dy = H / 2 / TILE;
+  return [unproject(x - dx, y + dy, z), unproject(x + dx, y - dy, z)];
+};
+const metresPerPx = (lat, z) => 156543.03392 * Math.cos(lat * Math.PI / 180) / 2 ** z;
+const fmtKm = m => m >= 1000 ? (m / 1000).toFixed(m >= 10000 ? 0 : 1) + ' km' : Math.round(m) + ' m';
+const fmtDate = ms => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const tileUrl = (item, z, row, col) => item.itemURL.replace('{level}', z).replace('{row}', row).replace('{col}', col);
+const setStatus = (msg, err = false) => { const s = $('#status'); s.textContent = msg || ''; s.classList.toggle('err', !!err); };
+
+function loadImg(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+
+async function compose(item, frame) {
+  const { lat, lon, z } = frame;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0b1118'; ctx.fillRect(0, 0, W, H);
+  const { x, y } = project(lat, lon, z);
+  const px = x * TILE - W / 2, py = y * TILE - H / 2;
+  const jobs = []; let missing = 0, total = 0;
+  for (let ty = Math.floor(py / TILE); ty <= Math.floor((py + H - 1) / TILE); ty++) {
+    for (let tx = Math.floor(px / TILE); tx <= Math.floor((px + W - 1) / TILE); tx++) {
+      total++;
+      jobs.push(loadImg(tileUrl(item, z, ty, tx)).then(img => ctx.drawImage(img, Math.round(tx * TILE - px), Math.round(ty * TILE - py))).catch(() => { missing++; }));
+    }
+  }
+  await Promise.all(jobs);
+  return { dataUrl: c.toDataURL('image/jpeg', 0.85), missing, total };
+}
+
+/* ---------- map ---------- */
+const map = L.map('map', { zoomControl: true, minZoom: 9, maxZoom: 17, attributionControl: true }).setView([25.05, 55.2], 10);
+map.attributionControl.setPrefix('');
+let frameRect = null, baseLayer = null;
+
+function drawFrame() {
+  const c = map.getCenter(), z = captureZoom(map.getZoom());
+  const b = frameBounds(c.lat, c.lng, z);
+  if (frameRect) frameRect.setBounds(b);
+  else frameRect = L.rectangle(b, { color: '#ffffff', weight: 1.5, dashArray: '6 5', fill: false, interactive: false }).addTo(map);
+}
+map.on('move zoom', drawFrame);
+map.on('moveend', () => {
+  if (!state.frame) return;
+  const c = map.getCenter(), z = captureZoom(map.getZoom());
+  const moved = Math.abs(c.lat - state.frame.lat) > 1e-4 || Math.abs(c.lng - state.frame.lon) > 1e-4 || z !== state.frame.z;
+  $('#refresh').hidden = !moved;
+});
+
+/* ---------- presets ---------- */
+function renderPresets() {
+  $('#presets').innerHTML = SITES.map((g, gi) => `<div class="group"><div class="gname">${esc(g.group)}</div><div class="chips">${
+    g.items.map((s, si) => `<button class="chip" data-g="${gi}" data-s="${si}" aria-pressed="false">${esc(s.name)}</button>`).join('')}</div></div>`).join('');
+  $('#presets').addEventListener('click', e => {
+    const b = e.target.closest('button.chip'); if (!b) return;
+    const s = SITES[+b.dataset.g].items[+b.dataset.s];
+    document.querySelectorAll('#presets .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    state.site = s.name; state.kind = s.kind;
+    map.setView([s.lat, s.lon], s.z, { animate: false });
+    analyseView();
+  });
+}
+
+function renderSuggestions() {
+  const list = PROMPTS[state.kind] || PROMPTS.any;
+  $('#suggest').innerHTML = list.map(p => `<button class="chip" type="button">${esc(p)}</button>`).join('');
+  if (!$('#q').value) $('#q').placeholder = 'e.g. ' + list[0];
+}
+$('#suggest').addEventListener('click', e => {
+  const b = e.target.closest('button.chip'); if (!b) return;
+  $('#q').value = b.textContent; ask();
+});
+
+$('#refresh').addEventListener('click', () => {
+  document.querySelectorAll('#presets .chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
+  state.site = 'Custom area'; state.kind = 'any';
+  analyseView();
+});
+
+/* ---------- dates ---------- */
+async function analyseView() {
+  const id = ++state.loadId;
+  const c = map.getCenter(), z = captureZoom(map.getZoom());
+  state.frame = { lat: c.lat, lon: c.lng, z };
+  $('#refresh').hidden = true;
+  state.ready = false; updateGo();
+  renderSuggestions(); clearResult();
+  ['#selBefore', '#selAfter'].forEach(s => { $(s).disabled = true; $(s).innerHTML = '<option>Finding dates&hellip;</option>'; });
+  showViewerLoading('Finding capture dates for this frame&hellip;');
+  setStatus('');
+  try {
+    const pt = { latitude: c.lat, longitude: c.lng };
+    let items = await getWaybackItemsWithLocalChanges(pt, z);
+    if (id !== state.loadId) return;
+    if (!items.length) items = (await getWaybackItems()).slice(0, 1);
+    items = items.slice(0, 16);
+    const metas = await Promise.all(items.map(it => getMetadata(pt, z, it.releaseNum).catch(() => null)));
+    if (id !== state.loadId) return;
+    const seen = new Set();
+    const opts = items.map((it, i) => {
+      const m = metas[i];
+      const when = m && m.date ? m.date : it.releaseDatetime;
+      const label = m && m.date ? fmtDate(m.date) : 'Archive ' + fmtDate(it.releaseDatetime);
+      const detail = m ? [m.provider, m.resolution ? m.resolution + ' m' : ''].filter(Boolean).join(' · ') : '';
+      return { item: it, when, label, detail, exact: !!(m && m.date) };
+    }).sort((a, b) => b.when - a.when || b.item.releaseNum - a.item.releaseNum)
+      .filter(o => { const k = o.label; if (seen.has(k)) return false; seen.add(k); return true; });
+    state.options = opts;
+    fillSelects();
+    await loadImagery();
+  } catch (err) {
+    if (id !== state.loadId) return;
+    hideViewerLoading();
+    setStatus('Could not reach the imagery archive. Check your connection and try again.', true);
+  }
+}
+
+function fillSelects() {
+  const o = state.options;
+  const optHtml = o.map((x, i) => `<option value="${i}">${esc(x.label)}${x.detail ? ' · ' + esc(x.detail) : ''}</option>`).join('');
+  $('#selAfter').innerHTML = optHtml; $('#selBefore').innerHTML = optHtml;
+  const afterIdx = 0;
+  let beforeIdx = o.length - 1;
+  const target = o[0].when - 3 * 365.25 * 864e5;
+  const cand = o.findIndex(x => x.when <= target);
+  if (cand > 0) beforeIdx = cand;
+  $('#selAfter').value = afterIdx; $('#selBefore').value = beforeIdx;
+  $('#selAfter').disabled = $('#selBefore').disabled = o.length < 2;
+  if (o.length < 2) $('#selBefore').innerHTML = '<option>Only one date for this frame</option>';
+  setStatus(o.length < 2 ? 'Only one image date is available here, so Orbit will describe it without a comparison. Try zooming out or another site.' : `${o.length} distinct capture dates found for this frame.`);
+}
+['#selBefore', '#selAfter'].forEach(s => $(s).addEventListener('change', () => {
+  const a = +$('#selAfter').value, b = +$('#selBefore').value;
+  if (a === b) setStatus('Before and after are the same date. Pick two different dates to compare.', true);
+  else if (state.options[b].when > state.options[a].when) setStatus('Heads-up: “before” is later than “after”. Swap them for a clearer comparison.', true);
+  else setStatus('');
+  loadImagery();
+}));
+
+/* ---------- imagery ---------- */
+function showViewerLoading(t) { $('#vloadText').innerHTML = t; $('#vload').hidden = false; $('#vempty').hidden = true; }
+function hideViewerLoading() { $('#vload').hidden = true; }
+
+async function loadImagery() {
+  const id = ++state.loadId;
+  const o = state.options; if (!o.length) return;
+  const a = o[+$('#selAfter').value] || o[0];
+  const single = o.length < 2;
+  const b = single ? null : o[+$('#selBefore').value];
+  state.ready = false; updateGo(); clearResult();
+  showViewerLoading('Stitching imagery&hellip;');
+  try {
+    const [ra, rb] = await Promise.all([compose(a.item, state.frame), b ? compose(b.item, state.frame) : null]);
+    if (id !== state.loadId) return;
+    state.after = { dataUrl: ra.dataUrl, label: a.label + (a.detail ? ' · ' + a.detail : '') };
+    state.before = rb ? { dataUrl: rb.dataUrl, label: b.label + (b.detail ? ' · ' + b.detail : '') } : null;
+    $('#imgAfter').src = ra.dataUrl; $('#imgAfter').hidden = false;
+    $('#imgAfter').alt = `Satellite image of ${state.site || 'the selected area'}, ${a.label}`;
+    if (rb) { $('#imgBefore').src = rb.dataUrl; $('#imgBefore').alt = `Satellite image of ${state.site || 'the selected area'}, ${b.label}`; }
+    $('#imgBefore').hidden = $('#divider').hidden = $('#swipe').hidden = $('#tagB').hidden = !rb;
+    $('#tagA').hidden = false;
+    $('#tagA').innerHTML = `${rb ? 'AFTER' : 'IMAGE'}<small>${esc(a.label)}</small>`;
+    if (rb) $('#tagB').innerHTML = `BEFORE<small>${esc(b.label)}</small>`;
+    const mpp = metresPerPx(state.frame.lat, state.frame.z);
+    $('#scale').textContent = `Frame ≈ ${fmtKm(W * mpp)} × ${fmtKm(H * mpp)}`; $('#scale').hidden = false;
+    setSwipe(50);
+    hideViewerLoading(); $('#vempty').hidden = true;
+    const gaps = Math.max(ra.missing / ra.total, rb ? rb.missing / rb.total : 0);
+    if (gaps > 0.3) setStatus('Part of this frame has no imagery at this zoom. Try zooming out a step.', true);
+    state.ready = true; updateGo();
+  } catch (err) {
+    if (id !== state.loadId) return;
+    hideViewerLoading();
+    setStatus('The imagery could not be prepared in this browser. Try again or use another browser.', true);
+  }
+}
+
+function setSwipe(v) {
+  $('#swipe').value = v;
+  $('#imgBefore').style.clipPath = `inset(0 ${100 - v}% 0 0)`;
+  $('#divider').style.left = v + '%';
+}
+$('#swipe').addEventListener('input', e => setSwipe(+e.target.value));
+
+/* ---------- ask ---------- */
+function updateGo() { $('#go').disabled = !state.ready || state.busy; }
+function clearResult() { $('#result').hidden = true; $('#loading').hidden = true; $('#empty').hidden = false; }
+$('#go').addEventListener('click', ask);
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ask(); } });
+
+async function ask() {
+  if (!state.ready || state.busy) return;
+  const question = $('#q').value.trim() || (PROMPTS[state.kind] || PROMPTS.any)[0];
+  $('#q').value = question;
+  state.busy = true; updateGo();
+  $('#empty').hidden = true; $('#result').hidden = true; $('#loading').hidden = false;
+  const mpp = metresPerPx(state.frame.lat, state.frame.z);
+  try {
+    const r = await fetch('/api/orbit', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        question, site: state.site || 'Selected area',
+        footprint: `about ${fmtKm(W * mpp)} wide, roughly ${mpp.toFixed(1)} m per pixel`,
+        after: { data: state.after.dataUrl, label: state.after.label },
+        before: state.before ? { data: state.before.dataUrl, label: state.before.label } : null
+      })
+    });
+    const data = await r.json().catch(() => ({ error: 'Unexpected response from the server.' }));
+    if (!r.ok) throw Object.assign(new Error(data.error || 'Something went wrong.'), { detail: data.detail });
+    renderResult(data);
+  } catch (e) {
+    $('#result').innerHTML = `<div class="errbox">${esc(e.message || 'Something went wrong.')}<small>${e.detail ? esc(e.detail) : 'Please try again.'}</small></div>`;
+    $('#result').hidden = false;
+  } finally {
+    $('#loading').hidden = true; state.busy = false; updateGo();
+  }
+}
+
+function renderResult(d) {
+  const conf = { High: 'good', Medium: 'warn', Low: 'crit' }[d.confidence] || 'crit';
+  const sig = { High: 'crit', Medium: 'warn', Low: 'good' };
+  let html = `<div class="rmeta"><span class="pill ${conf}"><i></i>${esc(d.confidence)} confidence</span><span class="why">${esc(d.confidenceReason)}</span></div>`;
+  html += `<div class="sec"><div class="h">Answer</div><p class="answer">${esc(d.answer)}</p></div>`;
+  if (d.counts?.length) {
+    const two = d.counts.some(c => c.before);
+    html += `<div class="sec"><div class="h">Estimated counts</div><table class="counts"><thead><tr><th>What</th>${two ? '<th class="b">Before</th>' : ''}<th class="a">${two ? 'After' : 'Count'}</th></tr></thead><tbody>${
+      d.counts.map(c => `<tr><td>${esc(c.label)}</td>${two ? `<td class="n b">${esc(c.before || '–')}</td>` : ''}<td class="n a">${esc(c.after || '–')}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  if (d.changes?.length) html += `<div class="sec"><div class="h">What changed</div><ul class="plain chg">${
+    d.changes.map(c => `<li><span>${esc(c.what)}<small>${esc(c.where)}</small></span><span class="pill ${sig[c.significance] || 'good'}">${esc(c.significance)}</span></li>`).join('')}</ul></div>`;
+  if (d.observations?.length) html += `<div class="sec"><div class="h">What&rsquo;s visible now</div><ul class="plain obs">${d.observations.map(o => `<li>${esc(o)}</li>`).join('')}</ul></div>`;
+  if (d.limitations?.length) html += `<div class="sec"><div class="h">What the imagery can&rsquo;t tell us</div><ul class="plain lim">${d.limitations.map(o => `<li>${esc(o)}</li>`).join('')}</ul></div>`;
+  if (d.followUps?.length) html += `<div class="sec"><div class="h">Ask next</div><div class="suggest" id="follow">${d.followUps.map(f => `<button class="chip" type="button">${esc(f)}</button>`).join('')}</div></div>`;
+  html += `<div class="rfoot">Generated by ${esc(d.model || 'Gemini')} from the two images above. Estimates only; verify before acting.</div>`;
+  $('#result').innerHTML = html; $('#result').hidden = false;
+  const f = $('#follow');
+  if (f) f.addEventListener('click', e => { const b = e.target.closest('button.chip'); if (b) { $('#q').value = b.textContent; ask(); } });
+}
+
+/* ---------- start ---------- */
+renderPresets(); renderSuggestions(); drawFrame();
+try {
+  const items = await getWaybackItems();
+  const latest = items[0];
+  baseLayer = L.tileLayer(latest.itemURL.replace('{level}', '{z}').replace('{row}', '{y}').replace('{col}', '{x}'), {
+    maxZoom: 17, maxNativeZoom: 19,
+    attribution: 'Imagery: Esri World Imagery Wayback, Maxar, Earthstar Geographics'
+  }).addTo(map);
+  document.querySelector('#presets .chip')?.click();
+} catch (e) {
+  setStatus('Could not load the imagery archive. Refresh the page to try again.', true);
+}
+</script>
+</body>
+</html>
