@@ -255,7 +255,7 @@ const SITES = [
     { name: 'Al Maktoum International', lat: 24.8960, lon: 55.1610, z: 13, kind: 'build' } ] }
 ];
 
-const TILE = 256, W = 1024, H = 768;
+const TILE = 256, W = 1024, H = 768, AI_W = 768, AI_H = 576;
 const state = { site: null, kind: 'any', frame: null, options: [], before: null, after: null, loadId: 0, ready: false, busy: false };
 
 /* ---------- helpers ---------- */
@@ -304,7 +304,11 @@ async function compose(item, frame) {
     }
   }
   await Promise.all(jobs);
-  return { dataUrl: c.toDataURL('image/jpeg', 0.85), missing, total };
+  // A smaller copy for the AI: 768x576 fits in one Gemini image tile, which is
+  // about 4x fewer tokens than the full frame and much faster to analyse.
+  const s = document.createElement('canvas'); s.width = AI_W; s.height = AI_H;
+  const sctx = s.getContext('2d'); sctx.imageSmoothingQuality = 'high'; sctx.drawImage(c, 0, 0, AI_W, AI_H);
+  return { dataUrl: c.toDataURL('image/jpeg', 0.85), aiUrl: s.toDataURL('image/jpeg', 0.82), missing, total };
 }
 
 /* ---------- map ---------- */
@@ -431,8 +435,8 @@ async function loadImagery() {
   try {
     const [ra, rb] = await Promise.all([compose(a.item, state.frame), b ? compose(b.item, state.frame) : null]);
     if (id !== state.loadId) return;
-    state.after = { dataUrl: ra.dataUrl, label: a.label + (a.detail ? ' · ' + a.detail : '') };
-    state.before = rb ? { dataUrl: rb.dataUrl, label: b.label + (b.detail ? ' · ' + b.detail : '') } : null;
+    state.after = { dataUrl: ra.dataUrl, aiUrl: ra.aiUrl, label: a.label + (a.detail ? ' · ' + a.detail : '') };
+    state.before = rb ? { dataUrl: rb.dataUrl, aiUrl: rb.aiUrl, label: b.label + (b.detail ? ' · ' + b.detail : '') } : null;
     $('#imgAfter').src = ra.dataUrl; $('#imgAfter').hidden = false;
     $('#imgAfter').alt = `Satellite image of ${state.site || 'the selected area'}, ${a.label}`;
     if (rb) { $('#imgBefore').src = rb.dataUrl; $('#imgBefore').alt = `Satellite image of ${state.site || 'the selected area'}, ${b.label}`; }
@@ -481,9 +485,9 @@ async function ask() {
       method: 'POST', headers: { 'content-type': 'application/json' }, signal: ctrl.signal,
       body: JSON.stringify({
         question, site: state.site || 'Selected area',
-        footprint: `about ${fmtKm(W * mpp)} wide, roughly ${mpp.toFixed(1)} m per pixel`,
-        after: { data: state.after.dataUrl, label: state.after.label },
-        before: state.before ? { data: state.before.dataUrl, label: state.before.label } : null
+        footprint: `about ${fmtKm(W * mpp)} wide, roughly ${(mpp * W / AI_W).toFixed(1)} m per pixel`,
+        after: { data: state.after.aiUrl, label: state.after.label },
+        before: state.before ? { data: state.before.aiUrl, label: state.before.label } : null
       })
     });
     const data = await r.json().catch(() => ({ error: 'Unexpected response from the server.' }));

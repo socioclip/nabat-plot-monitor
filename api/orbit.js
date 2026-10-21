@@ -73,8 +73,8 @@ function cleanImage(img) {
 // Gemini sometimes hangs or returns 429/500/503 under load. Each attempt gets a
 // hard timeout, transient errors are retried once with a short pause, and then
 // the next model in the list is tried, all inside a total time budget.
-const ATTEMPT_TIMEOUT_MS = 22000;
-const TOTAL_BUDGET_MS = 50000;
+const ATTEMPT_TIMEOUT_MS = 30000;
+const TOTAL_BUDGET_MS = 55000;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function callGemini(key, model, parts, timeoutMs) {
@@ -88,7 +88,11 @@ async function callGemini(key, model, parts, timeoutMs) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM }] },
         contents: [{ role: 'user', parts }],
-        generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA }
+        generationConfig: {
+          temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA,
+          // Keep "thinking" short: this task is looking, not long reasoning, and thinking adds most of the latency.
+          ...(/^gemini-2\.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : /^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: 'low' } } : {})
+        }
       })
     });
     const data = await r.json().catch(() => ({}));
@@ -136,13 +140,16 @@ module.exports = async (req, res) => {
   const models = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : FALLBACK_MODELS;
   const started = Date.now();
   let out = null, lastErr = '', lastStatus = 0;
+  const log = [];
   outer:
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const left = TOTAL_BUDGET_MS - (Date.now() - started);
       if (left < 4000) break outer;
+      const t0 = Date.now();
       const { status, data } = await callGemini(key, model, parts, Math.min(ATTEMPT_TIMEOUT_MS, left));
       lastStatus = status;
+      log.push(`${model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       if (status === 200) {
         const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
         try { out = JSON.parse(text); out.model = model; break outer; } catch { lastErr = 'The model returned an unreadable answer.'; continue; }
@@ -159,7 +166,8 @@ module.exports = async (req, res) => {
     const slow = lastStatus === 504;
     return res.status(busy ? 429 : slow ? 504 : 502).json({
       error: busy ? 'The AI service is busy right now. Try again in a minute.' : slow ? 'The AI service is slow right now. Try again in a moment.' : 'The AI service failed to answer. Try again.',
-      detail: lastErr.slice(0, 300)
+      detail: lastErr.slice(0, 300),
+      attempts: log
     });
   }
 
@@ -172,6 +180,7 @@ module.exports = async (req, res) => {
     confidenceReason: String(out.confidenceReason || ''),
     limitations: arr(out.limitations, 5).map(String),
     followUps: arr(out.followUps, 3).map(String),
-    model: out.model
+    model: out.model,
+    attempts: log
   });
 };
