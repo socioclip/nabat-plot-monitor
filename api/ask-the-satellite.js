@@ -108,7 +108,7 @@ async function callGemini(key, model, parts, timeoutMs) {
 
 
 // ---------- Groq (OpenAI-compatible) ----------
-const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GROQ_TIMEOUT_MS = 20000;
 const JSON_SHAPE = `Reply with ONLY a JSON object, no other text, in exactly this shape:
 {"answer": string (2-4 sentences),
