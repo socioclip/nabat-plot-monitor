@@ -373,7 +373,7 @@ async function analyseView() {
   setStatus('');
   try {
     const pt = { latitude: c.lat, longitude: c.lng };
-    let items = await getWaybackItemsWithLocalChanges(pt, z);
+    let items = await getWaybackItemsWithLocalChanges(pt, z, { onlyUseSizeToFilterDuplicates: true });
     if (id !== state.loadId) return;
     if (!items.length) items = (await getWaybackItems()).slice(0, 1);
     items = items.slice(0, 16);
