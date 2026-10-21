@@ -73,7 +73,7 @@ function cleanImage(img) {
 // Gemini sometimes hangs or returns 429/500/503 under load. Each attempt gets a
 // hard timeout, transient errors are retried once with a short pause, and then
 // the next model in the list is tried, all inside a total time budget.
-const ATTEMPT_TIMEOUT_MS = 30000;
+const ATTEMPT_TIMEOUT_MS = 15000; // normal answers take 3-7s
 const TOTAL_BUDGET_MS = 55000;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -157,6 +157,7 @@ module.exports = async (req, res) => {
       lastErr = data?.error?.message || `Model error (${status}).`;
       if (status === 401 || status === 403) break outer; // bad key: other models won't help
       if (status === 400 || status === 404) break;       // this model can't take the request: try the next one
+      if (status === 504) break;                         // stalled: move straight to the next model
       if (status === 429 || status >= 500 || status === 0) { await sleep(attempt === 0 ? 1200 : 0); continue; }
       break;
     }
