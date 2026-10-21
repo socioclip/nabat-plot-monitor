@@ -1,6 +1,7 @@
 // Ask the satellite: questions about satellite imagery of a place at two dates.
-// Vercel serverless function. Needs the GEMINI_API_KEY environment variable.
-// Optional: GEMINI_MODEL to pin a specific model.
+// Vercel serverless function.
+// Providers: Groq (GROQ_API_KEY, free tier, tried first) then Google Gemini (GEMINI_API_KEY) as backup.
+// Optional: GROQ_MODEL, GEMINI_MODEL to pin specific models.
 //
 // The browser sends one or two JPEG snapshots (base64) of the same area, plus the
 // capture dates and the question. Gemini returns a structured, analyst-style note.
@@ -105,6 +106,69 @@ async function callGemini(key, model, parts, timeoutMs) {
   }
 }
 
+
+// ---------- Groq (OpenAI-compatible) ----------
+const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+const GROQ_TIMEOUT_MS = 20000;
+const JSON_SHAPE = `Reply with ONLY a JSON object, no other text, in exactly this shape:
+{"answer": string (2-4 sentences),
+ "observations": [string] (2-5 items, what is visible in the most recent image),
+ "changes": [{"what": string, "where": string, "significance": "High"|"Medium"|"Low"}] (empty if one image or no change),
+ "counts": [{"label": string, "before": string like "8-10" or "", "after": string}] (only if the question asks for a count, else []),
+ "confidence": "High"|"Medium"|"Low",
+ "confidenceReason": string (one sentence),
+ "limitations": [string] (1-4 items),
+ "followUps": [string] (2 short follow-up questions)}`;
+
+function toGroqMessages(parts) {
+  const content = parts.map(p => p.inlineData
+    ? { type: 'image_url', image_url: { url: `data:${p.inlineData.mimeType};base64,${p.inlineData.data}` } }
+    : { type: 'text', text: p.text });
+  return [{ role: 'system', content: SYSTEM + '\n\n' + JSON_SHAPE }, { role: 'user', content }];
+}
+
+function parseLooseJson(text) {
+  let t = String(text || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```(?:json)?/gi, '').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b <= a) throw new Error('no json');
+  return JSON.parse(t.slice(a, b + 1));
+}
+
+async function callGroq(key, parts, timeoutMs, extras) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model: GROQ_MODEL, messages: toGroqMessages(parts), temperature: 0.2, max_completion_tokens: 1400, ...extras })
+    });
+    const data = await r.json().catch(() => ({}));
+    return { status: r.status, data };
+  } catch (e) {
+    return { status: e.name === 'AbortError' ? 504 : 0, data: { error: { message: e.name === 'AbortError' ? 'The model took too long to answer.' : 'Could not reach the AI service.' } } };
+  } finally { clearTimeout(timer); }
+}
+
+// One Groq try (plus one retry without optional parameters if Groq rejects them).
+async function tryGroq(parts, log) {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return null;
+  const variants = [{ response_format: { type: 'json_object' }, reasoning_format: 'hidden' }, {}];
+  for (const extras of variants) {
+    const t0 = Date.now();
+    const { status, data } = await callGroq(key, parts, GROQ_TIMEOUT_MS, extras);
+    const msg = data?.error?.message ? ' ' + String(data.error.message).slice(0, 200) : '';
+    log.push(`groq:${GROQ_MODEL} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 ? msg : ''));
+    if (status === 200) {
+      try { const out = parseLooseJson(data?.choices?.[0]?.message?.content); out.model = GROQ_MODEL + ' via Groq'; return out; }
+      catch { log.push('groq: unreadable answer'); return null; }
+    }
+    if (status !== 400) return null; // busy, rate-limited, slow or bad key: hand over to Gemini
+  }
+  return null;
+}
+
 const arr = (v, n) => (Array.isArray(v) ? v : []).slice(0, n);
 const level = v => (['High', 'Medium', 'Low'].includes(v) ? v : 'Low');
 
@@ -113,7 +177,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.setHeader('allow', 'POST'); return res.status(405).json({ error: 'Use POST.' }); }
 
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(503).json({ error: 'The demo is not connected to an AI model yet (GEMINI_API_KEY is not set).' });
+  if (!key && !process.env.GROQ_API_KEY) return res.status(503).json({ error: 'The demo is not connected to an AI model yet.' });
 
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = {}; } }
@@ -138,16 +202,19 @@ module.exports = async (req, res) => {
   parts.push({ inlineData: { mimeType: after.mime, data: after.data } });
   parts.push({ text: `Question: ${question}` });
 
-  const models = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : FALLBACK_MODELS;
+  const log = [];
+  const started = Date.now();
+  let out = await tryGroq(parts, log);
+
+  const models = !key ? [] : process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : FALLBACK_MODELS;
   // Alternate between models (A, B, A, B...) so an overloaded, rate-limited or
   // stalled model gets a short rest while the other one is tried.
   const plan = [];
   for (let round = 0; round < 3; round++) plan.push(...models);
   const dead = new Set();
-  const started = Date.now();
-  let out = null, lastErr = '', lastStatus = 0, tries = 0, quotaOut = false;
-  const log = [];
-  for (const model of plan) {
+  let lastErr = '', lastStatus = 0, tries = 0, quotaOut = false;
+  if (!out && !key) lastErr = 'Groq could not answer and no backup model is configured.';
+  for (const model of out ? [] : plan) {
     if (dead.has(model)) continue;
     const left = TOTAL_BUDGET_MS - (Date.now() - started);
     if (left < 4000) break;

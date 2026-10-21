@@ -8,7 +8,7 @@ Static site, no build step. Every push to `main` deploys to production on Vercel
 - `index.html` — homepage: intro, grid of AI products, approach, experience, contact
 - `work/*.html` — one case study per product (Cite, Geospatial Plant Monitor, Signal, Tone Coach, Ledger)
 - `assets/site.css` — shared styles (light and dark mode)
-- `ask-the-satellite/index.html` + `api/ask-the-satellite.js` — Ask the satellite: compare a place at two dates from Esri World Imagery Wayback and ask questions answered by Gemini vision (needs `GEMINI_API_KEY`)
+- `ask-the-satellite/index.html` + `api/ask-the-satellite.js` — Ask the satellite: compare a place at two dates from Esri World Imagery Wayback and ask questions answered by a vision model: Groq (`GROQ_API_KEY`) first, Gemini (`GEMINI_API_KEY`) as backup
 - `plant-monitor/index.html` — the Geospatial Plant Monitor dashboard (self-contained HTML/CSS/JS). Served at `/plant-monitor` (old `/nabat` links redirect)
 - `vercel.json` — clean URLs (e.g. `/work/cite`)
 
