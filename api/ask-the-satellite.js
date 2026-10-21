@@ -156,7 +156,7 @@ module.exports = async (req, res) => {
     const t0 = Date.now();
     const { status, data } = await callGemini(key, model, parts, Math.min(ATTEMPT_TIMEOUT_MS, TOTAL_BUDGET_MS - (Date.now() - started)));
     lastStatus = status;
-    log.push(`${model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    log.push(`${model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 220) : ''));
     if (status === 200) {
       const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
       try { out = JSON.parse(text); out.model = model; break; } catch { lastErr = 'The model returned an unreadable answer.'; continue; }
