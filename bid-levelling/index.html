@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bid Levelling Copilot · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="An AI copilot that reads contractor bids in any format, maps them to the tender BOQ, catches errors and exclusions, checks every rate against should-cost, and levels the bids for a fair award.">
+<meta property="og:title" content="Bid Levelling Copilot · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="An AI copilot that reads contractor bids in any format, maps them to the tender BOQ, catches errors and exclusions, checks every rate against should-cost, and levels the bids for a fair award.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/bid-levelling">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/bid-levelling">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one tender told top to bottom on a numbered rail. Lane colour = whose world: developer (navy), contractors (amber), AI copilot (blue). Single light theme, drawing-office feel. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F4F6F8; --line:#DDE2E8; --grid:#EEF1F4;
+  --ink:#14213D; --muted:#5E6878; --navy:#14213D; --navy-soft:#E6E9F0;
+  --blue:#1F5FAD; --blue-soft:#E3EDF9; --amber:#C77700; --amber-soft:#FFF1D9;
+  --good:#1E7B4C; --good-soft:#E1F3E9; --bad:#C0392B; --bad-soft:#FBE6E3; --warn:#B76E00; --warn-soft:#FFF3DC;
+  --display:"IBM Plex Sans Condensed","IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,4.6vw,50px);line-height:1.04;font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(21px,2.5vw,26px);line-height:1.15;font-weight:700}
+h3{font-size:15px;font-weight:600;font-family:var(--body)}
+p{margin:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:16px;margin-bottom:26px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:19px}
+.logo .mk{width:34px;height:34px;border-radius:6px;background:var(--navy);display:grid;place-items:center}
+.logo small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted)}
+.back{font-size:13px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:500}
+.intro{max-width:800px}
+.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:66ch}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:18px;font-size:13.5px;color:var(--muted)}
+.lane{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:4px;white-space:nowrap;justify-self:start}
+.lane::before{content:"";width:7px;height:7px;background:currentColor}
+.lane.dev{background:var(--navy-soft);color:var(--navy)}
+.lane.con{background:var(--amber-soft);color:var(--amber)}
+.lane.ai{background:var(--blue-soft);color:var(--blue)}
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:24px}
+.facts div{background:var(--sunk);padding:12px 14px;font-size:12.5px;color:var(--muted)}
+.facts b{display:block;font-family:var(--display);font-size:19px;color:var(--ink)}
+/* rail */
+.story{margin-top:40px}
+.step{display:grid;grid-template-columns:48px minmax(0,290px) minmax(0,1fr);gap:0 22px;padding-bottom:48px;position:relative}
+.step::before{content:"";position:absolute;left:23px;top:48px;bottom:0;width:2px;background:repeating-linear-gradient(var(--line) 0 6px,transparent 6px 10px)}
+.step:last-child::before{display:none}
+.num{width:48px;height:48px;border-radius:6px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;background:#fff;border:2px solid var(--line);position:relative;z-index:1}
+.step.dev .num{border-color:var(--navy);color:var(--navy)}
+.step.con .num{border-color:var(--amber);color:var(--amber)}
+.step.ai .num{border-color:var(--blue);color:var(--blue)}
+.say{padding-top:4px;display:grid;gap:10px;align-content:start}
+.say p{color:var(--muted);font-size:14.5px}
+.result{color:var(--ink)!important;font-size:14px!important;border-left:3px solid var(--blue);padding-left:10px;background:var(--blue-soft);padding:8px 10px;border-radius:0 6px 6px 0}
+.result b{font-family:var(--mono);font-weight:600}
+.show{min-width:0}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+/* tables */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--grid);text-align:left;vertical-align:top}
+th{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500;background:var(--sunk);border-bottom:1px solid var(--line);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.sec td{background:#fff;font-weight:600;font-size:12px;color:var(--navy);padding-top:10px;border-bottom:1px solid var(--line)}
+tr.tot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none}
+.code{font-family:var(--mono);font-size:12px;color:var(--muted)}
+/* bidder tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tab{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.tab:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.sheet{font-family:var(--mono);font-size:12px;background:#FBFCF8;border:1px solid #D9E2C9;border-radius:6px;overflow-x:auto}
+.sheet table{font-size:12px}
+.sheet th{background:#EEF3E4;color:#4B5A3A;text-transform:none;letter-spacing:0;font-size:11.5px}
+.sheet td{border-bottom:1px solid #EBEFE3}
+.sheet .err{background:var(--bad-soft)}
+.notes{margin-top:10px;font-size:12.5px;background:var(--amber-soft);border-radius:6px;padding:8px 10px;color:#6B4A00}
+.bars{display:grid;gap:7px;margin-top:14px}
+.brow{display:grid;grid-template-columns:150px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px}
+.btrack{height:14px;background:var(--sunk);border-radius:2px;position:relative}
+.bfill{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
+.brow .n{font-family:var(--mono);text-align:right;font-size:12.5px}
+/* mapping */
+.conf{display:inline-block;width:56px;height:6px;background:var(--grid);border-radius:3px;position:relative;vertical-align:middle;margin-right:6px}
+.conf i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.rev{background:var(--warn-soft);color:var(--warn)}
+.chip.miss{background:var(--bad-soft);color:var(--bad)}
+.chip.conv{background:var(--blue-soft);color:var(--blue)}
+.arrow{color:var(--muted);font-family:var(--mono)}
+.mstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.mstat{border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.mstat b{display:block;font-family:var(--display);font-size:22px;color:var(--ink)}
+/* issues */
+.issues{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bidcol{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.bidcol h3{background:var(--sunk);padding:9px 12px;display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.bidcol h3 span{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--muted)}
+.iss{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:9px 12px;border-top:1px solid var(--grid);font-size:13px}
+.iss .k{font-size:10.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.iss .k.bad{color:var(--bad)} .iss .k.warn{color:var(--warn)} .iss .k.info{color:var(--blue)}
+.iss .amt{font-family:var(--mono);font-size:12.5px;text-align:right;white-space:nowrap;grid-row:span 2;align-self:center}
+.iss .d{color:var(--muted);font-size:12.5px}
+.clean{padding:10px 12px;font-size:13px;color:var(--good)}
+/* heatmap */
+.heat td.c{font-family:var(--mono);font-size:12px;text-align:center;white-space:nowrap;border:2px solid #fff;padding:6px 4px}
+.c.lo{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.c.ok{background:var(--good-soft);color:var(--good)}
+.c.hi{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.c.na{background:var(--sunk);color:var(--muted)}
+.hlegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.hlegend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:-2px}
+.fl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.flc{border:1px solid var(--line);border-radius:6px;padding:10px;font-size:12px;color:var(--muted)}
+.flc b{display:block;color:var(--ink);font-size:13px;margin-bottom:6px}
+.stack{display:flex;height:12px;border-radius:2px;overflow:hidden;margin:4px 0}
+.stack span{display:block;height:100%}
+/* levelling */
+.rules{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:end;padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--line)}
+label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+.tog{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+.tog input{width:16px;height:16px;accent-color:var(--blue)}
+.wf{overflow-x:auto}
+.rank{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.rk{border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.rk ol{margin:6px 0 0;padding-left:20px;font-size:13.5px}
+.rk li span{font-family:var(--mono);color:var(--muted);font-size:12.5px;margin-left:6px}
+/* recommendation */
+.rec{border:2px solid var(--navy);border-radius:8px;padding:16px;display:grid;gap:10px}
+.rec .who{font-family:var(--display);font-size:26px;font-weight:700}
+.rec .why{color:var(--muted);font-size:14px}
+.cols2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.list{display:grid;gap:6px;font-size:13px}
+.list div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--grid)}
+.list .n{font-family:var(--mono);white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:6px;border:1px solid var(--navy);background:var(--navy);color:#fff;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn[disabled]{opacity:.5;cursor:default}
+.memo{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:16px 18px;background:var(--sunk);font-size:14px;white-space:pre-wrap;max-height:520px;overflow:auto}
+.memo.empty{color:var(--muted);font-style:italic;white-space:normal}
+.mnote{font-size:12px;color:var(--muted);margin-top:6px}
+.foot{margin-top:32px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:920px){
+  .step{grid-template-columns:40px minmax(0,1fr);gap:12px 14px}
+  .step::before{left:19px;top:40px}
+  .num{width:40px;height:40px;font-size:18px}
+  .show{grid-column:2}
+  .issues,.cols2,.rank{grid-template-columns:minmax(0,1fr)}
+  .facts,.fl,.mstats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){.brow{grid-template-columns:96px minmax(0,1fr) 78px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo"><span class="mk"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V9l8-5 8 5v11" stroke="#fff" stroke-width="1.8"/><path d="M8 20v-6h8v6M4 13h16" stroke="#fff" stroke-width="1.8"/></svg></span><span>Bid Levelling Copilot <small>· tender analysis</small></span></div>
+    <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  </div>
+
+  <header class="intro">
+    <div class="eyebrow">Demo · fictional developer, project and contractors</div>
+    <h1>Four contractor bids, four formats. Level them in minutes, not days.</h1>
+    <p class="lead">A developer sends one Bill of Quantities to four contractors. Each sends back a priced BOQ in its own layout, with errors, gaps and fine print. Follow the tender from step 1 to the award recommendation in step 7.</p>
+    <div class="legend">
+      <span><span class="lane dev">Developer</span>&nbsp; the client running the tender</span>
+      <span><span class="lane con">Contractors</span>&nbsp; what the bidders send</span>
+      <span><span class="lane ai">AI copilot</span>&nbsp; what the software does</span>
+    </div>
+    <div class="facts">
+      <div><b>Tower C</b>Creekside Residences, 32 floors</div>
+      <div><b>Main works</b>structure, envelope, finishes</div>
+      <div><b>16 BOQ lines</b>in 6 sections</div>
+      <div><b id="factEst">AED —</b>pre-tender estimate</div>
+    </div>
+  </header>
+
+  <div class="story">
+    <section class="step dev" id="s1">
+      <div class="num">1</div>
+      <div class="say">
+        <span class="lane dev">Developer · tender issued</span>
+        <h2>One Bill of Quantities goes out to four contractors.</h2>
+        <p>The quantity surveyor measures the works into a BOQ: every item, its unit and quantity. Contractors fill in rates. Provisional sums are fixed amounts everyone must carry unchanged.</p>
+        <p class="result" id="r1"></p>
+      </div>
+      <div class="show panel tbl"><table id="boq"></table></div>
+    </section>
+
+    <section class="step con" id="s2">
+      <div class="num">2</div>
+      <div class="say">
+        <span class="lane con">Contractors · bids received</span>
+        <h2>Bids come back, each in its own format.</h2>
+        <p>Different wording, different units, lines in a different order, a missing rate, notes at the bottom. This is exactly what the contractor sent. Pick a bidder to see their sheet.</p>
+        <p class="result" id="r2"></p>
+      </div>
+      <div class="show panel">
+        <div class="tabs" role="tablist" id="tabs2"></div>
+        <div class="sheet" id="raw"></div>
+        <div class="notes" id="rawNotes"></div>
+        <div class="bars" id="subBars"></div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s3">
+      <div class="num">3</div>
+      <div class="say">
+        <span class="lane ai">AI copilot · mapping</span>
+        <h2>Match every bid line to the tender BOQ.</h2>
+        <p>The copilot reads each description, expands trade shorthand (&ldquo;Blk&rdquo;, &ldquo;F/W&rdquo;, &ldquo;Reinf.&rdquo;), compares sizes and grades, checks the unit is compatible, and converts units where needed.</p>
+        <p>Low-confidence matches go to the QS for a one-click check instead of being guessed.</p>
+        <p class="result" id="r3"></p>
+      </div>
+      <div class="show panel">
+        <div class="tabs" role="tablist" id="tabs3"></div>
+        <div class="mstats" id="mstats"></div>
+        <div class="tbl"><table id="map"></table></div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s4">
+      <div class="num">4</div>
+      <div class="say">
+        <span class="lane ai">AI copilot · checks</span>
+        <h2>Catch errors, gaps and fine print.</h2>
+        <p>Every bid is checked for arithmetic slips, items left unpriced, quantities changed from the tender, provisional sums altered, and qualifications hidden in the notes. Each finding carries its money impact.</p>
+        <p class="result" id="r4"></p>
+      </div>
+      <div class="show"><div class="issues" id="issues"></div></div>
+    </section>
+
+    <section class="step ai" id="s5">
+      <div class="num">5</div>
+      <div class="say">
+        <span class="lane ai">AI copilot · should-cost</span>
+        <h2>Check every rate against what it should cost.</h2>
+        <p>Each rate is compared with a benchmark range from past tenders. Red rates are suspiciously low, a risk of claims later. Amber rates are high, so they are worth negotiating.</p>
+        <p>The copilot also checks whether a bidder has front-loaded the price into early work to get paid sooner.</p>
+        <p class="result" id="r5"></p>
+      </div>
+      <div class="show panel">
+        <div class="tbl"><table class="heat" id="heat"></table></div>
+        <div class="hlegend"><span><i style="background:var(--bad-soft);border:1px solid var(--bad)"></i>Below benchmark range</span><span><i style="background:var(--good-soft);border:1px solid var(--good)"></i>Within range</span><span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>Above range</span><span>Figures show rate vs benchmark mid-point</span></div>
+        <div class="fl" id="front"></div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s6">
+      <div class="num">6</div>
+      <div class="say">
+        <span class="lane ai">AI copilot · levelling</span>
+        <h2>Level the bids so they compare like for like.</h2>
+        <p>Starting from each submitted total, the copilot corrects arithmetic, re-prices tender quantities, adds a price for missing items, restores provisional sums, and adds allowances for risky qualifications and rates priced below the realistic range.</p>
+        <p>Change the rules to see the ranking move.</p>
+        <p class="result" id="r6"></p>
+      </div>
+      <div class="show panel">
+        <div class="rules">
+          <div><label for="missRule">Price missing items at</label><select id="missRule"><option value="median">Median of other bids</option><option value="bench">Benchmark mid-point</option><option value="high">Highest other bid (cautious)</option></select></div>
+          <label class="tog"><input type="checkbox" id="riskTog" checked> Add risk allowances (qualifications and abnormally low rates)</label>
+        </div>
+        <div class="wf"><svg id="wf" role="img" aria-label="Submitted versus levelled totals by bidder"></svg></div>
+        <div class="tbl" style="margin-top:10px"><table id="lvl"></table></div>
+        <div class="rank" id="rank"></div>
+      </div>
+    </section>
+
+    <section class="step dev" id="s7">
+      <div class="num">7</div>
+      <div class="say">
+        <span class="lane dev">Developer · award</span>
+        <h2>Recommend a contractor and what to negotiate.</h2>
+        <p>The cheapest bid on paper is often not the cheapest bid. The copilot recommends on the levelled price, lists the rates worth negotiating, and drafts the clarification questions for each bidder.</p>
+        <p class="result" id="r7"></p>
+      </div>
+      <div class="show">
+        <div class="rec" id="rec"></div>
+        <div class="cols2">
+          <div class="panel"><h3>Negotiate with the recommended bidder</h3><div class="list" id="nego" style="margin-top:8px"></div></div>
+          <div class="panel"><h3>Clarifications to send</h3><div class="list" id="clar" style="margin-top:8px"></div></div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between"><h3>Tender recommendation memo</h3><button class="btn" id="memoBtn" type="button">Draft the memo with AI</button></div>
+          <div class="memo empty" id="memo">The copilot writes a one-page award recommendation for the tender committee from the levelled results above.</div>
+          <div class="mnote" id="memoNote"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="foot">Designed and built by Syed Sarfaraz Ahmed · project, contractors, rates and benchmarks are fictional · demo only, not procurement advice</div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const M=x=>(x/1e6).toFixed(2)+"M";
+const AED=x=>"AED "+Math.round(x).toLocaleString("en-US");
+const R=x=>x>=100?Math.round(x).toLocaleString("en-US"):(+x).toFixed(2);
+
+// ---------------- tender BOQ ----------------
+// id, section, description, unit, qty, benchmark low/mid/high rate, type
+const BOQ=[
+  {id:"1.1",sec:"Preliminaries",d:"Preliminaries and general requirements",u:"LS",q:1,lo:6800000,mid:8200000,hi:9600000,early:true},
+  {id:"2.1",sec:"Substructure",d:"Excavation in any material including disposal",u:"m3",q:42000,lo:22,mid:28,hi:35,early:true},
+  {id:"2.2",sec:"Substructure",d:"Dewatering including monitoring",u:"LS",q:1,lo:1150000,mid:1450000,hi:1750000,early:true},
+  {id:"2.3",sec:"Substructure",d:"Bored cast-in-place piles 1000mm diameter",u:"m",q:9600,lo:950,mid:1150,hi:1350,early:true},
+  {id:"2.4",sec:"Substructure",d:"Concrete grade C45 in raft foundation",u:"m3",q:6800,lo:460,mid:520,hi:590,early:true},
+  {id:"3.1",sec:"Frame",d:"Concrete grade C60 in columns and walls",u:"m3",q:11200,lo:540,mid:610,hi:690,early:true},
+  {id:"3.2",sec:"Frame",d:"Concrete grade C45 in suspended slabs",u:"m3",q:18500,lo:480,mid:545,hi:615,early:true},
+  {id:"3.3",sec:"Frame",d:"Reinforcement steel bars grade B500",u:"t",q:6900,lo:2900,mid:3250,hi:3600,early:true},
+  {id:"3.4",sec:"Frame",d:"Formwork to soffits of suspended slabs",u:"m2",q:96000,lo:52,mid:62,hi:75,early:true},
+  {id:"4.1",sec:"Masonry",d:"Hollow concrete blockwork walls 200mm thick",u:"m2",q:54000,lo:58,mid:68,hi:80},
+  {id:"4.2",sec:"Masonry",d:"Concrete blockwork partitions 100mm thick",u:"m2",q:31000,lo:44,mid:52,hi:61},
+  {id:"5.1",sec:"Finishes & envelope",d:"Porcelain floor tiling 600x600mm",u:"m2",q:38000,lo:120,mid:145,hi:175},
+  {id:"5.2",sec:"Finishes & envelope",d:"Gypsum board suspended ceilings",u:"m2",q:41000,lo:74,mid:88,hi:104},
+  {id:"5.3",sec:"Finishes & envelope",d:"Emulsion paint three coats to internal walls",u:"m2",q:165000,lo:15,mid:18,hi:22},
+  {id:"5.4",sec:"Finishes & envelope",d:"Aluminium windows and curtain wall glazing",u:"m2",q:22500,lo:1000,mid:1180,hi:1400},
+  {id:"6.1",sec:"Provisional sums",d:"Provisional sum for MEP coordination works",u:"Sum",q:1,ps:4500000},
+  {id:"6.2",sec:"Provisional sums",d:"Provisional sum for landscaping",u:"Sum",q:1,ps:1200000}
+];
+BOQ.forEach(b=>{if(b.ps){b.lo=b.mid=b.hi=b.ps}});
+const EST=BOQ.reduce((s,b)=>s+b.q*b.mid,0);
+
+// ---------------- bids as received ----------------
+// rows: [boqId(hidden truth for demo only), description, unit, qty, rate, amount]; rate null = not priced
+function mk(id,d,u,qty,rate,amt){return{truth:id,d,u,q:qty,r:rate,a:amt===undefined?(rate==null?null:qty*rate):amt}}
+const BIDS=[
+  {id:"GS",name:"Gulfstone Builders",notes:["Dewatering excluded, assumed by client.","Reinforcement rate subject to steel price fluctuation clause.","Validity 30 days."],
+   risk:[{k:"Steel fluctuation clause",on:"3.3",pct:0.04,why:"Steel price risk moves to the developer"}],
+   rows:[
+    mk("1.1","Preliminaries & general items","LS",1,10660000),
+    mk("2.1","Excavation any material incl disposal","m3",42000,32.2),
+    mk("2.3","Bored piles 1000 dia","m",9600,1265),
+    mk("2.4","Raft concrete C45","m3",6800,562),
+    mk("3.1","Concrete C60 columns and walls","m3",11200,647),
+    mk("3.2","Concrete C45 suspended slabs","m3",18500,578),
+    mk("3.3","Rebar B500 (kg)","kg",6900000,3.05),
+    mk("3.4","Formwork to slab soffits","m2",96000,65),
+    mk("4.1","200mm hollow blockwork","m2",54000,57.8),
+    mk("4.2","100mm blockwork partitions","m2",31000,42.6),
+    mk("5.1","Porcelain tiles 600x600 to floors","m2",38000,101.5,38000*101.5-900000),
+    mk("5.2","Gypsum board false ceiling","m2",41000,63.4),
+    mk("5.3","Emulsion paint 3 coats internal walls","m2",165000,11),
+    mk("5.4","Aluminium windows and curtain wall","m2",22500,944),
+    mk("6.1","Provisional sum MEP coordination","Sum",1,4500000),
+    mk("6.2","Provisional sum landscaping","Sum",1,1200000)]},
+  {id:"VX",name:"Vertex Construction",notes:["Blockwork quantity re-measured from drawings.","Validity 60 days."],risk:[],
+   rows:[
+    mk("2.1","Bulk excavation, all materials","cu.m",42000,26.3),
+    mk("2.2","Dewatering incl. monitoring","LS",1,1356100),
+    mk("2.3","Bored cast-in-place piles Ø1000mm","rm",9600,1084),
+    mk("2.4","RC raft foundation grade C45/56","cu.m",6800,491.8),
+    mk("3.1","RC vertical elements C60/75","cu.m",11200,574.9),
+    mk("3.2","RC slabs C45/56","cu.m",18500,516.7),
+    mk("3.3","Reinforcement steel bars B500B","t",6900,3066),
+    mk("3.4","Slab formwork","sqm",96000,64),
+    mk("4.1","Blockwork 200 thk hollow","sqm",51000,65.9),
+    mk("4.2","Blockwork 100 thk","sqm",31000,48.7),
+    mk("5.1","Floor tiling porcelain 600x600mm","sqm",38000,142.3),
+    mk("5.2","Suspended gypsum ceilings","sqm",41000,95),
+    mk("5.3","Internal painting, 3 coats","sqm",165000,17.7),
+    mk("5.4","Curtain walling & windows (aluminium)","sqm",22500,1151),
+    mk("1.1","General requirements / prelims","item",1,8550000),
+    mk("6.1","PS - MEP coordination works","Sum",1,3800000),
+    mk("6.2","PS - Landscaping","Sum",1,1200000)]},
+  {id:"AN",name:"Al Noor Contracting",notes:["Validity 90 days."],risk:[],
+   rows:[
+    mk("1.1","Preliminaries (site set-up, supervision, insurances)","LS",1,8900000),
+    mk("2.1","Excavate in any material & cart away","m3",42000,30.5),
+    mk("2.2","Dewatering system","item",1,1580000),
+    mk("2.3","1000mm diameter bored piling","lin.m",9600,1240),
+    mk("2.4","Concrete C45 in raft","m3",6800,566),
+    mk("3.1","C60 concrete to columns & core walls","m3",11200,662),
+    mk("3.2","C45 concrete to slabs","m3",18500,590),
+    mk("3.3","High yield reinforcement B500","ton",6900,3480),
+    mk("3.4","Formwork soffits of suspended slabs","sq.m",96000,67),
+    mk("4.1","Hollow concrete block walls 200mm","sq.m",54000,73),
+    mk("4.2","Solid block partitions 100mm","sq.m",31000,56),
+    mk("5.1","600x600 porcelain floor finish","sq.m",38000,158),
+    mk("5.2","Gypsum board ceilings incl. framing","sq.m",41000,96),
+    mk("5.3","Paint to internal walls (3 coats emulsion)","sq.m",165000,19.5),
+    mk("5.4","Aluminium glazing system","sq.m",22500,1290),
+    mk("6.1","Provisional sum for MEP coordination","Sum",1,4500000),
+    mk("6.2","Provisional sum for landscaping","Sum",1,1200000)]},
+  {id:"CE",name:"Crescent Engineering",notes:["Curtain wall rate to follow after supplier quotes.","Excludes authority fees and utility connection charges."],
+   risk:[{k:"Authority fees excluded",fixed:650000,why:"Typical DEWA and civil defence fees for a tower this size"}],
+   rows:[
+    mk("1.1","PRELIMS - LUMP SUM","Sum",1,8450000),
+    mk("2.1","Exc. any mat'l","CUM",42000,26.8),
+    mk("2.2","Dewatering","LS",1,1390000),
+    mk("2.3","Piles D1000","m",9600,820),
+    mk("2.4","Raft conc. C45","CUM",6800,505),
+    mk("3.1","Cols/walls conc C60","CUM",11200,598),
+    mk("3.2","Slab conc. C45","CUM",18500,531),
+    mk("3.3","Reinf. steel","MT",6900,3240),
+    mk("3.4","F/W slabs","SQM",96000,60),
+    mk("4.1","Blk 200","SQM",54000,66),
+    mk("4.2","Blk 100","SQM",31000,50),
+    mk("5.1","Flr tiles 60x60","SQM",38000,141),
+    mk("5.2","Clg gyp bd","SQM",41000,86),
+    mk("5.3","Int. paint","SQM",165000,17.5),
+    mk("5.4","CW/windows alu","SQM",22500,null,null),
+    mk("6.1","PS MEP","Sum",1,4500000),
+    mk("6.2","PS Landscape","Sum",1,1200000)]}
+];
+BIDS.forEach(b=>b.submitted=b.rows.reduce((s,r)=>s+(r.a||0),0));
+
+// ---------------- mapping engine ----------------
+const SYN={exc:"excavation",excavate:"excavation",bulk:"excavation",mat:"material",materials:"material",conc:"concrete",rc:"concrete",cols:"columns",col:"columns",vertical:"columns",core:"walls",
+  reinf:"reinforcement",rebar:"reinforcement",reinforcement:"reinforcement",yield:"reinforcement",fw:"formwork",blk:"blockwork",block:"blockwork",blockwork:"blockwork",flr:"floor",tiles:"tiling",tiling:"tiling",finish:"tiling",
+  clg:"ceiling",ceilings:"ceiling",gyp:"gypsum",bd:"board",int:"internal",painting:"paint",cw:"curtain",alu:"aluminium",aluminum:"aluminium",glazing:"curtain",walling:"curtain",prelims:"preliminaries",ps:"provisional",
+  piles:"piles",piling:"piles",landscape:"landscaping",slab:"slabs",soffits:"slabs",partitions:"partitions",thk:"",dia:"",diameter:"",incl:"",including:"",and:"",to:"",in:"",of:"",the:"",any:"",all:"",with:"",for:"",sum:"",lump:"",grade:"",mm:"",cart:"",away:"",disposal:"",system:"",general:"",items:"",item:""};
+const UNIT={m3:"vol","cu.m":"vol",cum:"vol",m:"len",rm:"len","lin.m":"len",m2:"area",sqm:"area","sq.m":"area",t:"mass",ton:"mass",tonne:"mass",mt:"mass",kg:"mass",ls:"sum",item:"sum",sum:"sum"};
+function tokens(s){
+  const out=[];let t=s.toLowerCase().replace(/[ø]/g," ").replace(/\/(\d)/g," $1").replace(/[(),&'.]/g," ").replace(/f\/w/g,"fw").replace(/[\/-]/g," ");
+  t=t.replace(/(\d+)x(\d+)/g,(m,a,b)=>{let A=+a,B=+b;if(A<100&&B<100){A*=10;B*=10}return" size"+A+"x"+B+" "});
+  t=t.replace(/\b[cd](\d{2,4})\b/g," $1 ");
+  for(let w of t.split(/\s+/)){if(!w)continue;w=w.replace(/mm$/,"");if(w in SYN)w=SYN[w];if(!w)continue;if(w.length<2&&!/\d/.test(w))continue;out.push(w)}
+  return out;
+}
+function sim(a,b){const A=new Set(a),B=new Set(b);let inter=0,uni=0;
+  const wt=x=>/\d/.test(x)?2.2:1;
+  for(const x of new Set([...A,...B])){const w=wt(x);uni+=w;if(A.has(x)&&B.has(x))inter+=w}
+  // penalise conflicting numbers (e.g. 200 vs 100, C45 vs C60)
+  const nA=[...A].filter(x=>/^\d+$/.test(x)),nB=[...B].filter(x=>/^\d+$/.test(x));
+  let pen=0;if(nA.length&&nB.length&&!nA.some(x=>nB.includes(x)))pen=0.35;
+  return Math.max(0,inter/uni-pen);
+}
+const BOQTOK=BOQ.map(b=>tokens(b.d));
+function mapBid(bid){
+  const cand=[];
+  bid.rows.forEach((r,ri)=>{const rt=tokens(r.d),ru=UNIT[r.u.toLowerCase()];
+    BOQ.forEach((b,bi)=>{let s=sim(rt,BOQTOK[bi]);const bu=UNIT[b.u.toLowerCase()];if(ru&&bu&&ru===bu)s+=0.18;else s-=0.25;cand.push({ri,bi,s})})});
+  cand.sort((a,b)=>b.s-a.s);
+  const usedR=new Set(),usedB=new Set(),map={};
+  for(const c of cand){if(usedR.has(c.ri)||usedB.has(c.bi)||c.s<0.12)continue;usedR.add(c.ri);usedB.add(c.bi);map[c.ri]={bi:c.bi,conf:Math.min(1,c.s/0.95)}}
+  return bid.rows.map((r,ri)=>{const m=map[ri];if(!m)return{row:r,boq:null,conf:0};const b=BOQ[m.bi];
+    let conv=null,qty=r.q,rate=r.r;
+    if(r.u.toLowerCase()==="kg"&&b.u==="t"){conv="kg → t";qty=r.q/1000;rate=r.r==null?null:r.r*1000}
+    else if(r.u.toLowerCase()!==b.u.toLowerCase()&&UNIT[r.u.toLowerCase()]===UNIT[b.u.toLowerCase()]&&!["sum"].includes(UNIT[b.u.toLowerCase()])){conv=`${r.u} = ${b.u}`}
+    if(/60x60/.test(r.d)&&/600x600/.test(b.d))conv="60x60 cm = 600x600 mm";
+    return{row:r,boq:b,conf:m.conf,conv,qty,rate}});
+}
+BIDS.forEach(b=>{b.map=mapBid(b);b.byId={};b.map.forEach(m=>{if(m.boq)b.byId[m.boq.id]=m})});
+
+// ---------------- checks ----------------
+function checks(bid){
+  const out=[];
+  bid.map.forEach(m=>{const r=m.row;if(r.r!=null&&r.a!=null&&Math.abs(r.q*r.r-r.a)>1)out.push({t:"bad",k:"Arithmetic error",d:`${m.boq?m.boq.id+" ":""}${r.d}: ${R(r.q)} × ${R(r.r)} = ${AED(r.q*r.r)}, but the sheet shows ${AED(r.a)}.`,amt:r.q*r.r-r.a,adj:"arith",id:m.boq&&m.boq.id})});
+  BOQ.forEach(b=>{const m=bid.byId[b.id];
+    if(!m)out.push({t:"bad",k:"Item missing",d:`${b.id} ${b.d} is not in the bid.`,amt:null,adj:"missing",id:b.id});
+    else if(m.rate==null)out.push({t:"bad",k:"Item not priced",d:`${b.id} ${b.d}: rate left blank ("to follow").`,amt:null,adj:"missing",id:b.id});
+    else if(b.ps&&Math.abs(m.rate*m.qty-b.ps)>1)out.push({t:"bad",k:"Provisional sum changed",d:`${b.id} carried at ${AED(m.rate*m.qty)} instead of the fixed ${AED(b.ps)}.`,amt:b.ps-m.rate*m.qty,adj:"ps",id:b.id});
+    else if(!b.ps&&Math.abs(m.qty-b.q)/b.q>0.005)out.push({t:"warn",k:"Quantity changed",d:`${b.id} ${b.d}: ${R(m.qty)} ${b.u} priced instead of the tender ${R(b.q)}.`,amt:(b.q-m.qty)*m.rate,adj:"qty",id:b.id});
+  });
+  bid.risk.forEach(x=>out.push({t:"warn",k:"Qualification",d:`${x.k}. ${x.why}.`,amt:null,adj:"risk",risk:x}));
+  const low=BOQ.filter(b=>!b.ps).map(b=>{const m=bid.byId[b.id];return m&&m.rate!=null&&m.rate<b.lo?{b,gap:(b.lo-m.rate)*b.q}:null}).filter(Boolean).filter(x=>x.gap>100000);
+  if(low.length){const g=low.reduce((s,x)=>s+x.gap,0);bid.lowGap=g;out.push({t:"warn",k:"Abnormally low rates",d:`${low.map(x=>x.b.id).join(", ")} priced below the realistic range. Expect claims or quality cuts later.`,amt:null,adj:"risk",low:g})}
+  bid.notes.filter(n=>/validity/i.test(n)).forEach(n=>{const days=+(n.match(/\d+/)||[0])[0];if(days&&days<60)out.push({t:"info",k:"Short validity",d:`Prices valid ${days} days only. The award must happen fast or the bid can be re-priced.`,amt:null,adj:null})});
+  return out;
+}
+BIDS.forEach(b=>b.issues=checks(b));
+
+// ---------------- levelling ----------------
+function rateFor(bid,id){const m=bid.byId[id];return m&&m.rate!=null?m.rate:null}
+function level(rule,riskOn){
+  return BIDS.map(bid=>{
+    const steps={arith:0,qty:0,missing:0,ps:0,risk:0};const lines={};
+    BOQ.forEach(b=>{
+      const m=bid.byId[b.id];let rate=m?m.rate:null,src="bid";
+      if(b.ps){rate=b.ps}
+      if(rate==null){const others=BIDS.filter(o=>o!==bid).map(o=>rateFor(o,b.id)).filter(x=>x!=null).sort((a,c)=>a-c);
+        rate=rule==="bench"?b.mid:rule==="high"?Math.max(...others):others[Math.floor(others.length/2)];src="added"}
+      lines[b.id]={rate,amt:rate*b.q,src};
+    });
+    bid.issues.forEach(i=>{if(i.adj==="arith")steps.arith+=i.amt;if(i.adj==="qty")steps.qty+=i.amt;if(i.adj==="ps")steps.ps+=i.amt});
+    BOQ.forEach(b=>{if(lines[b.id].src==="added")steps.missing+=lines[b.id].amt});
+    if(riskOn){bid.risk.forEach(x=>{steps.risk+=x.fixed?x.fixed:(lines[x.on].amt*x.pct)});steps.risk+=bid.lowGap||0}
+    const levelled=bid.submitted+steps.arith+steps.qty+steps.missing+steps.ps+steps.risk;
+    return{bid,steps,lines,levelled};
+  });
+}
+
+// ---------------- render ----------------
+let focus2="GS",focus3="CE";
+function renderBOQ(){
+  let h=`<thead><tr><th>Ref</th><th>Description</th><th>Unit</th><th class="n">Qty</th><th class="n">Benchmark rate</th></tr></thead><tbody>`,sec="";
+  BOQ.forEach(b=>{if(b.sec!==sec){sec=b.sec;h+=`<tr class="sec"><td colspan="5">${sec}</td></tr>`}
+    h+=`<tr><td class="code">${b.id}</td><td>${b.d}</td><td>${b.u}</td><td class="n">${b.q.toLocaleString("en-US")}</td><td class="n">${b.ps?"fixed "+M(b.ps):R(b.lo)+"–"+R(b.hi)}</td></tr>`});
+  h+=`<tr class="tot"><td></td><td>Pre-tender estimate (benchmark mid-points)</td><td></td><td></td><td class="n">${AED(EST)}</td></tr></tbody>`;
+  $("#boq").innerHTML=h;$("#factEst").textContent="AED "+M(EST);
+  $("#r1").innerHTML=`Estimate <b>AED ${M(EST)}</b>. Two provisional sums worth <b>AED ${M(5700000)}</b> must be carried unchanged.`;
+}
+function tabs(el,cur,cb){$(el).innerHTML=BIDS.map(b=>`<button class="tab" role="tab" type="button" aria-selected="${b.id===cur}" data-id="${b.id}">${b.name}</button>`).join("");
+  document.querySelectorAll(el+" .tab").forEach(t=>t.onclick=()=>cb(t.dataset.id))}
+function renderRaw(){
+  tabs("#tabs2",focus2,id=>{focus2=id;renderRaw()});
+  const b=BIDS.find(x=>x.id===focus2);
+  $("#raw").innerHTML=`<table><thead><tr><th>#</th><th>Description</th><th>Unit</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.rows.map((r,i)=>`<tr class="${r.r!=null&&r.a!=null&&Math.abs(r.q*r.r-r.a)>1?'':''}"><td>${i+1}</td><td>${esc(r.d)}</td><td>${esc(r.u)}</td><td class="n">${r.q.toLocaleString("en-US")}</td><td class="n">${r.r==null?"TBC":r.r.toLocaleString("en-US")}</td><td class="n">${r.a==null?"—":Math.round(r.a).toLocaleString("en-US")}</td></tr>`).join("")}
+  <tr><td></td><td><b>TOTAL</b></td><td></td><td></td><td></td><td class="n"><b>${Math.round(b.submitted).toLocaleString("en-US")}</b></td></tr></tbody></table>`;
+  $("#rawNotes").innerHTML="<b>Notes on the bid:</b> "+b.notes.map(esc).join(" ");
+  const max=Math.max(...BIDS.map(x=>x.submitted));
+  const sorted=[...BIDS].sort((a,c)=>a.submitted-c.submitted);
+  $("#subBars").innerHTML=`<h3 style="font-size:13px">Submitted totals, as received</h3>`+sorted.map(x=>`<div class="brow"><span>${x.name}</span><span class="btrack"><span class="bfill" style="width:${x.submitted/max*100}%;background:${x.id===focus2?'var(--amber)':'#E3C58F'}"></span></span><span class="n">${M(x.submitted)}</span></div>`).join("");
+  $("#r2").innerHTML=`Cheapest on paper: <b>${sorted[0].name}</b> at AED ${M(sorted[0].submitted)}. Highest: ${sorted[3].name} at AED ${M(sorted[3].submitted)}.`;
+}
+function renderMap(){
+  tabs("#tabs3",focus3,id=>{focus3=id;renderMap()});
+  const b=BIDS.find(x=>x.id===focus3);
+  const auto=b.map.filter(m=>m.boq&&m.conf>=0.5).length,rev=b.map.filter(m=>m.boq&&m.conf<0.5).length,conv=b.map.filter(m=>m.conv).length,miss=BOQ.filter(x=>!b.byId[x.id]).length;
+  $("#mstats").innerHTML=[["Matched automatically",auto],["Sent to QS to confirm",rev],["Units converted",conv],["Tender items not found",miss]].map(([k,v])=>`<div class="mstat"><b>${v}</b>${k}</div>`).join("");
+  const rows=[...b.map].sort((x,y)=>(x.boq?BOQ.indexOf(x.boq):99)-(y.boq?BOQ.indexOf(y.boq):99));
+  let h=`<thead><tr><th>Contractor wrote</th><th>Unit</th><th></th><th>Matched to tender line</th><th>Confidence</th></tr></thead><tbody>`;
+  rows.forEach(m=>{const pct=Math.round(m.conf*100),col=m.conf>=0.5?"var(--good)":"var(--warn)";
+    h+=`<tr><td>${esc(m.row.d)}</td><td class="code">${esc(m.row.u)}</td><td class="arrow">→</td><td>${m.boq?`<span class="code">${m.boq.id}</span> ${m.boq.d}${m.conv?` <span class="chip conv">${m.conv}</span>`:""}`:'<span class="chip miss">No match</span>'}</td><td style="white-space:nowrap"><span class="conf"><i style="width:${pct}%;background:${col}"></i></span>${m.conf>=0.5?'<span class="chip ok">Auto</span>':'<span class="chip rev">QS check</span>'}</td></tr>`});
+  BOQ.filter(x=>!b.byId[x.id]).forEach(x=>h+=`<tr><td style="color:var(--muted)">(nothing)</td><td></td><td class="arrow">→</td><td><span class="code">${x.id}</span> ${x.d}</td><td><span class="chip miss">Missing</span></td></tr>`);
+  $("#map").innerHTML=h+"</tbody>";
+  const all=BIDS.reduce((s,x)=>s+x.map.length,0),allAuto=BIDS.reduce((s,x)=>s+x.map.filter(m=>m.boq&&m.conf>=0.5).length,0),correct=BIDS.reduce((s,x)=>s+x.map.filter(m=>m.boq&&m.boq.id===m.row.truth).length,0);
+  $("#r3").innerHTML=`Across all four bids: <b>${allAuto} of ${all}</b> lines matched automatically, <b>${correct} of ${all}</b> matched correctly. The QS checks only ${all-allAuto}.`;
+}
+function renderIssues(){
+  $("#issues").innerHTML=BIDS.map(b=>`<div class="bidcol"><h3>${b.name}<span>${b.issues.length} finding${b.issues.length===1?"":"s"}</span></h3>${b.issues.length?b.issues.map(i=>`<div class="iss"><span class="k ${i.t}">${i.k}</span><span class="amt">${i.low?"+"+AED(i.low):i.amt==null?(i.adj==="missing"?"priced in step 6":i.adj==="risk"?"allowance in step 6":""):(i.amt>0?"+":"")+AED(i.amt)}</span><span class="d">${esc(i.d)}</span></div>`).join(""):'<div class="clean">No problems found.</div>'}</div>`).join("");
+  const n=BIDS.reduce((s,b)=>s+b.issues.filter(i=>i.t!=="info").length,0);
+  const worst=[...BIDS].sort((a,c)=>c.issues.length-a.issues.length)[0];
+  $("#r4").innerHTML=`<b>${n}</b> findings that change the price. Most problems: <b>${worst.name}</b>.`;
+}
+let lastNego=[];
+function renderHeat(){
+  const rated=BOQ.filter(b=>!b.ps);
+  let h=`<thead><tr><th>Ref</th><th>Item</th>${BIDS.map(b=>`<th class="n" style="text-align:center">${b.name.split(" ")[0]}</th>`).join("")}</tr></thead><tbody>`;
+  rated.forEach(b=>{h+=`<tr><td class="code">${b.id}</td><td>${b.d.length>42?b.d.slice(0,40)+"…":b.d}</td>`+BIDS.map(bid=>{const r=rateFor(bid,b.id);if(r==null)return`<td class="c na">—</td>`;
+    const pct=Math.round((r/b.mid-1)*100),cls=r<b.lo?"lo":r>b.hi?"hi":"ok";return`<td class="c ${cls}" title="${R(r)} vs ${R(b.lo)}–${R(b.hi)}">${pct>0?"+":""}${pct}%</td>`}).join("")+"</tr>"});
+  $("#heat").innerHTML=h+"</tbody>";
+  // front-loading: share of priced value in early works vs benchmark share
+  const benchEarly=rated.filter(b=>b.early).reduce((s,b)=>s+b.q*b.mid,0)/rated.reduce((s,b)=>s+b.q*b.mid,0);
+  $("#front").innerHTML=BIDS.map(bid=>{let e=0,t=0;rated.forEach(b=>{const r=rateFor(bid,b.id)??b.mid;t+=r*b.q;if(b.early)e+=r*b.q});const sh=e/t,diff=(sh-benchEarly)*100;
+    bid.frontDiff=diff;
+    return`<div class="flc"><b>${bid.name}</b><div class="stack"><span style="width:${sh*100}%;background:var(--navy)"></span><span style="width:${(1-sh)*100}%;background:#C9D3E3"></span></div>Early works ${Math.round(sh*100)}% of value (benchmark ${Math.round(benchEarly*100)}%)<br><span style="color:${diff>4?'var(--bad)':'var(--good)'};font-weight:600">${diff>4?`Front-loaded by ${diff.toFixed(1)} pts`:"Balanced"}</span></div>`}).join("");
+  const lows=BIDS.flatMap(bid=>rated.filter(b=>{const r=rateFor(bid,b.id);return r!=null&&r<b.lo}).map(b=>({bid,b,gap:(b.lo-rateFor(bid,b.id))*b.q}))).sort((x,y)=>y.gap-x.gap);
+  const fl=BIDS.filter(b=>b.frontDiff>4);
+  $("#r5").innerHTML=`<b>${lows.length}</b> rates below the benchmark range${lows.length?` (biggest: ${lows[0].bid.name.split(" ")[0]} on ${lows[0].b.id}, ${lows[0].b.d.toLowerCase()})`:""}.${fl.length?` <b>${fl.map(b=>b.name).join(", ")}</b> front-loaded the price into early works.`:""}`;
+}
+function renderLevel(){
+  const L=level($("#missRule").value,$("#riskTog").checked);
+  // chart
+  const svg=$("#wf"),Wc=640,rowH=46,top=26,l=150,r=90,iw=Wc-l-r,Hc=top+L.length*rowH+24;
+  svg.setAttribute("viewBox",`0 0 ${Wc} ${Hc}`);svg.setAttribute("width",Wc);svg.style.maxWidth="100%";svg.style.height="auto";
+  const vals=L.flatMap(x=>[x.bid.submitted,x.levelled]);const lo=Math.floor(Math.min(...vals)/1e7)*1e7-1e7,hi=Math.ceil(Math.max(...vals)/1e7)*1e7;
+  const X=v=>l+(v-lo)/(hi-lo)*iw;
+  let s="";for(let v=lo;v<=hi;v+=1e7)s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${top-6}" y2="${Hc-20}" stroke="var(--grid)"/><text x="${X(v)}" y="${Hc-6}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono">${v/1e6}M</text>`;
+  s+=`<text x="${l}" y="12" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Sans">○ submitted   ● levelled   (AED)</text>`;
+  const best=Math.min(...L.map(x=>x.levelled));
+  L.forEach((x,i)=>{const y=top+i*rowH+rowH/2,a=X(x.bid.submitted),b=X(x.levelled),win=x.levelled===best;
+    s+=`<text x="${l-10}" y="${y+4}" text-anchor="end" font-size="12.5" font-weight="${win?700:500}" fill="var(--ink)" font-family="IBM Plex Sans">${x.bid.name}</text>`;
+    s+=`<line x1="${a}" x2="${b}" y1="${y}" y2="${y}" stroke="${b>a+1?'var(--bad)':'var(--muted)'}" stroke-width="3"/>`;
+    s+=`<circle cx="${a}" cy="${y}" r="6" fill="#fff" stroke="var(--ink)" stroke-width="2"/><circle cx="${b}" cy="${y}" r="7" fill="${win?'var(--good)':'var(--navy)'}"/>`;
+    s+=`<text x="${Math.max(a,b)+12}" y="${y+4}" font-size="11.5" fill="var(--ink)" font-family="IBM Plex Mono">${M(x.levelled)}${b>a+1?` (+${M(x.levelled-x.bid.submitted)})`:""}</text>`});
+  svg.innerHTML=s;
+  const cols=[["Submitted",x=>x.bid.submitted],["Arithmetic",x=>x.steps.arith],["Quantities",x=>x.steps.qty],["Missing items",x=>x.steps.missing],["Prov. sums",x=>x.steps.ps],["Risk allowances",x=>x.steps.risk],["Levelled",x=>x.levelled]];
+  $("#lvl").innerHTML=`<thead><tr><th>Bidder</th>${cols.map(c=>`<th class="n">${c[0]}</th>`).join("")}</tr></thead><tbody>${L.map(x=>`<tr><td>${x.bid.name}</td>${cols.map((c,i)=>{const v=c[1](x);return`<td class="n"${i===6?' style="font-weight:700"':''}>${i===0||i===6?M(v):v===0?"—":(v>0?"+":"")+M(v)}</td>`}).join("")}</tr>`).join("")}</tbody>`;
+  const sub=[...L].sort((a,c)=>a.bid.submitted-c.bid.submitted),lev=[...L].sort((a,c)=>a.levelled-c.levelled);
+  $("#rank").innerHTML=`<div class="rk"><h3>On paper</h3><ol>${sub.map(x=>`<li>${x.bid.name}<span>${M(x.bid.submitted)}</span></li>`).join("")}</ol></div><div class="rk" style="border-color:var(--good)"><h3>After levelling</h3><ol>${lev.map(x=>`<li${x===lev[0]?' style="font-weight:700"':''}>${x.bid.name}<span>${M(x.levelled)}</span></li>`).join("")}</ol></div>`;
+  $("#r6").innerHTML=sub[0]===lev[0]?`Lowest levelled bid: <b>${lev[0].bid.name}</b>, AED ${M(lev[0].levelled)}.`:`The cheapest bid on paper, <b>${sub[0].bid.name}</b>, drops to #${lev.indexOf(sub[0])+1}. Lowest levelled: <b>${lev[0].bid.name}</b> at AED ${M(lev[0].levelled)}.`;
+  renderRec(L,sub,lev);
+}
+function renderRec(L,sub,lev){
+  const w=lev[0],bid=w.bid,second=lev[1];
+  const gap=second.levelled-w.levelled;
+  const hiItems=BOQ.filter(b=>!b.ps).map(b=>{const r=rateFor(bid,b.id);return r!=null&&r>b.mid?{b,r,save:(r-b.mid)*b.q}:null}).filter(Boolean).sort((a,c)=>c.save-a.save).slice(0,4);
+  lastNego=hiItems;
+  const nego=hiItems.reduce((s,x)=>s+x.save,0);
+  const flags=bid.issues.filter(i=>i.t!=="info");
+  $("#rec").innerHTML=`<span class="lane dev">Recommended for award, subject to clarifications</span><div class="who">${bid.name}</div>
+  <div class="why">Levelled price <b>AED ${M(w.levelled)}</b>, ${M(gap)} below the next bid (${second.bid.name}). ${flags.length?`${flags.length} item${flags.length>1?"s":""} to close before award.`:"No pricing problems found."} ${Math.abs(w.levelled-EST)/EST<0.05?"Within 5% of the pre-tender estimate.":`${w.levelled>EST?"Above":"Below"} the pre-tender estimate by ${(Math.abs(w.levelled-EST)/EST*100).toFixed(1)}%.`}</div>`;
+  $("#nego").innerHTML=hiItems.length?hiItems.map(x=>`<div><span><span class="code">${x.b.id}</span> ${x.b.d}<br><span style="color:var(--muted);font-size:12px">bid ${R(x.r)} vs benchmark ${R(x.b.mid)} per ${x.b.u}</span></span><span class="n">up to ${M(x.save)}</span></div>`).join("")+`<div><b>Target saving if all brought to benchmark</b><span class="n"><b>${M(nego)}</b></span></div>`:"<div>All rates at or below benchmark.</div>";
+  const clar=BIDS.flatMap(b=>b.issues.filter(i=>i.t!=="info").map(i=>({b,i}))).slice(0,9);
+  $("#clar").innerHTML=clar.map(({b,i})=>`<div><span><b>${b.name.split(" ")[0]}:</b> ${clarQ(i)}</span><span></span></div>`).join("");
+  $("#r7").innerHTML=`Award to <b>${bid.name}</b> at AED ${M(w.levelled)}, then negotiate up to <b>AED ${M(nego)}</b> off.`;
+  state.L=L;state.lev=lev;state.sub=sub;state.nego=nego;
+}
+function clarQ(i){
+  if(i.adj==="arith")return`Confirm the amount for ${i.id}; rate × quantity differs by ${AED(Math.abs(i.amt))}. Rates will govern.`;
+  if(i.adj==="missing")return`Price item ${i.id} or confirm it is included elsewhere.`;
+  if(i.adj==="ps")return`Reinstate provisional sum ${i.id} at the tender value.`;
+  if(i.adj==="qty")return`Price item ${i.id} at the tender quantity; re-measurement is handled after award.`;
+  if(i.adj==="risk"&&i.low)return`Confirm the low rates can be delivered to specification, with a breakdown.`;
+  if(i.adj==="risk")return`Withdraw the qualification: ${i.risk.k.toLowerCase()}.`;
+  return i.d;
+}
+const state={};
+
+// ---------------- AI memo ----------------
+function memoFacts(){
+  const{lev,sub,nego}=state;
+  return{project:"Tower C, Creekside Residences (32 floors), main works package",estimate_aed:Math.round(EST),
+    bids:lev.map((x,i)=>({rank_levelled:i+1,rank_on_paper:sub.indexOf(x)+1,contractor:x.bid.name,submitted_aed:Math.round(x.bid.submitted),levelled_aed:Math.round(x.levelled),
+      adjustments_aed:Object.fromEntries(Object.entries(x.steps).map(([k,v])=>[k,Math.round(v)])),findings:x.bid.issues.map(i=>i.k+": "+i.d),front_loaded_points:+(x.bid.frontDiff||0).toFixed(1)})),
+    negotiation_items:lastNego.map(x=>({item:x.b.id+" "+x.b.d,bid_rate:x.r,benchmark_rate:x.b.mid,unit:x.b.u,potential_saving_aed:Math.round(x.save)})),negotiation_total_aed:Math.round(nego),
+    missing_item_rule:$("#missRule").selectedOptions[0].text,risk_allowances:$("#riskTog").checked};
+}
+function templateMemo(f){
+  const w=f.bids[0],p=f.bids.find(b=>b.rank_on_paper===1);
+  return`TENDER RECOMMENDATION — ${f.project}
+
+Recommendation
+Award the main works to ${w.contractor} at a levelled price of AED ${(w.levelled_aed/1e6).toFixed(2)}M, subject to the clarifications below.
+
+Why
+• Four bids were received. After levelling (arithmetic, tender quantities, missing items priced at ${f.missing_item_rule.toLowerCase()}, provisional sums restored${f.risk_allowances?", risk allowances added":""}), ${w.contractor} is lowest.
+• ${p.contractor} was lowest on paper at AED ${(p.submitted_aed/1e6).toFixed(2)}M but levels to AED ${(p.levelled_aed/1e6).toFixed(2)}M (rank ${p.rank_levelled}).
+• The recommended price is ${(Math.abs(w.levelled_aed-f.estimate_aed)/f.estimate_aed*100).toFixed(1)}% ${w.levelled_aed>f.estimate_aed?"above":"below"} the pre-tender estimate of AED ${(f.estimate_aed/1e6).toFixed(2)}M.
+
+Levelled ranking
+${f.bids.map(b=>`${b.rank_levelled}. ${b.contractor} — AED ${(b.levelled_aed/1e6).toFixed(2)}M (submitted ${(b.submitted_aed/1e6).toFixed(2)}M)`).join("\n")}
+
+Before award
+${w.findings.length?w.findings.map(x=>"• "+x).join("\n"):"• No pricing issues found."}
+
+Negotiation targets
+${f.negotiation_items.map(n=>`• ${n.item}: ${n.bid_rate} vs ${n.benchmark_rate} per ${n.unit} (up to AED ${(n.potential_saving_aed/1e6).toFixed(2)}M)`).join("\n")}
+Target saving: up to AED ${(f.negotiation_total_aed/1e6).toFixed(2)}M.`;
+}
+$("#memoBtn").onclick=async()=>{
+  const btn=$("#memoBtn"),box=$("#memo"),note=$("#memoNote");btn.disabled=true;box.classList.remove("empty");box.textContent="Writing the memo…";note.textContent="";
+  const f=memoFacts();
+  try{
+    const r=await fetch("/api/tender-memo",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({facts:f})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.memo)throw new Error(d.error||"no memo");
+    box.textContent=d.memo;note.textContent="Drafted by "+(d.model||"an AI model")+" from the levelled figures above. Numbers come from the copilot, not the model.";
+  }catch(e){box.textContent=templateMemo(f);note.textContent="The AI model is busy, so this memo was assembled from a template using the same figures."}
+  btn.disabled=false;btn.textContent="Redraft the memo";
+};
+
+$("#missRule").addEventListener("input",renderLevel);$("#riskTog").addEventListener("input",renderLevel);
+renderBOQ();renderRaw();renderMap();renderIssues();renderHeat();renderLevel();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

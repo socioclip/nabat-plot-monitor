@@ -64,6 +64,9 @@
     },
     "api/concierge.js": {
       "maxDuration": 60
+    },
+    "api/tender-memo.js": {
+      "maxDuration": 60
     }
   }
 }
