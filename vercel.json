@@ -46,6 +46,16 @@
       "source": "/work/orbit",
       "destination": "/work/ask-the-satellite",
       "permanent": true
+    },
+    {
+      "source": "/ready-now",
+      "destination": "/sahn-rescue",
+      "permanent": true
+    },
+    {
+      "source": "/work/ready-now",
+      "destination": "/work/sahn-rescue",
+      "permanent": true
     }
   ],
   "functions": {
