@@ -1,4 +1,4 @@
-// Bid Levelling Copilot: drafts a tender award recommendation memo from figures the page has
+// BOQ & Tender Optimisation: drafts a tender award recommendation memo from figures the page has
 // already computed. The model only writes prose; every number comes from the request.
 // Providers: Groq (GROQ_API_KEY) first, then Google Gemini (GEMINI_API_KEY).
 
