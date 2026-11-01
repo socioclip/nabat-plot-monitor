@@ -51,6 +51,9 @@
   "functions": {
     "api/ask-the-satellite.js": {
       "maxDuration": 60
+    },
+    "api/concierge.js": {
+      "maxDuration": 60
     }
   }
 }

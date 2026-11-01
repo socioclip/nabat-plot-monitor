@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ready Now Rescue Engine · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="When a customer cancels a food order already on the road, this engine finds, prices and offers it to nearby customers within a 20-minute ride.">
+<meta property="og:title" content="Ready Now Rescue Engine · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="When a customer cancels a food order already on the road, this engine finds, prices and offers it to nearby customers within a 20-minute ride.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/ready-now">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/ready-now">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ops-console. Header band, then the engine's real sequence (order → reach → rank → price → dispatch → settle) as numbered panels. */
+:root{
+  --bg:#F3F5F1; --surface:#FFFFFF; --sunk:#E8ECE6; --line:#D3D9D1;
+  --ink:#18201C; --muted:#5B665F; --accent:#C97F00; --accent-ink:#7A4D00; --accent-soft:#F7E7C6;
+  --reach:#0E7466; --reach-soft:#CFE7E1; --bad:#B4471A; --good:#2F7D3A;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111613; --surface:#181F1B; --sunk:#202823; --line:#2E3832;
+  --ink:#E6EBE5; --muted:#9AA69E; --accent:#F0A82A; --accent-ink:#F6C878; --accent-soft:#3A2D12;
+  --reach:#3CC2AD; --reach-soft:#16352F; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111613; --surface:#181F1B; --sunk:#202823; --line:#2E3832;
+  --ink:#E6EBE5; --muted:#9AA69E; --accent:#F0A82A; --accent-ink:#F6C878; --accent-soft:#3A2D12;
+  --reach:#3CC2AD; --reach-soft:#16352F; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.2vw,46px);line-height:1.05;font-weight:700;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:700}
+h3{font-size:15px;font-weight:700;font-family:var(--body)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;align-items:end;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.hero p{max-width:62ch;color:var(--muted);margin:10px 0 0}
+.rules{display:grid;gap:6px;font-size:13.5px}
+.rules div{display:flex;gap:10px;align-items:baseline}
+.rules b{font-family:var(--mono);font-weight:500;color:var(--accent-ink);min-width:62px}
+.grid3{display:grid;grid-template-columns:300px minmax(0,1fr) 340px;gap:18px;align-items:start}
+.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.ph{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.step{font-family:var(--mono);font-size:12px;color:var(--accent-ink);background:var(--accent-soft);padding:1px 7px;border-radius:4px}
+label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px}
+select,input[type=number]{width:100%;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.val{float:right;font-family:var(--mono);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:7px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:600;font-size:14px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.cand:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+/* phone */
+.phone{border:1px solid var(--line);border-radius:22px;padding:14px;background:var(--bg);margin-top:14px}
+.sheet{background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--line)}
+.sheet .t{font-weight:600;font-size:14.5px}
+.sheet .s{font-size:12.5px;color:var(--muted)}
+.quote{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin:12px 0;font-size:13.5px}
+.quote .n{font-family:var(--mono);text-align:right}
+.chance{font-family:var(--mono);font-size:12px;padding:8px 10px;background:var(--reach-soft);color:var(--ink);border-radius:8px}
+.closed{background:var(--sunk);color:var(--muted)}
+/* map */
+.mapbox{overflow-x:auto}
+svg text{font-family:var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.chk{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px}
+.chk b{display:block;font-family:var(--mono);font-size:15px;font-weight:500}
+.chk.pass b{color:var(--good)} .chk.fail b{color:var(--bad)}
+/* candidates */
+.cands{display:grid;gap:4px}
+.cand{display:grid;grid-template-columns:22px minmax(0,1fr) 52px 54px;gap:8px;align-items:center;padding:6px 8px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--ink);text-align:left;font-size:13px;width:100%}
+.cand:hover{background:var(--sunk)}
+.cand.sel{border-color:var(--accent);background:var(--accent-soft)}
+.cand .rk{font-family:var(--mono);color:var(--muted);font-size:12px}
+.cand .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:3px;background:var(--reach-soft);color:var(--reach);margin-left:5px;letter-spacing:.04em}
+.thead{display:grid;grid-template-columns:22px minmax(0,1fr) 52px 54px;gap:8px;padding:0 8px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.thead span:nth-child(n+3){text-align:right}
+.explain{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 46px;gap:8px;align-items:center;font-size:12px;margin:3px 0}
+.bar .track{position:relative;height:10px;background:var(--sunk);border-radius:2px}
+.bar .track .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
+.bar .track .fill{position:absolute;top:0;bottom:0}
+.bar .n{font-family:var(--mono);text-align:right}
+.excl{font-size:12px;color:var(--muted);margin-top:10px}
+/* chart + log */
+.chartbox{overflow-x:auto}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.kpi{border-left:2px solid var(--accent);padding:2px 0 2px 10px}
+.kpi b{display:block;font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.log{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border-radius:8px;padding:10px 12px;min-height:160px;max-height:280px;overflow:auto;margin-top:12px}
+.log div{padding:2px 0}
+.log .w{color:var(--accent-ink)} .log .ok{color:var(--good);font-weight:500} .log .no{color:var(--muted)} .log .x{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{font-weight:600;border-bottom:none}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px;max-width:70ch}
+.notif{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.notif .app{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.notif .h{font-weight:600;margin-top:4px}
+.claim{margin-top:10px}
+.claim .price{font-family:var(--display);font-size:26px;font-weight:700}
+.claim .was{text-decoration:line-through;color:var(--muted);font-family:var(--mono);font-size:13px;margin-left:8px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.badges span{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+.why{font-size:12.5px;color:var(--muted);background:var(--sunk);padding:8px 10px;border-radius:8px}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.guard{display:grid;gap:10px;font-size:13.5px}
+.guard div b{display:block;font-size:13.5px}
+.guard div span{color:var(--muted)}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 12px}
+.out{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.foot{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:1100px){.grid3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.grid3 .mapp{grid-column:1/-1;order:-1}}
+@media (max-width:760px){.hero,.grid3,.grid2,.cols2{grid-template-columns:minmax(0,1fr)}.checks,.out{grid-template-columns:repeat(2,minmax(0,1fr))}.calc{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes pulse{0%{r:6}70%{r:16;opacity:0}100%{r:16;opacity:0}}
+.pulse{animation:pulse 1.6s ease-out infinite}
+</style>
+<style>body{margin:0}.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:14px}.back:hover{color:var(--ink)}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Live demo · Food delivery app "Sahn" (fictional) · Feature: Ready Now</div>
+      <h1>Let customers cancel after dispatch, and get the meal to someone nearby who wants it.</h1>
+      <p>When a customer cancels an order that is already on the road, the engine predicts who within a 20-minute ride will take it, prices it, and offers it in waves. Every number on this page is computed live from the scenario you set on the left.</p>
+    </div>
+    <div class="rules" aria-label="Business rules">
+      <div><b>Reach</b><span>Only customers within 20 minutes' travel of the rider, by road time, not straight-line distance</span></div>
+      <div><b>Rescued</b><span>Cancelling customer pays a small fee. New customer gets a discount and a faster drop</span></div>
+      <div><b>Not rescued</b><span>Cancelling customer pays the full order amount, as today</span></div>
+      <div><b>Safety</b><span>Sealed packs only. No ice cream or shakes. Never offered back to the same household</span></div>
+    </div>
+  </header>
+
+  <section class="grid3">
+    <div class="panel">
+      <div class="ph"><span class="step">1</span><h2>The order</h2></div>
+      <label for="preset">Order on the road</label>
+      <select id="preset"></select>
+      <label for="tod">Time of day</label>
+      <select id="tod">
+        <option value="lunch">13:10 · lunch</option>
+        <option value="afternoon">16:20 · afternoon</option>
+        <option value="dinner" selected>19:45 · dinner peak</option>
+        <option value="late">23:30 · late night</option>
+      </select>
+      <label for="prog">Rider progress to the customer <span class="val" id="progV"></span></label>
+      <input type="range" id="prog" min="5" max="95" value="35">
+      <label for="fee">Cancel fee if rescued (% of order) <span class="val" id="feeV"></span></label>
+      <input type="range" id="fee" min="5" max="35" value="20">
+      <label for="lam">New-customer priority <span class="val" id="lamV"></span></label>
+      <input type="range" id="lam" min="0" max="150" value="60">
+      <div class="row">
+        <button class="btn ghost" id="reseed">New neighbourhood</button>
+      </div>
+
+      <div class="phone" aria-label="Cancelling customer's screen">
+        <div class="eyebrow" style="margin-bottom:8px">Cancelling customer sees</div>
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </div>
+
+    <div class="panel mapp">
+      <div class="ph"><span class="step">2</span><h2>Who can the rider reach in 20 minutes?</h2></div>
+      <div class="mapbox"><svg id="map" role="img" aria-label="Neighbourhood grid showing 20-minute travel-time zone around the rider"></svg></div>
+      <div class="legend">
+        <span><i style="background:var(--reach)"></i>20-min ride zone (darker = closer)</span>
+        <span><i style="background:var(--accent)"></i>Top-ranked customers</span>
+        <span><i style="background:var(--muted)"></i>Other app users</span>
+        <span><i style="background:var(--bad)"></i>Excluded</span>
+      </div>
+      <div class="checks" id="checks"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><span class="step">3</span><h2>Ranked by likelihood to claim</h2></div>
+      <div class="thead"><span>#</span><span>Customer</span><span>ETA</span><span>P(claim)</span></div>
+      <div class="cands" id="cands"></div>
+      <div class="explain" id="explain"></div>
+      <div class="excl" id="excl"></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <div class="ph"><span class="step">4</span><h2>Price it: the discount that earns the most</h2></div>
+      <p class="note" style="margin-top:0">For every discount level the model re-scores everyone in reach, works out the chance someone claims it within the food-quality window, and adds what the platform earns: cancel fee + delivery fee − discount − rider's extra leg, plus the value of acquiring a new customer.</p>
+      <div class="chartbox"><svg id="chart" role="img" aria-label="Expected value and rescue chance by discount"></svg></div>
+      <div class="kpis" id="kpisPrice"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="step">5</span><h2>Offer it in waves, not a broadcast</h2></div>
+      <p class="note" style="margin-top:0">Five customers per wave, best first, every 90 seconds. Small waves keep the offer feeling personal and stop people learning to wait for cancelled food.</p>
+      <div class="row" style="margin-top:4px">
+        <button class="btn" id="run">Run this rescue</button>
+        <button class="btn ghost" id="mc">Simulate 2,000 times</button>
+      </div>
+      <div class="log" id="log" aria-live="polite"><div class="no">Press "Run this rescue" to dispatch the offer.</div></div>
+      <div class="kpis" id="kpisMc"></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <div class="ph"><span class="step">6</span><h2>Who pays what</h2></div>
+      <div style="overflow-x:auto"><table id="settle"></table></div>
+      <p class="note" id="settleNote"></p>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="step">7</span><h2>What the new customer sees</h2></div>
+      <div class="cols2">
+        <div>
+          <div class="notif" id="notif"></div>
+          <div class="claim sheet" id="claim"></div>
+        </div>
+        <div class="guard">
+          <div><b>Name it for what it is: ready food, nearby</b><span>"Ready Now" sells speed and freshness. The word "cancelled" never appears in the offer.</span></div>
+          <div><b>Be open about why</b><span>One plain line explains the plans changed after it left the kitchen. Hiding it would backfire the first time someone found out.</span></div>
+          <div><b>Proof it was never opened</b><span>Kitchen seal time, tamper-evident sticker, and the rider's photo of the seal at pickup.</span></div>
+          <div><b>Only send what they'd order anyway</b><span>Offers go to people whose order history matches the cuisine. Vegetarians only ever see vegetarian orders.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <div class="ph"><h2>Guardrails against gaming</h2></div>
+      <div class="guard">
+        <div><b>No buying back your own order</b><span>The cancelling account, its address and its devices are excluded, so no one can cancel and reclaim at a discount.</span></div>
+        <div><b>Weekly claim cap</b><span>Three rescues per customer per week, so it stays a pleasant surprise rather than a way to shop.</span></div>
+        <div><b>Repeat cancellers pay more</b><span>The cancel fee steps up for accounts that cancel often after dispatch.</span></div>
+        <div><b>No cannibalisation</b><span>Customers with their own order in progress, or who opened the app to order in the last 10 minutes, are skipped.</span></div>
+        <div><b>Restaurant is paid as normal</b><span>The kitchen receives its usual payout whether or not the meal is rescued.</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>What it's worth at scale</h2></div>
+      <div class="calc">
+        <div><label for="cOrders">Orders per month</label><input type="number" id="cOrders" value="3000000" step="100000"></div>
+        <div><label for="cRate">Cancel attempts after dispatch (%)</label><input type="number" id="cRate" value="1.2" step="0.1"></div>
+        <div><label for="cElig">Eligible (sealed, not chilled) %</label><input type="number" id="cElig" value="85" step="1"></div>
+        <div><label for="cRescue">Rescue rate %</label><input type="number" id="cRescue" value="70" step="1"></div>
+        <div><label for="cNew">Claimed by new customers %</label><input type="number" id="cNew" value="25" step="1"></div>
+        <div><label for="cCac">Cost to acquire a customer (AED)</label><input type="number" id="cCac" value="35" step="1"></div>
+      </div>
+      <div class="out" id="out"></div>
+      <p class="note">Assumptions are editable placeholders, to be replaced with the platform's own data. For reference, a large Indian food delivery app reported that about three in four eligible cancelled orders were being claimed after it launched a similar feature. Average margin per rescue comes from step 4.</p>
+    </div>
+  </section>
+
+  <div class="foot">Designed and built by Syed Sarfaraz Ahmed · scenario data is synthetic · brand names are fictional</div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const W=26,H=16,CS=24;
+const PRESETS=[
+  {id:"a",rest:"Zaatar Lane Kitchen",item:"Chicken machboos, fattoush, laban",cuisine:"Arabic",value:46,veg:false,chilled:false},
+  {id:"b",rest:"Bombay Tiffin Co.",item:"Paneer butter masala, 2 garlic naan",cuisine:"Indian",value:52,veg:true,chilled:false},
+  {id:"c",rest:"Seoul Bowl",item:"Beef bibimbap, kimchi pancake",cuisine:"Korean",value:61,veg:false,chilled:false},
+  {id:"d",rest:"Little Sicily",item:"Margherita pizza, garlic bread",cuisine:"Italian",value:58,veg:true,chilled:false},
+  {id:"e",rest:"Frost & Co.",item:"Mango shake, pistachio gelato tub",cuisine:"Dessert",value:39,veg:true,chilled:true}
+];
+const CUISINES=["Arabic","Indian","Korean","Italian","Dessert"];
+const TOD={lunch:{traffic:1.2,meal:1.0,label:"lunch"},afternoon:{traffic:1.0,meal:0.35,label:"afternoon"},dinner:{traffic:1.45,meal:1.0,label:"dinner"},late:{traffic:0.75,meal:0.7,label:"late night"}};
+const FIRST=["Aisha","Omar","Priya","Rahul","Fatima","Yusuf","Meera","Hassan","Sara","Arjun","Layla","Karim","Noor","Vikram","Mariam","Zaid","Anika","Faisal","Rania","Imran","Hana","Tariq","Divya","Salma","Ali","Neha","Khalid","Lina","Rohan","Dana","Ahmed","Sana","Joseph","Huda","Kiran","Reem","Nikhil","Amal","Bilal","Ritu","Sami","Asma","Dev","Yara","Hamad","Tara"];
+const DELIVERY_FEE=7, CAC_DEFAULT=35, MAX_AGE=40, WAVE=5, WAVE_GAP=1.5;
+let seed=7, state={};
+
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const sig=z=>1/(1+Math.exp(-z));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const aed=x=>"AED "+(Math.round(x*100)/100).toFixed(2);
+const aed0=x=>"AED "+Math.round(x).toLocaleString("en-US");
+
+// --- road grid ---
+function cellCost(x,y,traffic){
+  const hwyRow=(y===4||y===11), hwyCol=(x===7||x===18);
+  return (hwyRow||hwyCol?0.9:2.2)*traffic;
+}
+function dijkstra(src,traffic){
+  const N=W*H,dist=new Float64Array(N).fill(Infinity),prev=new Int32Array(N).fill(-1),done=new Uint8Array(N);
+  dist[src]=0;
+  for(let k=0;k<N;k++){
+    let u=-1,b=Infinity;for(let i=0;i<N;i++)if(!done[i]&&dist[i]<b){b=dist[i];u=i}
+    if(u<0)break;done[u]=1;const ux=u%W,uy=(u/W)|0;
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const vx=ux+dx,vy=uy+dy;if(vx<0||vy<0||vx>=W||vy>=H)continue;
+      const v=vy*W+vx,c=(cellCost(ux,uy,traffic)+cellCost(vx,vy,traffic))/2;
+      if(dist[u]+c<dist[v]){dist[v]=dist[u]+c;prev[v]=u}}
+  }
+  return{dist,prev};
+}
+
+// --- scenario ---
+function build(){
+  const r=rng(seed);
+  const pick=n=>Math.floor(r()*n);
+  const rest={x:3+pick(4),y:2+pick(4)};
+  const cust={x:rest.x+5+pick(5),y:rest.y+3+pick(4)};
+  const users=[];
+  const names=FIRST.slice().sort(()=>r()-.5);
+  for(let i=0;i<44;i++){
+    const aff={};CUISINES.forEach(c=>aff[c]=Math.pow(r(),1.4));
+    const fav=CUISINES[pick(CUISINES.length)];aff[fav]=0.75+r()*0.25;
+    users.push({id:i,name:names[i%names.length]+" "+String.fromCharCode(65+pick(26))+".",x:pick(W),y:pick(H),
+      aff,isNew:r()<0.3,ps:r(),active:r()<0.45,past:pick(5),claims:r()<0.08?3:pick(3),veg:r()<0.22,household:false,busy:r()<0.07});
+  }
+  // a neighbour in the same building as the cancelling customer
+  users.push({id:99,name:"Same flat as customer",x:cust.x,y:cust.y,aff:Object.fromEntries(CUISINES.map(c=>[c,0.9])),isNew:false,ps:.8,active:true,past:4,claims:0,veg:false,household:true,busy:false});
+  state.rest=rest;state.cust=cust;state.users=users;
+  state.sim=null;state.mc=null;state.sel=null;
+}
+
+function compute(){
+  const order=PRESETS.find(p=>p.id===$("#preset").value);
+  const tod=TOD[$("#tod").value];
+  const prog=+$("#prog").value/100, feePct=+$("#fee").value/100, lam=+$("#lam").value/100;
+  const{rest,cust,users}=state;
+  const fromR=dijkstra(rest.y*W+rest.x,tod.traffic);
+  const path=[];let c=cust.y*W+cust.x;while(c!==-1){path.push(c);c=fromR.prev[c]}path.reverse();
+  const riderCell=path[Math.min(path.length-1,Math.round(prog*(path.length-1)))];
+  const rider={x:riderCell%W,y:(riderCell/W)|0};
+  const totalTrip=fromR.dist[cust.y*W+cust.x];
+  const onRoad=fromR.dist[riderCell];
+  const toCust=Math.max(0,totalTrip-onRoad);
+  const age=4+onRoad; // 4 min sealed at pickup
+  const fromRider=dijkstra(riderCell,tod.traffic);
+  const fee=clamp(order.value*feePct,5,25);
+  const window=clamp(MAX_AGE-age-8,0,10.5);
+  const nWaves=Math.floor(window/WAVE_GAP);
+  let blocked=null;
+  if(order.chilled)blocked="Chilled and frozen items can't travel to a second customer safely, so this order can't be cancelled once it's on the road.";
+  else if(toCust<2.5)blocked="The rider is less than 3 minutes away, so cancelling is closed for this order.";
+  else if(nWaves<1)blocked="The meal has been out too long to offer it to anyone else.";
+  const cand=users.map(u=>{
+    const eta=fromRider.dist[u.y*W+u.x]+1;
+    let reason=null;
+    if(u.household)reason="Same address as the cancelling customer";
+    else if(eta>20)reason="out";
+    else if(order.veg===false&&u.veg)reason="Vegetarian, order has meat";
+    else if(u.claims>=3)reason="Hit weekly rescue cap";
+    else if(u.busy)reason="Has own order in progress";
+    return{...u,eta,reason};
+  });
+  const elig=cand.filter(u=>!u.reason);
+  function feats(u,d){
+    return[
+      ["Base rate",-5.2],
+      ["Likes "+order.cuisine,2.1*u.aff[order.cuisine]],
+      ["App open now",u.active?1.0:0],
+      ["Ordered here before",0.32*Math.min(u.past,3)],
+      ["Discount × price-sensitivity",(1.6+3.4*u.ps)*d],
+      ["Mealtime ("+tod.label+")",0.9*tod.meal],
+      ["Travel time "+u.eta.toFixed(0)+" min",-0.075*u.eta],
+      ["New customer",u.isNew?0.25:0]
+    ];
+  }
+  const pOf=(u,d)=>sig(feats(u,d).reduce((s,f)=>s+f[1],0));
+  // optimize discount
+  const grid=[];for(let d=0.10;d<=0.401;d+=0.025)grid.push(+d.toFixed(3));
+  const curve=grid.map(d=>{
+    const ranked=elig.map(u=>{const p=pOf(u,d);return{u,p,pri:p*(1+lam*(u.isNew?1:0))}}).sort((a,b)=>b.pri-a.pri);
+    const reach=ranked.slice(0,nWaves*WAVE);
+    let none=1,pNew=0,etaW=0;
+    for(const r of reach){const p=r.p*(r.u.active?0.9:0.35);pNew+=none*p*(r.u.isNew?1:0);etaW+=none*p*r.u.eta;none*=1-p}
+    const pr=blocked?0:1-none;
+    const avgEta=pr>0?etaW/pr:10;
+    const rider=3+0.25*avgEta;
+    const margin=fee+DELIVERY_FEE-order.value*d-rider;
+    const ev=pr*margin+(blocked?0:pNew)*state.cac;
+    return{d,pr,pNew:blocked?0:pNew,margin,ev,ranked};
+  });
+  let best=curve[0];curve.forEach(c=>{if(c.ev>best.ev)best=c});
+  Object.assign(state,{order,tod,prog,fee,lam,rider,path,fromRider,age,toCust,window,nWaves,blocked,cand,elig,curve,best,pOf,feats});
+}
+
+// --- render ---
+function renderSheet(){
+  const{order,fee,best,blocked,toCust}=state;
+  const el=$("#sheet");
+  if(blocked){el.innerHTML=`<div class="t">Cancel order?</div><div class="s">${order.rest} · ${order.item}</div><div class="chance closed" style="margin-top:12px">${blocked}</div>`;return}
+  const p=best.pr,exp=p*fee+(1-p)*order.value;
+  el.innerHTML=`<div class="t">Cancel order?</div><div class="s">${order.rest} · ${order.item} · arriving in ${Math.round(toCust)} min</div>
+  <div class="quote"><span>If someone nearby takes it</span><span class="n">${aed(fee)}</span><span>If no one does</span><span class="n">${aed(order.value)}</span></div>
+  <div class="chance">${Math.round(p*100)}% chance it finds a new home in the next ${Math.round(state.window)} min. Expected charge ${aed(exp)}.</div>
+  <div class="row"><button class="btn ghost" style="flex:1" tabindex="-1">Keep order</button><button class="btn" style="flex:1" tabindex="-1">Cancel</button></div>`;
+}
+function renderMap(){
+  const svg=$("#map"),{fromRider,rest,cust,rider,path,cand,best,sim}=state;
+  svg.setAttribute("viewBox",`0 0 ${W*CS} ${H*CS}`);svg.setAttribute("width",W*CS);svg.style.maxWidth="100%";svg.style.height="auto";
+  const top=new Set(best.ranked.slice(0,10).map(r=>r.u.id));
+  let s=`<rect width="${W*CS}" height="${H*CS}" fill="var(--sunk)"/>`;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const e=fromRider.dist[y*W+x];
+    if(e<=20)s+=`<rect x="${x*CS}" y="${y*CS}" width="${CS}" height="${CS}" fill="var(--reach)" fill-opacity="${(0.07+0.38*(1-e/20)).toFixed(3)}"/>`}
+  for(let i=0;i<=W;i++)s+=`<line x1="${i*CS}" y1="0" x2="${i*CS}" y2="${H*CS}" stroke="var(--line)" stroke-width="0.6"/>`;
+  for(let j=0;j<=H;j++)s+=`<line x1="0" y1="${j*CS}" x2="${W*CS}" y2="${j*CS}" stroke="var(--line)" stroke-width="0.6"/>`;
+  [4,11].forEach(y=>s+=`<rect x="0" y="${y*CS+9}" width="${W*CS}" height="6" fill="var(--muted)" fill-opacity=".35"/>`);
+  [7,18].forEach(x=>s+=`<rect x="${x*CS+9}" y="0" width="6" height="${H*CS}" fill="var(--muted)" fill-opacity=".35"/>`);
+  s+=`<text x="6" y="${4*CS+7}" font-size="9" fill="var(--muted)">EXPRESSWAY</text>`;
+  const pts=path.map(c=>`${(c%W)*CS+12},${((c/W)|0)*CS+12}`).join(" ");
+  s+=`<polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/>`;
+  cand.forEach(u=>{const cx=u.x*CS+12,cy=u.y*CS+12;
+    if(u.reason&&u.reason!=="out"){s+=`<path d="M${cx-4} ${cy-4}L${cx+4} ${cy+4}M${cx+4} ${cy-4}L${cx-4} ${cy+4}" stroke="var(--bad)" stroke-width="2"/>`}
+    else if(top.has(u.id)){const win=sim&&sim.winner&&sim.winner.id===u.id;s+=`<circle cx="${cx}" cy="${cy}" r="${win?8:5.5}" fill="var(--accent)" stroke="${win?'var(--ink)':'var(--surface)'}" stroke-width="${win?2.5:1.5}"/>`}
+    else s+=`<circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--muted)" opacity="${u.reason==='out'?.45:.9}"/>`});
+  s+=`<rect x="${rest.x*CS+4}" y="${rest.y*CS+4}" width="16" height="16" rx="3" fill="var(--ink)"/><text x="${rest.x*CS+12}" y="${rest.y*CS-3}" text-anchor="middle" font-size="10" fill="var(--ink)">Kitchen</text>`;
+  s+=`<path d="M${cust.x*CS+12} ${cust.y*CS+2}l9 10-9 10-9-10z" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><text x="${cust.x*CS+12}" y="${cust.y*CS+34}" text-anchor="middle" font-size="10" fill="var(--ink)">Cancelled</text>`;
+  const rx=rider.x*CS+12,ry=rider.y*CS+12;
+  s+=`<circle class="pulse" cx="${rx}" cy="${ry}" r="6" fill="none" stroke="var(--reach)" stroke-width="2"/><circle cx="${rx}" cy="${ry}" r="7" fill="var(--reach)" stroke="var(--surface)" stroke-width="2"/><text x="${rx+11}" y="${ry-9}" font-size="10" fill="var(--ink)">Rider</text>`;
+  svg.innerHTML=s;
+  const inReach=cand.filter(u=>u.reason!=="out");
+  const excluded=cand.filter(u=>u.reason&&u.reason!=="out");
+  $("#checks").innerHTML=[
+    ["Sealed for",Math.round(state.age)+" min",state.age<MAX_AGE-8],
+    ["Offer window",state.blocked?"closed":Math.round(state.window)+" min",!state.blocked],
+    ["Users in reach",inReach.length,inReach.length>0],
+    ["Eligible",state.elig.length,state.elig.length>0]
+  ].map(([k,v,ok])=>`<div class="chk ${ok?'pass':'fail'}">${k}<b>${v}</b></div>`).join("");
+  $("#excl").textContent=excluded.length?"Excluded: "+excluded.map(u=>u.reason).filter((v,i,a)=>a.indexOf(v)===i).map(r=>`${r} (${excluded.filter(u=>u.reason===r).length})`).join(" · "):"";
+}
+function renderCands(){
+  const{best,blocked}=state;
+  const list=best.ranked.slice(0,10);
+  if(blocked||!list.length){$("#cands").innerHTML=`<p class="note">${blocked?"No offer goes out for this order.":"No eligible customers in reach."}</p>`;$("#explain").innerHTML="";return}
+  if(!state.sel||!list.find(r=>r.u.id===state.sel))state.sel=list[0].u.id;
+  $("#cands").innerHTML=list.map((r,i)=>`<button class="cand ${r.u.id===state.sel?'sel':''}" data-id="${r.u.id}"><span class="rk">${i+1}</span><span class="nm">${r.u.name}${r.u.isNew?'<span class="tag">NEW</span>':''}</span><span class="n">${r.u.eta.toFixed(0)}m</span><span class="n">${Math.round(r.p*100)}%</span></button>`).join("");
+  document.querySelectorAll(".cand").forEach(b=>b.onclick=()=>{state.sel=+b.dataset.id;renderCands()});
+  const u=list.find(r=>r.u.id===state.sel).u;
+  const f=state.feats(u,best.d),max=3.2;
+  $("#explain").innerHTML=`<h3>Why ${u.name.split(" ")[0]} scores ${Math.round(state.pOf(u,best.d)*100)}%</h3><p class="note" style="margin:2px 0 8px">Each factor pushes the log-odds up or down (at the ${Math.round(best.d*100)}% discount).</p>`+
+    f.map(([k,v])=>{const w=Math.min(Math.abs(v)/max,1)*50;return`<div class="bar"><span>${k}</span><span class="track"><span class="mid"></span><span class="fill" style="${v>=0?`left:50%;width:${w}%;background:var(--reach)`:`right:50%;width:${w}%;background:var(--bad)`}"></span></span><span class="n">${v>=0?'+':''}${v.toFixed(2)}</span></div>`}).join("");
+}
+function renderChart(){
+  const{curve,best,blocked}=state;const svg=$("#chart");
+  const Wc=560,Hc=230,l=52,r=48,t=14,b=34,iw=Wc-l-r,ih=Hc-t-b;
+  svg.setAttribute("viewBox",`0 0 ${Wc} ${Hc}`);svg.setAttribute("width",Wc);svg.style.maxWidth="100%";svg.style.height="auto";
+  const evs=curve.map(c=>c.ev);let lo=Math.min(0,...evs),hi=Math.max(1,...evs);
+  const step=hi-lo>40?10:5;lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
+  const X=d=>l+(d-0.10)/(0.40-0.10)*iw,Y=v=>t+(hi-v)/(hi-lo)*ih,Yp=p=>t+(1-p)*ih;
+  let s="";
+  for(let v=lo;v<=hi+1e-9;v+=step)s+=`<line x1="${l}" x2="${l+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${l-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`;
+  [0,.25,.5,.75,1].forEach(p=>s+=`<text x="${l+iw+6}" y="${Yp(p)+4}" font-size="10" fill="var(--reach)">${p*100}%</text>`);
+  [0.1,0.15,0.2,0.25,0.3,0.35,0.4].forEach(d=>s+=`<text x="${X(d)}" y="${Hc-14}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(d*100)}%</text>`);
+  s+=`<text x="${l+iw/2}" y="${Hc-1}" text-anchor="middle" font-size="10" fill="var(--muted)">discount offered to the new customer</text>`;
+  s+=`<text x="${l-6}" y="${t-3}" text-anchor="end" font-size="9.5" fill="var(--accent-ink)">AED/order</text>`;
+  if(lo<0)s+=`<line x1="${l}" x2="${l+iw}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
+  s+=`<polyline fill="none" stroke="var(--reach)" stroke-width="2" stroke-dasharray="5 4" points="${curve.map(c=>X(c.d)+","+Yp(c.pr)).join(" ")}"/>`;
+  s+=`<path d="M${X(curve[0].d)},${Y(Math.max(lo,0))} ${curve.map(c=>"L"+X(c.d)+","+Y(c.ev)).join(" ")} L${X(curve[curve.length-1].d)},${Y(Math.max(lo,0))}Z" fill="var(--accent)" fill-opacity=".12"/>`;
+  s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${curve.map(c=>X(c.d)+","+Y(c.ev)).join(" ")}"/>`;
+  if(!blocked){s+=`<line x1="${X(best.d)}" x2="${X(best.d)}" y1="${t}" y2="${t+ih}" stroke="var(--ink)" stroke-dasharray="2 3"/><circle cx="${X(best.d)}" cy="${Y(best.ev)}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+    const lx=X(best.d)>l+iw-120?X(best.d)-8:X(best.d)+8;s+=`<text x="${lx}" y="${t+12}" text-anchor="${X(best.d)>l+iw-120?'end':'start'}" font-size="11" fill="var(--ink)">best: ${Math.round(best.d*100)}% off</text>`}
+  s+=`<text x="${l+6}" y="${t+ih-6}" font-size="10" fill="var(--accent-ink)">— expected value</text><text x="${l+110}" y="${t+ih-6}" font-size="10" fill="var(--reach)">- - chance of rescue</text>`;
+  svg.innerHTML=s;
+  $("#kpisPrice").innerHTML=blocked?`<div class="kpi"><b>—</b><span>No offer for this order</span></div>`:
+   `<div class="kpi"><b>${Math.round(best.d*100)}%</b><span>discount chosen</span></div><div class="kpi"><b>${Math.round(best.pr*100)}%</b><span>predicted rescue chance</span></div><div class="kpi"><b>${aed(best.margin)}</b><span>platform margin if rescued</span></div>`;
+}
+function renderSettle(){
+  const{order,fee,best,blocked,sim}=state;
+  const d=best.d,newPays=order.value*(1-d),rider=3+0.25*(sim&&sim.winner?sim.winner.eta:10),comm=0.25;
+  const rows=[
+    ["Cancelling customer","pays "+aed(fee)+" fee","pays "+aed(order.value)],
+    ["New customer",`pays ${aed(newPays)} + ${aed(DELIVERY_FEE)} delivery, gets it in ~${sim&&sim.winner?Math.round(sim.winner.eta):"10"} min`,"—"],
+    ["Restaurant",`gets ${aed(order.value*(1-comm))} (usual payout)`,`gets ${aed(order.value*(1-comm))} (usual payout)`],
+    ["Rider","extra leg paid "+aed(rider),"returns food to hub"],
+    ["Food","eaten","binned"]
+  ];
+  $("#settle").innerHTML=`<thead><tr><th></th><th>Rescued</th><th>Not rescued</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}
+  <tr class="tot"><td>Platform, vs. today</td><td class="n">${blocked?"—":(best.margin>=0?"+":"")+aed(best.margin)}</td><td class="n">AED 0.00</td></tr></tbody>`;
+  $("#settleNote").textContent=blocked?"This order can't enter the rescue flow.":`Today the customer can't cancel and pays ${aed(order.value)}. With Ready Now the platform keeps its normal margin, ${best.margin>=0?`adds ${aed(best.margin)} per rescue`:`gives up ${aed(-best.margin)} on this rescue`}, and ${best.pNew>0.05?`a ${Math.round(best.pNew/Math.max(best.pr,1e-6)*100)}% chance the meal lands with a first-time customer, worth about ${aed0(state.cac)} in avoided acquisition cost`:"a happier customer who was allowed to change plans"}.`;
+}
+function renderNotif(){
+  const{order,best,blocked,age,sim}=state;
+  const u=sim&&sim.winner?sim.winner:(best.ranked[0]&&best.ranked[0].u);
+  if(blocked||!u){$("#notif").innerHTML=`<div class="app"><span>SAHN</span><span>now</span></div><div class="h">No offer sent</div><div class="s note" style="margin:0">This order isn't eligible.</div>`;$("#claim").innerHTML="";return}
+  const price=order.value*(1-best.d);
+  $("#notif").innerHTML=`<div class="app"><span>SAHN · READY NOW</span><span>now</span></div><div class="h">${u.name.split(" ")[0]}, ${order.item.split(",")[0].toLowerCase()} is ready ${Math.round(u.eta)} min from you</div><div style="font-size:13px;color:var(--muted)">${order.rest} · ${Math.round(best.d*100)}% off · sealed at the kitchen</div>`;
+  $("#claim").innerHTML=`<div class="eyebrow">Ready Now · 1 available</div><div style="font-weight:600;margin-top:4px">${order.item}</div><div style="font-size:13px;color:var(--muted)">${order.rest}</div>
+  <div><span class="price">${aed(price)}</span><span class="was">${aed(order.value)}</span></div>
+  <div class="badges"><span>Arrives in ~${Math.round(u.eta)} min</span><span>Sealed ${Math.round(age)} min ago</span><span>Tamper-evident seal</span><span>Never opened</span></div>
+  <div class="why">Why is this available? The original customer changed plans after it left the kitchen. It's still sealed, and our rider photographed the seal at pickup.</div>
+  <div class="row"><button class="btn" style="flex:1" tabindex="-1">Claim · offer ends in ${Math.max(1,Math.round(WAVE_GAP))}:30</button></div>`;
+}
+function renderMcKpis(){
+  const m=state.mc;
+  $("#kpisMc").innerHTML=m?`<div class="kpi"><b>${Math.round(m.rate*100)}%</b><span>rescued across 2,000 runs</span></div><div class="kpi"><b>${m.med?m.med.toFixed(1)+" min":"—"}</b><span>median time to claim</span></div><div class="kpi"><b>${Math.round(m.newShare*100)}%</b><span>of rescues went to new customers</span></div>`:"";
+}
+function all(){compute();renderSheet();renderMap();renderCands();renderChart();renderSettle();renderNotif();renderMcKpis();calc()}
+
+// --- dispatch simulation ---
+function simulate(r,quiet){
+  const{best,nWaves,pOf}=state;const ranked=best.ranked;const lines=[];
+  for(let w=0;w<nWaves;w++){
+    const batch=ranked.slice(w*WAVE,w*WAVE+WAVE);if(!batch.length)break;
+    const t0=w*WAVE_GAP;
+    if(!quiet)lines.push([`w`,`${fmt(t0)}  Wave ${w+1}: offer sent to ${batch.map(b=>b.u.name.split(" ")[0]).join(", ")}`]);
+    let first=null;
+    batch.forEach(b=>{const p=b.p*(b.u.active?0.9:0.35);if(r()<p){const t=t0+0.15+r()*1.25;if(!first||t<first.t)first={t,u:b.u}}});
+    if(first){if(!quiet)lines.push(["ok",`${fmt(first.t)}  ${first.u.name} claimed it (${Math.round(pOf(first.u,best.d)*100)}% predicted). Rider rerouted, ${Math.round(first.u.eta)} min away.`]);return{winner:first.u,t:first.t,lines}}
+    if(!quiet)lines.push(["no",`${fmt(t0+WAVE_GAP)}  No claim in wave ${w+1}`]);
+  }
+  if(!quiet)lines.push(["x",`${fmt(nWaves*WAVE_GAP)}  Window closed. Not rescued: original customer charged ${aed(state.order.value)}.`]);
+  return{winner:null,lines};
+}
+function fmt(m){const s=Math.round(m*60);return`+${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
+let timers=[];
+$("#run").onclick=()=>{
+  if(state.blocked){$("#log").innerHTML=`<div class="x">${state.blocked}</div>`;return}
+  timers.forEach(clearTimeout);timers=[];
+  const res=simulate(rng(Date.now()&0xffff),false);
+  state.sim=null;$("#log").innerHTML=`<div class="w">+0:00  Cancel accepted. Fee if rescued ${aed(state.fee)}. Discount set at ${Math.round(state.best.d*100)}%.</div>`;
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  res.lines.forEach((l,i)=>timers.push(setTimeout(()=>{$("#log").insertAdjacentHTML("beforeend",`<div class="${l[0]}">${l[1]}</div>`);$("#log").scrollTop=1e6;
+    if(i===res.lines.length-1){state.sim=res;renderMap();renderSettle();renderNotif()}},reduce?0:380*(i+1))));
+};
+$("#mc").onclick=()=>{
+  if(state.blocked){state.mc={rate:0,med:null,newShare:0};renderMcKpis();return}
+  const r=rng(12345);let ok=0,nw=0;const ts=[];
+  for(let i=0;i<2000;i++){const s=simulate(r,true);if(s.winner){ok++;ts.push(s.t);if(s.winner.isNew)nw++}}
+  ts.sort((a,b)=>a-b);
+  state.mc={rate:ok/2000,med:ts.length?ts[ts.length>>1]:null,newShare:ok?nw/ok:0};renderMcKpis();
+};
+
+// --- calculator ---
+function calc(){
+  const g=id=>+$(id).value||0;
+  const att=g("#cOrders")*g("#cRate")/100*g("#cElig")/100, resc=att*g("#cRescue")/100, nu=resc*g("#cNew")/100;
+  const m=state.blocked?Math.max(0,state.curve.reduce((a,c)=>Math.max(a,c.margin),0)):state.best.margin;
+  const money=resc*m+nu*g("#cCac");
+  $("#out").innerHTML=`<div class="kpi"><b>${Math.round(resc).toLocaleString("en-US")}</b><span>meals rescued / month</span></div><div class="kpi"><b>${aed0(money)}</b><span>margin + acquisition value / month</span></div><div class="kpi"><b>${Math.round(nu).toLocaleString("en-US")}</b><span>new customers / month</span></div><div class="kpi"><b>${Math.round(resc*0.6/1000).toLocaleString("en-US")} t</b><span>food kept out of landfill (0.6 kg/meal)</span></div>`;
+}
+["#cOrders","#cRate","#cElig","#cRescue","#cNew","#cCac"].forEach(id=>$(id).addEventListener("input",calc));
+
+// --- wiring ---
+$("#preset").innerHTML=PRESETS.map(p=>`<option value="${p.id}">${p.rest} · AED ${p.value}${p.chilled?" · chilled":""}</option>`).join("");
+function labels(){$("#progV").textContent=$("#prog").value+"%";$("#feeV").textContent=$("#fee").value+"%";$("#lamV").textContent="×"+(1+$("#lam").value/100).toFixed(1)}
+["#preset","#tod","#prog","#fee","#lam"].forEach(id=>$(id).addEventListener("input",()=>{labels();state.sim=null;state.mc=null;$("#log").innerHTML='<div class="no">Scenario changed. Press "Run this rescue" to dispatch the offer.</div>';all()}));
+$("#reseed").onclick=()=>{seed=(seed*7919+13)%100000;build();$("#log").innerHTML='<div class="no">New neighbourhood loaded.</div>';all()};
+state.cac=CAC_DEFAULT;$("#cCac").addEventListener("input",()=>{state.cac=+$("#cCac").value||0;all()});
+labels();build();all();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

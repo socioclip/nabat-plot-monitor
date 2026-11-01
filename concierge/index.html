@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lumen Concierge Agent · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="An AI concierge agent that plans and books dining, attractions, spa and upgrades across a hotel group's destination, with the revenue each conversation creates.">
+<meta property="og:title" content="Lumen Concierge Agent · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="An AI concierge agent that plans and books dining, attractions, spa and upgrades across a hotel group's destination, with the revenue each conversation creates.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/concierge">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/concierge">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: three-pane console. Guest profile | live conversation | the trip plan and revenue it creates. Architecture strip below. */
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --sunk:#E3E7EC; --line:#CDD4DC;
+  --ink:#1A2030; --muted:#5D6677; --accent:#A85A26; --accent-soft:#F3E2D5; --lagoon:#0C5866; --lagoon-soft:#D5E9EC;
+  --guest:#1A2030; --guest-ink:#F4F6F9; --ok:#2E7A45;
+  --display:"DM Serif Display",Georgia,serif; --body:"Figtree",ui-sans-serif,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F131B; --surface:#171C27; --sunk:#1F2532; --line:#2D3445; --ink:#E7EAF0; --muted:#9AA3B5; --accent:#E39A63; --accent-soft:#3A2618;
+  --lagoon:#5BC0CF; --lagoon-soft:#12313A; --guest:#2B3346; --guest-ink:#F4F6F9; --ok:#6CC58A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F131B; --surface:#171C27; --sunk:#1F2532; --line:#2D3445; --ink:#E7EAF0; --muted:#9AA3B5; --accent:#E39A63; --accent-soft:#3A2618;
+  --lagoon:#5BC0CF; --lagoon-soft:#12313A; --guest:#2B3346; --guest-ink:#F4F6F9; --ok:#6CC58A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:26px 56px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.08}
+h2{font-size:21px}
+h3{font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500;margin:0 0 8px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:end;margin-bottom:20px}
+.hero p{margin:8px 0 0;color:var(--muted);max-width:64ch}
+.mode{font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;gap:8px;align-items:center}
+.mode i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.mode.live i{background:var(--ok)}
+.cols{display:grid;grid-template-columns:260px minmax(0,1fr) 330px;gap:16px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.guestcard dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:13.5px}
+.guestcard dt{color:var(--muted)}
+.guestcard dd{margin:0}
+.tier{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-top:4px}
+.prefs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.prefs span{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--sunk)}
+.prefs span.new{background:var(--lagoon-soft);color:var(--lagoon)}
+.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+/* chat */
+.chat{display:flex;flex-direction:column;height:640px;padding:0}
+.chathead{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.chathead b{font-family:var(--display);font-weight:400;font-size:18px}
+.msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:84%;padding:10px 13px;border-radius:14px;font-size:14.5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.m.a{background:var(--sunk);border-top-left-radius:4px;align-self:flex-start}
+.m.u{background:var(--guest);color:var(--guest-ink);border-top-right-radius:4px;align-self:flex-end}
+.m.think{color:var(--muted);font-style:italic}
+.tool{align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--lagoon);background:var(--lagoon-soft);padding:4px 9px;border-radius:6px;max-width:92%;overflow-wrap:anywhere}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px}
+.chip{font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip.primary{border-color:var(--accent);color:var(--accent);font-weight:600}
+form{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+form input{flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.btn{font:inherit;font-weight:600;padding:9px 15px;border-radius:9px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);font-weight:500}
+.btn:focus-visible,.chip:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* plan */
+.day{margin-bottom:12px}
+.day .d{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.item{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.item .t{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.item .p{font-family:var(--mono);font-size:12.5px;text-align:right;white-space:nowrap}
+.item.fresh{animation:fresh 1.6s ease-out}
+@keyframes fresh{from{background:var(--accent-soft)}to{background:transparent}}
+.empty{font-size:13px;color:var(--muted);padding:8px 0}
+.rev{background:var(--sunk);border-radius:10px;padding:12px 14px;margin-top:10px}
+.rev .big{font-family:var(--display);font-size:32px;line-height:1.1;font-variant-numeric:tabular-nums}
+.rev .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:3px}
+.rev .row span:last-child{font-family:var(--mono)}
+/* arch */
+.arch{margin-top:16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.node{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);font-size:13px;position:relative}
+.node b{display:block;font-size:14px;margin-bottom:3px}
+.node span{color:var(--muted)}
+.node.hl{border-color:var(--accent)}
+.why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.why div b{display:block;font-family:var(--display);font-weight:400;font-size:19px;margin-bottom:4px}
+.why div span{color:var(--muted);font-size:14px}
+.foot{margin-top:24px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cols .chat{grid-column:1/-1;order:-1}.arch{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:720px){.cols,.why{grid-template-columns:minmax(0,1fr)}.arch{grid-template-columns:repeat(2,minmax(0,1fr))}.chat{height:560px}.m{max-width:92%}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<style>body{margin:0}.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:14px}.back:hover{color:var(--ink)}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Live demo · Fictional "Lumen Collection" hotels and destination</div>
+      <h1>A concierge that books the whole destination, not just the room.</h1>
+      <p>One conversation reaches dining, attractions, spa and upgrades across the group's own venues. Every booking it makes lands in the guest's plan and in the revenue column on the right.</p>
+    </div>
+    <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
+  </header>
+
+  <section class="cols">
+    <aside class="panel guestcard" aria-label="Guest profile">
+      <h3>Guest</h3>
+      <div style="font-family:var(--display);font-size:21px;line-height:1.2">Leila &amp; Karim Haddad</div>
+      <span class="tier">GOLD · 3rd stay</span>
+      <hr class="sep">
+      <dl>
+        <dt>Hotel</dt><dd>Lumen Downtown</dd>
+        <dt>Room</dt><dd id="roomType">Deluxe King, fountain view</dd>
+        <dt>Dates</dt><dd>Thu 12 – Sun 15 Nov</dd>
+        <dt>Arrives</dt><dd>Thu, 15:00</dd>
+        <dt>Party</dt><dd>2 adults, Sami (9), Nour (6)</dd>
+        <dt>Occasion</dt><dd>10th anniversary, Sat 14</dd>
+      </dl>
+      <hr class="sep">
+      <h3>Known preferences</h3>
+      <div class="prefs" id="prefs"><span>Leila is vegetarian</span><span>Early dinners with kids</span><span>Likes terrace seating</span></div>
+      <p style="font-size:12px;color:var(--muted);margin:10px 0 0">New preferences the agent picks up are saved to the guest profile in blue.</p>
+    </aside>
+
+    <section class="panel chat" aria-label="Concierge conversation">
+      <div class="chathead"><b>Concierge</b><button class="btn ghost" id="reset" type="button" style="padding:5px 10px;font-size:13px">Start over</button></div>
+      <div class="msgs" id="msgs" aria-live="polite"></div>
+      <div class="chips" id="chips"></div>
+      <form id="f"><input id="q" placeholder="Message the concierge…" autocomplete="off" aria-label="Message"><button class="btn" id="send">Send</button></form>
+    </section>
+
+    <aside class="panel" aria-label="Trip plan">
+      <h3>Trip plan</h3>
+      <div id="plan"></div>
+      <div class="rev">
+        <div class="eyebrow">Revenue from this conversation</div>
+        <div class="big" id="revTotal">AED 0</div>
+        <div id="revRows"></div>
+      </div>
+    </aside>
+  </section>
+
+  <h2 style="margin-top:28px">How it works</h2>
+  <div class="arch">
+    <div class="node"><b>Guest</b><span>App, WhatsApp or web chat, before and during the stay</span></div>
+    <div class="node hl"><b>Agent</b><span>Language model with the guest's profile and stay in context</span></div>
+    <div class="node"><b>Tools</b><span>Dining, attractions, spa and room inventory. Same APIs the front desk uses</span></div>
+    <div class="node"><b>Guardrails</b><span>Confirms before any paid booking. Only quotes live availability. Hands over to a human for complaints</span></div>
+    <div class="node"><b>Guest profile</b><span>Learned preferences flow back to CRM for the next stay and for marketing</span></div>
+  </div>
+  <div class="why">
+    <div><b>Higher spend per stay</b><span>Each guest is a captive audience for the group's restaurants, attractions and malls. The agent turns a room booking into a full itinerary.</span></div>
+    <div><b>Direct relationship</b><span>Guests who booked through travel sites still end up talking to the brand, and their preferences stay with the group.</span></div>
+    <div><b>Concierge capacity</b><span>Routine requests run around the clock. Staff spend their time on the moments that need a person.</span></div>
+  </div>
+  <div class="foot">Designed and built by Syed Sarfaraz Ahmed · venues, prices and guests are fictional · <span id="footMode"></span></div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const DAYS={"2026-11-12":"Thu 12 Nov","2026-11-13":"Fri 13 Nov","2026-11-14":"Sat 14 Nov","2026-11-15":"Sun 15 Nov"};
+const DINING=[
+  {id:"ember-olive",name:"Ember & Olive",cuisine:"Mediterranean",where:"Fountain terrace, Lumen Downtown",perPerson:380,kids:true,veg:"strong",slots:["17:30","18:00","18:30","19:30","20:30"],note:"Terrace tables face the fountain show (every 30 min from 18:00)"},
+  {id:"saffron-court",name:"Saffron Court",cuisine:"Indian",where:"Grand Arcade, level 2",perPerson:320,kids:true,veg:"strong",slots:["18:00","19:00","20:00","21:00"],note:""},
+  {id:"atelier-140",name:"Atelier 140",cuisine:"Tasting menu",where:"The Spire, level 140",perPerson:950,kids:false,veg:"vegetarian tasting menu on request",slots:["19:00","19:30","20:00","21:00"],note:"Window tables over the city. Adults only"},
+  {id:"little-harbour",name:"Little Harbour",cuisine:"Family café",where:"Grand Arcade, waterfront",perPerson:120,kids:true,veg:"good",slots:["12:00","12:30","13:00","13:30","18:00"],note:"Kids' menu and play corner"},
+  {id:"koji",name:"Koji",cuisine:"Japanese",where:"Lumen Marina",perPerson:450,kids:true,veg:"limited",slots:["19:00","20:00","21:00"],note:""}
+];
+const EXPS=[
+  {id:"sky-deck",name:"The Spire Sky Deck, level 125",cat:"views",adult:169,child:129,slots:["10:00","14:00","16:00","17:00","17:30","20:00"],note:"17:00 and 17:30 are sunset slots (+AED 70 per person)",sunset:["17:00","17:30"],mins:60},
+  {id:"spire-lounge",name:"Spire Lounge, level 140",cat:"views",adult:549,child:null,slots:["16:00","18:00","21:00"],note:"Adults only, refreshments included",mins:75},
+  {id:"fountain-boat",name:"Fountain lake boat ride",cat:"show",adult:68,child:68,slots:["18:00","18:30","19:00","19:30","20:00","20:30"],note:"25 minutes, during the fountain show",mins:25},
+  {id:"aquarium",name:"Grand Arcade Aquarium & Underwater Zoo",cat:"family",adult:155,child:125,slots:["10:00","11:00","12:00","15:00","17:00"],note:"",mins:90},
+  {id:"ice-rink",name:"Grand Arcade Ice Rink",cat:"family",adult:105,child:105,slots:["10:00","12:00","14:00","16:00"],note:"Skates included, 60 min",mins:60},
+  {id:"kids-club",name:"Lumen Kids Club evening session",cat:"family",adult:null,child:150,slots:["18:00"],note:"18:00–22:30, dinner included, ages 4–12",mins:270},
+  {id:"spa-couples",name:"Couples ritual, Lumen Spa",cat:"wellness",adult:725,child:null,slots:["10:00","14:00","16:30"],note:"90 minutes, priced per person",mins:90}
+];
+const FULL=new Set(["atelier-140|2026-11-14|20:00","ember-olive|2026-11-12|18:00","sky-deck|2026-11-12|17:30","aquarium|2026-11-13|11:00"]);
+const UPGRADE={id:"fountain-suite",name:"Fountain Suite, 1 bedroom",perNight:650,listPerNight:850,nights:3,note:"Gold member rate. Separate living room, sofa bed for the kids, wraparound fountain view"};
+
+let bookings=[],prefsNew=[],turns=[],pending=null,ctl=null,busy=false,live=true;
+
+// ---------- tools (run in page against mock inventory) ----------
+function partyCount(p){const a=Math.max(0,+p.adults||0),c=Math.max(0,+p.children||0);return{a,c}}
+const TOOLS={
+  search_dining:{description:"Find restaurant tables in the destination. Returns venues with open time slots, price per person, kid-friendliness and vegetarian strength.",
+    inputSchema:{type:"object",properties:{date:{type:"string"},party_size:{type:"number"},kids_in_party:{type:"boolean"},time_from:{type:"string",description:"HH:MM earliest"},time_to:{type:"string",description:"HH:MM latest"}},required:["date","party_size"]},
+    run(i){const date=String(i.date),from=i.time_from||"00:00",to=i.time_to||"23:59";
+      return DINING.filter(r=>!(i.kids_in_party&&!r.kids)).map(r=>({id:r.id,name:r.name,cuisine:r.cuisine,where:r.where,price_per_person_aed:r.perPerson,vegetarian:r.veg,kids_allowed:r.kids,note:r.note,
+        open_slots:r.slots.filter(s=>s>=from&&s<=to&&!FULL.has(`${r.id}|${date}|${s}`)),full_slots:r.slots.filter(s=>FULL.has(`${r.id}|${date}|${s}`))})).filter(r=>r.open_slots.length||r.full_slots.length)}},
+  book_dining:{description:"Book a table. Only after the guest agreed. Returns a confirmation.",
+    inputSchema:{type:"object",properties:{restaurant_id:{type:"string"},date:{type:"string"},time:{type:"string"},party_size:{type:"number"},note:{type:"string"}},required:["restaurant_id","date","time","party_size"]},
+    run(i){const r=DINING.find(x=>x.id===String(i.restaurant_id));if(!r)throw new Error("Unknown restaurant id");
+      if(FULL.has(`${r.id}|${i.date}|${i.time}`)||!r.slots.includes(String(i.time)))throw new Error("That time is not available");
+      const n=+i.party_size||2,est=r.perPerson*n;
+      add({key:`${r.id}|${i.date}|${i.time}`,kind:"Dining",date:String(i.date),time:String(i.time),title:`${r.name} · table for ${n}`,sub:i.note||r.where,amount:est,est:true});
+      return{confirmed:true,ref:"LD-"+(4100+bookings.length),estimated_spend_aed:est}}},
+  search_experiences:{description:"Find attraction, spa and kids club sessions. Returns open slots and adult/child prices in AED.",
+    inputSchema:{type:"object",properties:{date:{type:"string"},category:{type:"string",enum:["views","show","family","wellness","any"]}},required:["date"]},
+    run(i){const date=String(i.date),cat=i.category&&i.category!=="any"?i.category:null;
+      return EXPS.filter(e=>!cat||e.cat===cat).map(e=>({id:e.id,name:e.name,category:e.cat,adult_price_aed:e.adult,child_price_aed:e.child,note:e.note,duration_min:e.mins,
+        open_slots:e.slots.filter(s=>!FULL.has(`${e.id}|${date}|${s}`)),full_slots:e.slots.filter(s=>FULL.has(`${e.id}|${date}|${s}`))}))}},
+  book_experience:{description:"Book an experience. Only after the guest agreed. Returns a confirmation and total price.",
+    inputSchema:{type:"object",properties:{experience_id:{type:"string"},date:{type:"string"},time:{type:"string"},adults:{type:"number"},children:{type:"number"}},required:["experience_id","date","time"]},
+    run(i){const e=EXPS.find(x=>x.id===String(i.experience_id));if(!e)throw new Error("Unknown experience id");
+      if(FULL.has(`${e.id}|${i.date}|${i.time}`)||!e.slots.includes(String(i.time)))throw new Error("That time is not available");
+      const{a,c}=partyCount(i);if(c&&e.child==null)throw new Error("Adults only");if(a&&e.adult==null)throw new Error("Children only");
+      const sun=e.sunset&&e.sunset.includes(String(i.time))?70*(a+c):0,total=a*(e.adult||0)+c*(e.child||0)+sun;
+      add({key:`${e.id}|${i.date}|${i.time}`,kind:"Experience",date:String(i.date),time:String(i.time),title:e.name,sub:[a&&`${a} adult${a>1?"s":""}`,c&&`${c} child${c>1?"ren":""}`].filter(Boolean).join(", ")+(sun?" · sunset":""),amount:total});
+      return{confirmed:true,ref:"LX-"+(7200+bookings.length),total_aed:total}}},
+  get_room_upgrade:{description:"Check room upgrade offers for this guest's stay. Returns the offer and price per night.",inputSchema:{type:"object",properties:{}},
+    run(){return bookings.some(b=>b.kind==="Upgrade")?{already_upgraded:true}:{offer_id:UPGRADE.id,room:UPGRADE.name,price_per_night_aed:UPGRADE.perNight,usual_price_per_night_aed:UPGRADE.listPerNight,nights:UPGRADE.nights,total_aed:UPGRADE.perNight*UPGRADE.nights,note:UPGRADE.note}}},
+  accept_room_upgrade:{description:"Apply the room upgrade. Only after the guest agreed.",inputSchema:{type:"object",properties:{offer_id:{type:"string"}},required:["offer_id"]},
+    run(){if(bookings.some(b=>b.kind==="Upgrade"))return{already_upgraded:true};
+      add({key:"upgrade",kind:"Upgrade",date:"2026-11-12",time:"15:00",title:"Upgraded to "+UPGRADE.name,sub:`${UPGRADE.nights} nights at AED ${UPGRADE.perNight}`,amount:UPGRADE.perNight*UPGRADE.nights});
+      $("#roomType").textContent=UPGRADE.name;return{confirmed:true}}},
+  save_preference:{description:"Save a lasting guest preference to their profile for future stays.",inputSchema:{type:"object",properties:{preference:{type:"string"}},required:["preference"]},
+    run(i){const p=String(i.preference).slice(0,60);if(p&&!prefsNew.includes(p)){prefsNew.push(p);renderPrefs()}return{saved:true}}},
+  handoff_to_staff:{description:"Hand the conversation to a human guest relations manager.",inputSchema:{type:"object",properties:{reason:{type:"string"}},required:["reason"]},
+    run(i){addTool(`Handed to guest relations: ${i.reason}`);return{handed_off:true,eta_minutes:5}}}
+};
+function toolLabel(name,i){const map={search_dining:`Checking tables · ${DAYS[i.date]||i.date}`,book_dining:`Booking ${i.restaurant_id} · ${i.time}`,search_experiences:`Checking ${i.category&&i.category!=="any"?i.category:"experiences"} · ${DAYS[i.date]||i.date}`,book_experience:`Booking ${i.experience_id} · ${i.time}`,get_room_upgrade:"Checking upgrade offers",accept_room_upgrade:"Applying room upgrade",save_preference:`Saving preference: ${i.preference}`,handoff_to_staff:"Handing over to staff"};return map[name]||name}
+function runTool(name,input){const t=TOOLS[name];addTool(toolLabel(name,input||{}));return t.run(input||{})}
+
+// ---------- UI ----------
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function addMsg(role,text){const d=document.createElement("div");d.className="m "+role;d.textContent=text;$("#msgs").appendChild(d);$("#msgs").scrollTop=1e6;return d}
+function addTool(t){const d=document.createElement("div");d.className="tool";d.textContent="↳ "+t;$("#msgs").appendChild(d);$("#msgs").scrollTop=1e6}
+function add(b){b.fresh=true;bookings.push(b);renderPlan()}
+function renderPrefs(){$("#prefs").innerHTML=`<span>Leila is vegetarian</span><span>Early dinners with kids</span><span>Likes terrace seating</span>`+prefsNew.map(p=>`<span class="new">${esc(p)}</span>`).join("")}
+function renderPlan(){
+  const by={};bookings.forEach(b=>(by[b.date]=by[b.date]||[]).push(b));
+  const keys=Object.keys(by).sort();
+  $("#plan").innerHTML=keys.length?keys.map(k=>`<div class="day"><div class="d">${DAYS[k]||k}</div>${by[k].sort((a,b)=>a.time.localeCompare(b.time)).map(b=>`<div class="item${b.fresh?" fresh":""}"><span class="t">${b.time}</span><span>${esc(b.title)}<br><span style="color:var(--muted);font-size:12.5px">${esc(b.sub)}</span></span><span class="p">${b.est?"~":""}AED ${b.amount.toLocaleString("en-US")}</span></div>`).join("")}</div>`).join(""):`<div class="empty">Nothing booked yet. Bookings the concierge makes appear here, by day.</div>`;
+  bookings.forEach(b=>b.fresh=false);
+  const sum=k=>bookings.filter(b=>b.kind===k).reduce((s,b)=>s+b.amount,0);
+  const tot=bookings.reduce((s,b)=>s+b.amount,0);
+  $("#revTotal").textContent="AED "+tot.toLocaleString("en-US");
+  $("#revRows").innerHTML=[["Dining (estimated spend)","Dining"],["Attractions, spa, kids club","Experience"],["Room upgrade","Upgrade"]].map(([l,k])=>`<div class="row"><span>${l}</span><span>AED ${sum(k).toLocaleString("en-US")}</span></div>`).join("")+
+    `<div class="row" style="margin-top:8px;color:var(--ink)"><span>Room booking alone</span><span>AED 4,200</span></div>`;
+}
+function setChips(list){$("#chips").innerHTML=list.map((c,i)=>`<button type="button" class="chip${c.primary?" primary":""}" data-i="${i}">${esc(c.label)}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>send(list[+b.dataset.i].text||list[+b.dataset.i].label))}
+const STARTERS=[
+  {label:"We land Thursday 3pm. Plan our first evening with the kids"},
+  {label:"Saturday is our 10th anniversary. Something special?"},
+  {label:"The kids want the aquarium and ice rink on Friday"},
+  {label:"Is there a room upgrade for us?"}
+];
+function greet(){addMsg("a","Good evening Leila, and welcome back. Your Deluxe King overlooking the fountain is ready for Thursday at 15:00. How can I help plan your stay?");setChips(STARTERS)}
+function reset(){ctl&&ctl.abort();bookings=[];prefsNew=[];turns=[];pending=null;$("#msgs").innerHTML="";$("#roomType").textContent="Deluxe King, fountain view";renderPrefs();renderPlan();greet()}
+
+// ---------- live agent ----------
+async function liveReply(){
+  const bubble=addMsg("a think","Thinking…");
+  ctl=new AbortController();
+  let r,data={};
+  try{
+    r=await fetch("/api/concierge",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,
+      body:JSON.stringify({messages:turns,bookings:bookings.map(b=>({key:b.key,kind:b.kind}))})});
+    data=await r.json().catch(()=>({}));
+  }catch(e){if(e&&e.name==="AbortError"){bubble.remove();return}r=null}
+  bubble.remove();
+  if(!r||!r.ok||!data.reply){
+    turns.pop();
+    if(!r||r.status===503||r.status===502||r.status===404){goScripted(true);return scriptedReply(lastUser,true)}
+    addMsg("a",data.error||"Sorry, I lost the connection for a moment. Please send that again.");return;
+  }
+  for(const ev of data.events||[]){
+    if(ev.type==="tool")addTool(ev.label);
+    else if(ev.type==="booking"){add(ev.booking);if(ev.booking.room)$("#roomType").textContent=ev.booking.room}
+    else if(ev.type==="preference"){if(!prefsNew.includes(ev.preference)){prefsNew.push(ev.preference);renderPrefs()}}
+  }
+  const out=data.reply;addMsg("a",out);
+  turns.push({role:"assistant",content:out});
+  setChips(/book it\?|shall i|would you like/i.test(out)?[{label:"Yes, book it",primary:true},{label:"Show me another option"}]:STARTERS);
+}
+// ---------- guided (scripted) agent: same tools, fixed dialogue ----------
+const wait=ms=>new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
+const FLOWS={
+  async evening(){
+    const exps=runTool("search_experiences",{date:"2026-11-12",category:"views"});await wait(500);
+    runTool("search_dining",{date:"2026-11-12",party_size:4,kids_in_party:true,time_from:"18:00",time_to:"19:00"});await wait(600);
+    const sky=exps.find(e=>e.id==="sky-deck");const t=sky.open_slots.includes("17:00")?"17:00":sky.open_slots[0];
+    pending={say:"Done. Sunset at the Sky Deck at 17:00, then the terrace at Ember & Olive at 18:30 for the first fountain shows. Confirmation is in your app. Enjoy your first evening!",
+      run:()=>{runTool("book_experience",{experience_id:"sky-deck",date:"2026-11-12",time:t,adults:2,children:2});runTool("book_dining",{restaurant_id:"ember-olive",date:"2026-11-12",time:"18:30",party_size:4,note:"Terrace, fountain side · vegetarian menu for Leila · 2 kids' chairs"})}};
+    return `A gentle first evening, close to the hotel:
+• 17:00  The Spire Sky Deck at sunset (the 17:30 slot is full). AED 876 for the four of you
+• 18:30  Ember & Olive terrace, facing the fountain. Strong vegetarian menu for you, kids' menu for Sami and Nour. About AED 1,520
+18:00 was taken, so 18:30 lines you up with the second show. Shall I book it?`;},
+  async anniversary(){
+    runTool("search_dining",{date:"2026-11-14",party_size:2,kids_in_party:false,time_from:"19:00",time_to:"21:00"});await wait(600);
+    runTool("search_experiences",{date:"2026-11-14",category:"family"});await wait(500);
+    pending={say:"Booked. Atelier 140 at 19:30 by the window with the vegetarian tasting menu and an anniversary note for the chef, and Sami and Nour are in Kids Club from 18:00 with dinner. I've also saved your anniversary date for future stays.",
+      run:()=>{runTool("book_dining",{restaurant_id:"atelier-140",date:"2026-11-14",time:"19:30",party_size:2,note:"Window table · vegetarian tasting for Leila · 10th anniversary"});runTool("book_experience",{experience_id:"kids-club",date:"2026-11-14",time:"18:00",adults:0,children:2});runTool("save_preference",{preference:"Anniversary 14 Nov"})}};
+    return `Happy anniversary in advance. My suggestion for Saturday:
+• 18:00  Sami and Nour at Lumen Kids Club, dinner included. AED 300
+• 19:30  Atelier 140 at the top of The Spire, window table. 20:00 is full, but 19:30 catches the last of the light. Vegetarian tasting menu for you. About AED 1,900
+Shall I book it?`;},
+  async kids(){
+    const ex=runTool("search_experiences",{date:"2026-11-13",category:"family"});await wait(600);
+    runTool("search_dining",{date:"2026-11-13",party_size:4,kids_in_party:true,time_from:"12:00",time_to:"13:30"});await wait(500);
+    pending={say:"All set for Friday: aquarium at 10:00, ice rink at 12:00, lunch at Little Harbour at 13:30. Everything is in the Grand Arcade, a 5-minute walk through the covered bridge from the hotel.",
+      run:()=>{runTool("book_experience",{experience_id:"aquarium",date:"2026-11-13",time:"10:00",adults:2,children:2});runTool("book_experience",{experience_id:"ice-rink",date:"2026-11-13",time:"12:00",adults:1,children:2});runTool("book_dining",{restaurant_id:"little-harbour",date:"2026-11-13",time:"13:30",party_size:4,note:"Kids' menu"});runTool("save_preference",{preference:"Kids love aquariums & skating"})}};
+    return `Friday morning in the Grand Arcade:
+• 10:00  Aquarium & Underwater Zoo. AED 560 for four
+• 12:00  Ice rink, skates included. AED 315 for one parent and both kids
+• 13:30  Lunch at Little Harbour by the water, kids' menu. About AED 480
+Shall I book it?`;},
+  async upgrade(){
+    const o=runTool("get_room_upgrade",{});await wait(600);
+    if(o.already_upgraded)return"You're already in the Fountain Suite for all three nights.";
+    pending={say:"Done. You're in the Fountain Suite for all three nights, and the sofa bed will be made up for the kids on arrival.",run:()=>runTool("accept_room_upgrade",{offer_id:o.offer_id})};
+    return `Yes. As a Gold member you can move to the Fountain Suite for AED 650 a night instead of 850, so AED 1,950 for the three nights. You'd get a separate living room with a sofa bed for Sami and Nour, and the full fountain view. Shall I book it?`;},
+  async other(){return"I can plan dining, The Spire, the fountain shows, the aquarium and ice rink, the spa, Kids Club and room upgrades. What would you like for your stay?"}
+};
+let lastUser="";
+function route(t){t=t.toLowerCase();
+  if(/^(yes|yep|sure|ok|okay|please|book|go ahead|confirm|perfect|sounds good)/.test(t)&&pending)return"confirm";
+  if(/anniversar|romantic|saturday|special/.test(t))return"anniversary";
+  if(/upgrade|suite|bigger room/.test(t))return"upgrade";
+  if(/aquarium|ice|skat|friday|kids want/.test(t))return"kids";
+  if(/evening|thursday|land|arriv|first/.test(t))return"evening";
+  if(/another|other option|different/.test(t))return"alt";
+  return"other";}
+async function scriptedReply(text,noBubble){
+  if(!noBubble){const bubble=addMsg("a think","Thinking…");await wait(450);bubble.remove();}
+  const r=route(text);let out;
+  if(r==="confirm"){const p=pending;pending=null;p.run();await wait(400);out=p.say}
+  else if(r==="alt"){out="Of course. Tell me what you'd like to change (time, place or budget) and I'll rework it.";}
+  else{pending=null;out=await FLOWS[r]()}
+  addMsg("a",out);
+  setChips(pending?[{label:"Yes, book it",primary:true},{label:"Show me another option"}]:STARTERS);
+}
+
+// ---------- send ----------
+async function send(text){
+  text=String(text||"").trim();if(!text||busy)return;busy=true;$("#send").disabled=true;setChips([]);
+  addMsg("u",text);lastUser=text;$("#q").value="";
+  try{if(live){turns.push({role:"user",content:text});await liveReply()}else await scriptedReply(text)}
+  finally{busy=false;$("#send").disabled=false}
+}
+$("#f").addEventListener("submit",e=>{e.preventDefault();send($("#q").value)});
+$("#reset").onclick=reset;
+
+function goScripted(fellBack){live=false;$("#mode").className="mode";$("#mode span").textContent="Guided demo";$("#footMode").textContent=fellBack?"The AI model is busy, so replies are scripted for now. Bookings still run against the same inventory":"Guided demo: replies are scripted, bookings run against the same inventory"}
+function goLive(){live=true;$("#mode").className="mode live";$("#mode span").textContent="Live AI agent";$("#footMode").textContent="Live AI: replies come from a language model calling the booking tools"}
+
+renderPrefs();renderPlan();greet();goLive();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
