@@ -11,56 +11,54 @@
 <link rel="canonical" href="https://sarfaraz27.vercel.app/ready-now">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a single story told top to bottom. Each step = explanation column + what it looks like, on a numbered rail. Lane colour says whose view it is: customer screen, AI engine, or business. */
 :root{
-  --bg:#F3F5F1; --surface:#FFFFFF; --sunk:#E8ECE6; --line:#D3D9D1;
-  --ink:#18201C; --muted:#5B665F; --accent:#C97F00; --accent-ink:#7A4D00; --accent-soft:#F7E7C6;
-  --reach:#0E7466; --reach-soft:#CFE7E1; --biz:#3D4A8C; --biz-soft:#E0E4F5; --bad:#B4471A; --good:#2F7D3A;
-  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
-  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F5F5F3; --line:#E7E5E1;
+  --ink:#1C1A19; --muted:#6B6762; --brand:#E8452C; --brand-soft:#FDEBE7; --brand-ink:#B02E18;
+  --accent:#F29F05; --accent-ink:#8A5A00; --accent-soft:#FFF3D6;
+  --reach:#0F8A5F; --reach-soft:#E2F4EC; --biz:#3949AB; --biz-soft:#E8EAF8; --bad:#C62828; --good:#0F8A5F;
+  --display:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#111613; --surface:#181F1B; --sunk:#202823; --line:#2E3832;
-  --ink:#E6EBE5; --muted:#9AA69E; --accent:#F0A82A; --accent-ink:#F6C878; --accent-soft:#3A2D12;
-  --reach:#3CC2AD; --reach-soft:#16352F; --biz:#9AA8F0; --biz-soft:#262C4A; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#111613; --surface:#181F1B; --sunk:#202823; --line:#2E3832;
-  --ink:#E6EBE5; --muted:#9AA69E; --accent:#F0A82A; --accent-ink:#F6C878; --accent-soft:#3A2D12;
-  --reach:#3CC2AD; --reach-soft:#16352F; --biz:#9AA8F0; --biz-soft:#262C4A; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
 .wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
 h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
-h1{font-size:clamp(28px,4.4vw,48px);line-height:1.05;font-weight:700;letter-spacing:-.01em}
-h2{font-size:clamp(20px,2.4vw,25px);line-height:1.15;font-weight:700}
+h1{font-size:clamp(28px,4.4vw,46px);line-height:1.08;font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(20px,2.4vw,24px);line-height:1.2;font-weight:800;letter-spacing:-.01em}
 h3{font-size:14.5px;font-weight:600;font-family:var(--body)}
 p{margin:0}
-.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:16px}
+.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:18px;margin-bottom:26px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo .mk{width:36px;height:36px;border-radius:11px;background:var(--brand);display:grid;place-items:center}
+.logo small{font-weight:600;font-size:13px;color:var(--muted);letter-spacing:0}
 .back:hover{color:var(--ink)}
-.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.eyebrow{font-size:13px;font-weight:600;color:var(--brand-ink)}
 .intro{max-width:760px}
 .intro p.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:64ch}
 .legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:20px;font-size:13.5px;color:var(--muted)}
-.lane{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
-.lane::before{content:"";width:7px;height:7px;border-radius:2px;background:currentColor}
-.lane.cust{background:var(--accent-soft);color:var(--accent-ink)}
+.lane{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;justify-self:start}
+.lane::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.lane.cust{background:var(--brand-soft);color:var(--brand-ink)}
 .lane.ai{background:var(--reach-soft);color:var(--reach)}
 .lane.biz{background:var(--biz-soft);color:var(--biz)}
 /* scene bar */
-.scene{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:14px 18px;align-items:end}
+.scene{margin-top:28px;background:var(--sunk);border:0;border-radius:16px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:14px 18px;align-items:end}
 .scene .t{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
 .scene .t span{color:var(--muted);font-size:13.5px}
 label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 4px}
-select,input[type=number]{width:100%;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
-input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0 0}
+select,input[type=number]{width:100%;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--brand);margin:6px 0 0}
 .val{float:right;font-family:var(--mono);color:var(--ink)}
 button{font:inherit;cursor:pointer}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:7px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:600;font-size:14px}
-.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:700;font-size:14px}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
 .btn[disabled]{opacity:.45;cursor:default}
 .btn:focus-visible,select:focus-visible,input:focus-visible,.cand:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* story rail */
@@ -68,8 +66,8 @@ button{font:inherit;cursor:pointer}
 .step{display:grid;grid-template-columns:52px minmax(0,300px) minmax(0,1fr);gap:0 22px;padding-bottom:44px;position:relative}
 .step::before{content:"";position:absolute;left:25px;top:52px;bottom:0;width:2px;background:var(--line)}
 .step:last-child::before{display:none}
-.num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1}
-.step.cust .num{border-color:var(--accent);color:var(--accent-ink)}
+.num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:22px;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1}
+.step.cust .num{border-color:var(--brand);color:var(--brand)}
 .step.ai .num{border-color:var(--reach);color:var(--reach)}
 .step.biz .num{border-color:var(--biz);color:var(--biz)}
 .say{padding-top:6px;display:grid;gap:10px;align-content:start}
@@ -78,11 +76,11 @@ button{font:inherit;cursor:pointer}
 .say .result{color:var(--ink);font-size:14px;border-left:2px solid var(--line);padding-left:10px}
 .say .result b{font-family:var(--mono);font-weight:500}
 .show{min-width:0}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0;box-shadow:0 1px 2px rgba(28,26,25,.04)}
 .next{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-family:var(--mono)}
 /* phones */
 .phones{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
-.phone{width:300px;max-width:100%;border:1px solid var(--line);border-radius:26px;padding:12px;background:var(--sunk)}
+.phone{width:300px;max-width:100%;border:8px solid #1C1A19;border-radius:34px;padding:12px;background:var(--sunk)}
 .phone .bar{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:2px 8px 8px}
 .sheet{background:var(--surface);border-radius:16px;padding:14px;border:1px solid var(--line)}
 .sheet .t{font-weight:600;font-size:15px}
@@ -91,13 +89,13 @@ button{font:inherit;cursor:pointer}
 .quote .n{font-family:var(--mono);text-align:right}
 .chance{font-size:12.5px;padding:8px 10px;background:var(--reach-soft);color:var(--ink);border-radius:8px}
 .closed{background:var(--sunk);color:var(--muted)}
-.done{background:var(--accent-soft)}
+.done{background:var(--reach-soft)}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .row .btn{flex:1}
 .notif{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:10px}
 .notif .app{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between}
 .notif .h{font-weight:600;margin-top:3px;font-size:14px}
-.price{font-family:var(--display);font-size:28px;font-weight:700}
+.price{font-family:var(--display);font-size:28px;font-weight:800;color:var(--brand)}
 .was{text-decoration:line-through;color:var(--muted);font-family:var(--mono);font-size:13px;margin-left:8px}
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .badges span{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
@@ -109,7 +107,7 @@ svg text{font-family:var(--mono)}
 .mlegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
 .fstep{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted)}
-.fstep b{display:block;font-family:var(--display);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.fstep b{display:block;font-family:var(--display);font-weight:800;font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
 /* ranking */
 .rank{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
 .thead,.cand{display:grid;grid-template-columns:20px minmax(0,1fr) 44px 50px;gap:8px;align-items:center}
@@ -122,7 +120,7 @@ svg text{font-family:var(--mono)}
 .cand .rk{font-family:var(--mono);color:var(--muted);font-size:12px}
 .cand .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cand .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
-.tag{font-family:var(--mono);font-size:9.5px;padding:0 5px;border-radius:3px;background:var(--accent-soft);color:var(--accent-ink);margin-left:5px;letter-spacing:.04em}
+.tag{font-size:10px;font-weight:700;padding:0 6px;border-radius:999px;background:var(--brand-soft);color:var(--brand-ink);margin-left:5px}
 .bar{display:grid;grid-template-columns:118px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:12px;margin:4px 0}
 .bar .track{position:relative;height:10px;background:var(--sunk);border-radius:2px}
 .bar .track .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
@@ -133,18 +131,19 @@ svg text{font-family:var(--mono)}
 .chartbox{overflow-x:auto}
 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
 .kpi{border-left:2px solid var(--reach);padding:2px 0 2px 10px}
-.kpi b{display:block;font-family:var(--display);font-size:23px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi b{display:block;font-family:var(--display);font-size:23px;font-weight:800;font-variant-numeric:tabular-nums}
 .kpi span{font-size:12px;color:var(--muted)}
 .settings{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}
 .settings .eyebrow{grid-column:1/-1}
 /* waves */
 .waves{display:grid;gap:8px}
-.wave{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:8px;background:var(--sunk);font-size:13.5px}
+.wave{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:8px;background:var(--sunk);font-size:13.5px}
 .wave .w{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .wave .ppl{display:flex;flex-wrap:wrap;gap:5px}
 .wave .ppl span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
-.wave .ppl span.win{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
-.wave.ok{background:var(--accent-soft)}
+.wave .ppl span.win{background:var(--reach);border-color:var(--reach);color:#fff;font-weight:700}
+.wave.ok{background:var(--reach-soft)}
+.wave.skip{opacity:.5}
 .wave.fail{background:var(--sunk);color:var(--muted)}
 .waiting{font-size:13.5px;color:var(--muted);padding:18px;border:1px dashed var(--line);border-radius:8px;text-align:center}
 /* settle */
@@ -183,9 +182,12 @@ tr.tot td{font-weight:600;border-bottom:none}
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  <div class="topbar">
+    <div class="logo"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0Z" fill="#fff"/><path d="M8 8c0-2 2-2 2-4M12 8c0-2 2-2 2-4M16 8c0-2 2-2 2-4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>sahn <small>· Ready Now</small></span></div>
+    <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  </div>
   <header class="intro">
-    <div class="eyebrow">Live demo · Food delivery app &ldquo;Sahn&rdquo; (fictional) · Feature: Ready Now</div>
+    <div class="eyebrow">Feature demo for a food delivery app (Sahn is fictional)</div>
     <h1>Cancel a food order after it&rsquo;s left the kitchen, and get the meal to someone nearby.</h1>
     <p class="lead">Follow one order from the moment a customer cancels to the moment someone else eats it. Seven steps, top to bottom. Every number is computed live.</p>
     <div class="legend">
@@ -197,6 +199,7 @@ tr.tot td{font-weight:600;border-bottom:none}
 
   <section class="scene" aria-label="Scenario">
     <div class="t"><h3>The order</h3><span>A customer ordered dinner and the rider is on the way. Change these to see every step adapt.</span></div>
+    <div><label for="area">Neighbourhood</label><select id="area"></select></div>
     <div><label for="preset">What was ordered</label><select id="preset"></select></div>
     <div><label for="tod">Time</label><select id="tod">
       <option value="lunch">13:10 · lunch</option>
@@ -204,7 +207,7 @@ tr.tot td{font-weight:600;border-bottom:none}
       <option value="dinner" selected>19:45 · dinner peak</option>
       <option value="late">23:30 · late night</option></select></div>
     <div><label for="prog">How far the rider has got <span class="val" id="progV"></span></label><input type="range" id="prog" min="5" max="95" value="35"></div>
-    <div><button class="btn ghost" id="reseed" type="button">Different neighbourhood</button></div>
+
   </section>
 
   <div class="story">
@@ -281,8 +284,9 @@ tr.tot td{font-weight:600;border-bottom:none}
       <div class="num">5</div>
       <div class="say">
         <span class="lane ai">AI engine · notifications</span>
-        <h2>Send the offer in small waves, best matches first.</h2>
-        <p>Five people at a time, every 90 seconds, until someone claims it or the food-quality window closes. Small waves keep it personal and stop people learning to wait for cancelled food.</p>
+        <h2>Send the offer in up to three waves, sized by probability.</h2>
+        <p>Wave 1 goes to the smallest group of best matches that gives a 60% chance of a claim. If no one bites, wave 2 does the same with the next group, three minutes later. Wave 3 is a last call to everyone still in reach.</p>
+        <p>Three waves at most keeps the food fresh, and small first waves stop people learning to wait for cancelled food.</p>
         <p class="result" id="r5"></p>
       </div>
       <div class="show panel">
@@ -363,8 +367,32 @@ const PRESETS=[
 const CUISINES=["Arabic","Indian","Korean","Italian","Dessert"];
 const TOD={lunch:{traffic:1.2,meal:1.0,label:"lunch"},afternoon:{traffic:1.0,meal:0.35,label:"afternoon"},dinner:{traffic:1.45,meal:1.0,label:"dinner"},late:{traffic:0.75,meal:0.7,label:"late night"}};
 const FIRST=["Aisha","Omar","Priya","Rahul","Fatima","Yusuf","Meera","Hassan","Sara","Arjun","Layla","Karim","Noor","Vikram","Mariam","Zaid","Anika","Faisal","Rania","Imran","Hana","Tariq","Divya","Salma","Ali","Neha","Khalid","Lina","Rohan","Dana","Ahmed","Sana","Joseph","Huda","Kiran","Reem","Nikhil","Amal","Bilal","Ritu","Sami","Asma","Dev","Yara","Hamad","Tara"];
-const DELIVERY_FEE=7, CAC_DEFAULT=35, MAX_AGE=40, WAVE=5, WAVE_GAP=1.5;
-let seed=7, state={};
+const DELIVERY_FEE=7, CAC_DEFAULT=35, MAX_AGE=40, WAVE_GAP=3, MAX_WAVES=3, WAVE_TARGET=0.6;
+const NEIGHS=[
+  {id:"marina",name:"Dubai Marina",seed:7,users:60,rows:[3,12],cols:[20],road:"SHEIKH ZAYED RD",note:"Dense towers, lots of app users"},
+  {id:"jlt",name:"Jumeirah Lake Towers",seed:311,users:56,rows:[4],cols:[8,19],road:"SHEIKH ZAYED RD",note:"Clusters around the lakes"},
+  {id:"downtown",name:"Downtown Dubai",seed:58,users:52,rows:[4,11],cols:[7,18],road:"FINANCIAL CENTRE RD",note:"Busy evenings, heavy traffic"},
+  {id:"bb",name:"Business Bay",seed:1203,users:46,rows:[5,12],cols:[12],road:"AL KHAIL RD",note:"Offices by day, flats by night"},
+  {id:"barsha",name:"Al Barsha",seed:919,users:40,rows:[7],cols:[6,17],road:"UMM SUQEIM ST",note:"Villas and low-rise, spread out"},
+  {id:"deira",name:"Deira",seed:4242,users:58,rows:[3,10],cols:[13],road:"AL ITTIHAD RD",note:"Old town, narrow streets, very dense"},
+  {id:"jvc",name:"Jumeirah Village Circle",seed:2718,users:34,rows:[8],cols:[11],road:"HESSA ST",note:"Quieter, fewer active users"}
+];
+const NB=()=>NEIGHS.find(n=>n.id===($("#area")?$("#area").value:"marina"))||NEIGHS[0];
+let CUR_NB=NEIGHS[0];
+function waveEff(r){return r.p*(r.u.active?0.9:0.35)}
+// Plan up to three waves: each of the first waves is the smallest group (3 to 12 people, leaving some for later waves) that gives a 60% chance of a claim;
+// the last wave goes to everyone left in reach.
+function planWaves(ranked,n){
+  const waves=[];let i=0;
+  for(let w=0;w<n&&i<ranked.length;w++){
+    if(w===n-1){waves.push(ranked.slice(i));break}
+    let none=1,j=i;const cap=Math.min(12,Math.ceil((ranked.length-i)/(n-w)));
+    while(j<ranked.length&&j-i<cap&&(j-i<Math.min(3,cap)||1-none<WAVE_TARGET)){none*=1-waveEff(ranked[j]);j++}
+    waves.push(ranked.slice(i,j));i=j;
+  }
+  return waves;
+}
+let seed=7, seedBump=0, state={};
 
 function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const sig=z=>1/(1+Math.exp(-z));
@@ -374,7 +402,7 @@ const aed0=x=>"AED "+Math.round(x).toLocaleString("en-US");
 
 // --- road grid ---
 function cellCost(x,y,traffic){
-  const hwyRow=(y===4||y===11), hwyCol=(x===7||x===18);
+  const nb=CUR_NB,hwyRow=nb.rows.includes(y), hwyCol=nb.cols.includes(x);
   return (hwyRow||hwyCol?0.9:2.2)*traffic;
 }
 function dijkstra(src,traffic){
@@ -392,13 +420,13 @@ function dijkstra(src,traffic){
 
 // --- scenario ---
 function build(){
-  const r=rng(seed);
+  const r=rng(NB().seed+seedBump);
   const pick=n=>Math.floor(r()*n);
   const rest={x:3+pick(4),y:2+pick(4)};
   const cust={x:rest.x+5+pick(5),y:rest.y+3+pick(4)};
   const users=[];
   const names=FIRST.slice().sort(()=>r()-.5);
-  for(let i=0;i<44;i++){
+  for(let i=0;i<NB().users;i++){
     const aff={};CUISINES.forEach(c=>aff[c]=Math.pow(r(),1.4));
     const fav=CUISINES[pick(CUISINES.length)];aff[fav]=0.75+r()*0.25;
     users.push({id:i,name:names[i%names.length]+" "+String.fromCharCode(65+pick(26))+".",x:pick(W),y:pick(H),
@@ -411,6 +439,7 @@ function build(){
 }
 
 function compute(){
+  CUR_NB=NB();
   const order=PRESETS.find(p=>p.id===$("#preset").value);
   const tod=TOD[$("#tod").value];
   const prog=+$("#prog").value/100, feePct=+$("#fee").value/100, lam=+$("#lam").value/100;
@@ -426,11 +455,11 @@ function compute(){
   const fromRider=dijkstra(riderCell,tod.traffic);
   const fee=clamp(order.value*feePct,5,25);
   const window=clamp(MAX_AGE-age-8,0,10.5);
-  const nWaves=Math.floor(window/WAVE_GAP);
+  const nWaves=Math.min(MAX_WAVES,Math.floor(window/WAVE_GAP)+1);
   let blocked=null;
   if(order.chilled)blocked="Chilled and frozen items can't travel to a second customer safely, so this order can't be cancelled once it's on the road.";
   else if(toCust<2.5)blocked="The rider is less than 3 minutes away, so cancelling is closed for this order.";
-  else if(nWaves<1)blocked="The meal has been out too long to offer it to anyone else.";
+  else if(window<2)blocked="The meal has been out too long to offer it to anyone else.";
   const cand=users.map(u=>{
     const eta=fromRider.dist[u.y*W+u.x]+1;
     let reason=null;
@@ -459,7 +488,7 @@ function compute(){
   const grid=[];for(let d=0.10;d<=0.401;d+=0.025)grid.push(+d.toFixed(3));
   const curve=grid.map(d=>{
     const ranked=elig.map(u=>{const p=pOf(u,d);return{u,p,pri:p*(1+lam*(u.isNew?1:0))}}).sort((a,b)=>b.pri-a.pri);
-    const reach=ranked.slice(0,nWaves*WAVE);
+    const reach=ranked;
     let none=1,pNew=0,etaW=0;
     for(const r of reach){const p=r.p*(r.u.active?0.9:0.35);pNew+=none*p*(r.u.isNew?1:0);etaW+=none*p*r.u.eta;none*=1-p}
     const pr=blocked?0:1-none;
@@ -470,6 +499,7 @@ function compute(){
     return{d,pr,pNew:blocked?0:pNew,margin,ev,ranked};
   });
   let best=curve[0];curve.forEach(c=>{if(c.ev>best.ev)best=c});
+  best.waves=planWaves(best.ranked,nWaves);
   Object.assign(state,{order,tod,prog,fee,lam,rider,path,fromRider,age,toCust,window,nWaves,blocked,cand,elig,curve,best,pOf,feats});
 }
 
@@ -490,7 +520,7 @@ function renderSheet(){
   if(state.cancelled){
     const s=state.sim;
     el.innerHTML=head+`<div class="chance done">${s&&s.winner?`Good news: someone nearby took your meal. You were charged ${aed(fee)}.`:`No one nearby took it in time, so the full ${aed(order.value)} was charged.`}</div><div class="row"><button class="btn ghost" type="button" id="undo">Start again</button></div>`;
-    $("#undo").onclick=()=>{state.cancelled=false;state.sim=simulate(rng(1000+seed),false);renderAfter()};
+    $("#undo").onclick=()=>{state.cancelled=false;state.sim=simulate(rng(1000+NB().seed),false);renderAfter()};
   }else{
     el.innerHTML=head+`<div class="chance">${Math.round(p*100)}% chance someone nearby takes it in the next ${Math.round(state.window)} min.</div>
     <div class="row"><button class="btn ghost" type="button" tabindex="-1" aria-disabled="true">Keep order</button><button class="btn" type="button" id="doCancel">Cancel order</button></div>`;
@@ -508,9 +538,9 @@ function renderMap(){
     if(e<=20)s+=`<rect x="${x*CS}" y="${y*CS}" width="${CS}" height="${CS}" fill="var(--reach)" fill-opacity="${(0.07+0.38*(1-e/20)).toFixed(3)}"/>`}
   for(let i=0;i<=W;i++)s+=`<line x1="${i*CS}" y1="0" x2="${i*CS}" y2="${H*CS}" stroke="var(--line)" stroke-width="0.6"/>`;
   for(let j=0;j<=H;j++)s+=`<line x1="0" y1="${j*CS}" x2="${W*CS}" y2="${j*CS}" stroke="var(--line)" stroke-width="0.6"/>`;
-  [4,11].forEach(y=>s+=`<rect x="0" y="${y*CS+9}" width="${W*CS}" height="6" fill="var(--muted)" fill-opacity=".35"/>`);
-  [7,18].forEach(x=>s+=`<rect x="${x*CS+9}" y="0" width="6" height="${H*CS}" fill="var(--muted)" fill-opacity=".35"/>`);
-  s+=`<text x="6" y="${4*CS+7}" font-size="9" fill="var(--muted)">EXPRESSWAY</text>`;
+  NB().rows.forEach(y=>s+=`<rect x="0" y="${y*CS+9}" width="${W*CS}" height="6" fill="var(--muted)" fill-opacity=".35"/>`);
+  NB().cols.forEach(x=>s+=`<rect x="${x*CS+9}" y="0" width="6" height="${H*CS}" fill="var(--muted)" fill-opacity=".35"/>`);
+  s+=`<text x="6" y="${NB().rows[0]*CS+7}" font-size="9" fill="var(--muted)">${NB().road}</text><text x="${W*CS-8}" y="${H*CS-8}" text-anchor="end" font-size="11" font-weight="600" fill="var(--ink)">${NB().name.toUpperCase()}</text>`;
   const pts=path.map(c=>`${(c%W)*CS+12},${((c/W)|0)*CS+12}`).join(" ");
   s+=`<polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 4" opacity=".5"/>`;
   const winId=sim&&sim.winner?sim.winner.id:null;
@@ -570,17 +600,18 @@ function renderChart(){
   $("#r4").innerHTML=blocked?"":`Chosen discount <b>${Math.round(best.d*100)}%</b>. The meal will be offered at <b>${aed(state.order.value*(1-best.d))}</b> instead of ${aed(state.order.value)}.`;
 }
 
-// structured simulation: waves of 5, first claim wins
+// simulation: up to three planned waves, first claim wins
 function simulate(r){
-  const{best,nWaves,blocked}=state;const out={waves:[],winner:null,t:null};
+  const{best,blocked}=state;const out={waves:[],winner:null,t:null};
   if(blocked)return out;
-  for(let w=0;w<nWaves;w++){
-    const batch=best.ranked.slice(w*WAVE,w*WAVE+WAVE);if(!batch.length)break;
+  best.waves.forEach((batch,w)=>{
+    if(out.winner)return;
     const t0=w*WAVE_GAP;let firstHit=null;
-    batch.forEach(b=>{const p=b.p*(b.u.active?0.9:0.35);if(r()<p){const t=t0+0.4+r()*1.0;if(!firstHit||t<firstHit.t)firstHit={t,u:b.u}}});
-    out.waves.push({n:w+1,t0,people:batch.map(b=>b.u),win:firstHit?firstHit.u:null,t:firstHit?firstHit.t:null});
-    if(firstHit){out.winner=firstHit.u;out.t=firstHit.t;break}
-  }
+    batch.forEach(b=>{if(r()<waveEff(b)){const t=t0+0.4+r()*(WAVE_GAP-0.8);if(!firstHit||t<firstHit.t)firstHit={t,u:b.u}}});
+    let none=1;batch.forEach(b=>none*=1-waveEff(b));
+    out.waves.push({n:w+1,t0,last:w===best.waves.length-1,chance:1-none,people:batch.map(b=>b.u),win:firstHit?firstHit.u:null,t:firstHit?firstHit.t:null});
+    if(firstHit){out.winner=firstHit.u;out.t=firstHit.t}
+  });
   return out;
 }
 let timers=[];
@@ -588,8 +619,15 @@ function renderWaves(animate){
   timers.forEach(clearTimeout);timers=[];
   const s=state.sim,box=$("#waves");
   if(state.blocked){box.innerHTML=`<div class="waiting">No offer goes out for this order.</div>`;$("#r5").textContent="";return}
-  const html=s.waves.map(w=>`<div class="wave ${w.win?'ok':''}"><span class="w">Wave ${w.n}<br>+${fmt(w.t0)}</span><div><div class="ppl">${w.people.map(u=>`<span class="${w.win&&w.win.id===u.id?'win':''}">${first(u.name)}</span>`).join("")}</div><div style="margin-top:5px;font-size:12.5px;color:var(--muted)">${w.win?`${w.win.name} claimed it at +${fmt(w.t)}. Rider rerouted, ${Math.round(w.win.eta)} min away.`:"No one claimed it. Next wave in 90 seconds."}</div></div></div>`);
-  if(!s.winner)html.push(`<div class="wave fail"><span class="w">Closed<br>+${fmt(state.nWaves*WAVE_GAP)}</span><div>The food-quality window closed with no claim. The original customer pays the full price.</div></div>`);
+  const plan=state.best.waves;
+  const html=plan.map((batch,i)=>{
+    const w=s.waves[i],ppl=batch.map(b=>b.u),shown=ppl.slice(0,12);
+    let none=1;batch.forEach(b=>none*=1-waveEff(b));
+    const head=`<b>Wave ${i+1}</b> · ${i===plan.length-1&&plan.length>1?"last call, everyone left":"top "+ppl.length} · ${ppl.length} ${ppl.length===1?"person":"people"} · ${Math.round((1-none)*100)}% chance`;
+    const chips=`<div class="ppl">${shown.map(u=>`<span class="${w&&w.win&&w.win.id===u.id?'win':''}">${u.name}</span>`).join("")}${ppl.length>12?`<span>+${ppl.length-12} more</span>`:""}</div>`;
+    const status=!w?"Not needed: claimed in an earlier wave.":w.win?`${w.win.name} claimed it at +${fmt(w.t)}. Rider rerouted, ${Math.round(w.win.eta)} min away.`:i<plan.length-1?`No claim. Next wave goes out at +${fmt((i+1)*WAVE_GAP)}.`:"No claim.";
+    return`<div class="wave ${w&&w.win?'ok':!w?'skip':''}"><span class="w">+${fmt(i*WAVE_GAP)}</span><div><div style="font-size:13px;margin-bottom:6px">${head}</div>${chips}<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">${status}</div></div></div>`});
+  if(!s.winner)html.push(`<div class="wave fail"><span class="w">+${fmt(Math.min(state.window,plan.length*WAVE_GAP))}</span><div>The food-quality window closed with no claim. The original customer pays the full price.</div></div>`);
   const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(!animate||reduce){box.innerHTML=html.join("")}
   else{box.innerHTML="";html.forEach((h,i)=>timers.push(setTimeout(()=>box.insertAdjacentHTML("beforeend",h),500*i)))}
@@ -597,7 +635,7 @@ function renderWaves(animate){
 }
 function renderMcKpis(){
   const m=state.mc;
-  $("#kpisMc").innerHTML=m?`<div class="kpi"><b>${Math.round(m.rate*100)}%</b><span>of 2,000 runs rescued</span></div><div class="kpi"><b>${m.med?fmt(m.med):"—"}</b><span>typical time to claim</span></div><div class="kpi"><b>${Math.round(m.newShare*100)}%</b><span>went to first-time customers</span></div>`:"";
+  $("#kpisMc").innerHTML=m?`<div class="kpi"><b>${Math.round(m.rate*100)}%</b><span>of 2,000 runs rescued</span></div><div class="kpi"><b>${m.med?fmt(m.med):"—"}</b><span>typical time to claim (min:sec)</span></div><div class="kpi"><b>${Math.round(m.newShare*100)}%</b><span>went to first-time customers</span></div>`:"";
 }
 
 function renderNotif(){
@@ -632,7 +670,7 @@ function renderSettle(){
 }
 
 function renderAfter(animate){renderSheet();renderMap();renderWaves(animate);renderNotif();renderSettle()}
-function all(){compute();state.sim=simulate(rng(1000+seed));renderSheet();renderMap();renderCands();renderChart();renderWaves(false);renderNotif();renderSettle();renderMcKpis();calc()}
+function all(){compute();state.sim=simulate(rng(1000+NB().seed));renderSheet();renderMap();renderCands();renderChart();renderWaves(false);renderNotif();renderSettle();renderMcKpis();calc()}
 
 function cancelNow(){
   state.cancelled=true;state.sim=simulate(rng((Date.now()&0xffff)+1));
@@ -659,7 +697,8 @@ $("#cCac").addEventListener("input",()=>{state.cac=+$("#cCac").value||0;all()});
 $("#preset").innerHTML=PRESETS.map(p=>`<option value="${p.id}">${p.rest} · ${p.item.split(",")[0]} · AED ${p.value}${p.chilled?" (chilled)":""}</option>`).join("");
 function labels(){$("#progV").textContent=$("#prog").value+"%";$("#feeV").textContent=$("#fee").value+"%";$("#lamV").textContent="×"+(1+$("#lam").value/100).toFixed(1)}
 ["#preset","#tod","#prog","#fee","#lam"].forEach(id=>$(id).addEventListener("input",()=>{labels();state.cancelled=false;state.mc=null;all()}));
-$("#reseed").onclick=()=>{seed=(seed*7919+13)%100000;build();state.cancelled=false;state.mc=null;all()};
+$("#area").innerHTML=NEIGHS.map(n=>`<option value="${n.id}">${n.name}</option>`).join("");
+$("#area").addEventListener("input",()=>{build();state.cancelled=false;state.mc=null;all()});
 state.cac=CAC_DEFAULT;labels();build();all();
 })();
 </script>
