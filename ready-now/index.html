@@ -13,11 +13,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: ops-console. Header band, then the engine's real sequence (order → reach → rank → price → dispatch → settle) as numbered panels. */
+/* Layout: a single story told top to bottom. Each step = explanation column + what it looks like, on a numbered rail. Lane colour says whose view it is: customer screen, AI engine, or business. */
 :root{
   --bg:#F3F5F1; --surface:#FFFFFF; --sunk:#E8ECE6; --line:#D3D9D1;
   --ink:#18201C; --muted:#5B665F; --accent:#C97F00; --accent-ink:#7A4D00; --accent-soft:#F7E7C6;
-  --reach:#0E7466; --reach-soft:#CFE7E1; --bad:#B4471A; --good:#2F7D3A;
+  --reach:#0E7466; --reach-soft:#CFE7E1; --biz:#3D4A8C; --biz-soft:#E0E4F5; --bad:#B4471A; --good:#2F7D3A;
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -25,252 +25,330 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#111613; --surface:#181F1B; --sunk:#202823; --line:#2E3832;
   --ink:#E6EBE5; --muted:#9AA69E; --accent:#F0A82A; --accent-ink:#F6C878; --accent-soft:#3A2D12;
-  --reach:#3CC2AD; --reach-soft:#16352F; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}}
+  --reach:#3CC2AD; --reach-soft:#16352F; --biz:#9AA8F0; --biz-soft:#262C4A; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111613; --surface:#181F1B; --sunk:#202823; --line:#2E3832;
   --ink:#E6EBE5; --muted:#9AA69E; --accent:#F0A82A; --accent-ink:#F6C878; --accent-soft:#3A2D12;
-  --reach:#3CC2AD; --reach-soft:#16352F; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}
+  --reach:#3CC2AD; --reach-soft:#16352F; --biz:#9AA8F0; --biz-soft:#262C4A; --bad:#F07A4A; --good:#6CC27A; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
-.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
 h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
-h1{font-size:clamp(28px,4.2vw,46px);line-height:1.05;font-weight:700;letter-spacing:-.01em}
-h2{font-size:21px;font-weight:700}
-h3{font-size:15px;font-weight:700;font-family:var(--body)}
+h1{font-size:clamp(28px,4.4vw,48px);line-height:1.05;font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(20px,2.4vw,25px);line-height:1.15;font-weight:700}
+h3{font-size:14.5px;font-weight:600;font-family:var(--body)}
+p{margin:0}
+.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:16px}
+.back:hover{color:var(--ink)}
 .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;align-items:end;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:22px}
-.hero p{max-width:62ch;color:var(--muted);margin:10px 0 0}
-.rules{display:grid;gap:6px;font-size:13.5px}
-.rules div{display:flex;gap:10px;align-items:baseline}
-.rules b{font-family:var(--mono);font-weight:500;color:var(--accent-ink);min-width:62px}
-.grid3{display:grid;grid-template-columns:300px minmax(0,1fr) 340px;gap:18px;align-items:start}
-.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:18px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
-.ph{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
-.step{font-family:var(--mono);font-size:12px;color:var(--accent-ink);background:var(--accent-soft);padding:1px 7px;border-radius:4px}
-label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px}
+.intro{max-width:760px}
+.intro p.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:64ch}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:20px;font-size:13.5px;color:var(--muted)}
+.lane{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lane::before{content:"";width:7px;height:7px;border-radius:2px;background:currentColor}
+.lane.cust{background:var(--accent-soft);color:var(--accent-ink)}
+.lane.ai{background:var(--reach-soft);color:var(--reach)}
+.lane.biz{background:var(--biz-soft);color:var(--biz)}
+/* scene bar */
+.scene{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:14px 18px;align-items:end}
+.scene .t{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.scene .t span{color:var(--muted);font-size:13.5px}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 4px}
 select,input[type=number]{width:100%;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
-input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0 0}
 .val{float:right;font-family:var(--mono);color:var(--ink)}
 button{font:inherit;cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:7px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:600;font-size:14px}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
-.btn:focus-visible,select:focus-visible,input:focus-visible,.cand:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn[disabled]{opacity:.45;cursor:default}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-/* phone */
-.phone{border:1px solid var(--line);border-radius:22px;padding:14px;background:var(--bg);margin-top:14px}
-.sheet{background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--line)}
-.sheet .t{font-weight:600;font-size:14.5px}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.cand:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* story rail */
+.story{margin-top:36px;position:relative}
+.step{display:grid;grid-template-columns:52px minmax(0,300px) minmax(0,1fr);gap:0 22px;padding-bottom:44px;position:relative}
+.step::before{content:"";position:absolute;left:25px;top:52px;bottom:0;width:2px;background:var(--line)}
+.step:last-child::before{display:none}
+.num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1}
+.step.cust .num{border-color:var(--accent);color:var(--accent-ink)}
+.step.ai .num{border-color:var(--reach);color:var(--reach)}
+.step.biz .num{border-color:var(--biz);color:var(--biz)}
+.say{padding-top:6px;display:grid;gap:10px;align-content:start}
+.say p{color:var(--muted);font-size:14.5px}
+.say ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:grid;gap:4px}
+.say .result{color:var(--ink);font-size:14px;border-left:2px solid var(--line);padding-left:10px}
+.say .result b{font-family:var(--mono);font-weight:500}
+.show{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.next{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-family:var(--mono)}
+/* phones */
+.phones{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.phone{width:300px;max-width:100%;border:1px solid var(--line);border-radius:26px;padding:12px;background:var(--sunk)}
+.phone .bar{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:2px 8px 8px}
+.sheet{background:var(--surface);border-radius:16px;padding:14px;border:1px solid var(--line)}
+.sheet .t{font-weight:600;font-size:15px}
 .sheet .s{font-size:12.5px;color:var(--muted)}
-.quote{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin:12px 0;font-size:13.5px}
+.quote{display:grid;grid-template-columns:1fr auto;gap:5px 10px;margin:12px 0;font-size:13.5px}
 .quote .n{font-family:var(--mono);text-align:right}
-.chance{font-family:var(--mono);font-size:12px;padding:8px 10px;background:var(--reach-soft);color:var(--ink);border-radius:8px}
+.chance{font-size:12.5px;padding:8px 10px;background:var(--reach-soft);color:var(--ink);border-radius:8px}
 .closed{background:var(--sunk);color:var(--muted)}
+.done{background:var(--accent-soft)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.row .btn{flex:1}
+.notif{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:10px}
+.notif .app{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between}
+.notif .h{font-weight:600;margin-top:3px;font-size:14px}
+.price{font-family:var(--display);font-size:28px;font-weight:700}
+.was{text-decoration:line-through;color:var(--muted);font-family:var(--mono);font-size:13px;margin-left:8px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.badges span{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+.why{font-size:12.5px;color:var(--muted);background:var(--sunk);padding:8px 10px;border-radius:8px}
 /* map */
 .mapbox{overflow-x:auto}
 svg text{font-family:var(--mono)}
-.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
-.checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
-.chk{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px}
-.chk b{display:block;font-family:var(--mono);font-size:15px;font-weight:500}
-.chk.pass b{color:var(--good)} .chk.fail b{color:var(--bad)}
-/* candidates */
-.cands{display:grid;gap:4px}
-.cand{display:grid;grid-template-columns:22px minmax(0,1fr) 52px 54px;gap:8px;align-items:center;padding:6px 8px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--ink);text-align:left;font-size:13px;width:100%}
+.mlegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.mlegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.fstep{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.fstep b{display:block;font-family:var(--display);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+/* ranking */
+.rank{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.thead,.cand{display:grid;grid-template-columns:20px minmax(0,1fr) 44px 50px;gap:8px;align-items:center}
+.thead{padding:0 8px 6px;font-size:10.5px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.thead span:nth-child(n+3){text-align:right}
+.cands{display:grid;gap:2px}
+.cand{padding:6px 8px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--ink);text-align:left;font-size:13px;width:100%}
 .cand:hover{background:var(--sunk)}
-.cand.sel{border-color:var(--accent);background:var(--accent-soft)}
+.cand.sel{border-color:var(--reach);background:var(--reach-soft)}
 .cand .rk{font-family:var(--mono);color:var(--muted);font-size:12px}
 .cand .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cand .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
-.tag{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:3px;background:var(--reach-soft);color:var(--reach);margin-left:5px;letter-spacing:.04em}
-.thead{display:grid;grid-template-columns:22px minmax(0,1fr) 52px 54px;gap:8px;padding:0 8px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
-.thead span:nth-child(n+3){text-align:right}
-.explain{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
-.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 46px;gap:8px;align-items:center;font-size:12px;margin:3px 0}
+.tag{font-family:var(--mono);font-size:9.5px;padding:0 5px;border-radius:3px;background:var(--accent-soft);color:var(--accent-ink);margin-left:5px;letter-spacing:.04em}
+.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:12px;margin:4px 0}
 .bar .track{position:relative;height:10px;background:var(--sunk);border-radius:2px}
 .bar .track .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
 .bar .track .fill{position:absolute;top:0;bottom:0}
 .bar .n{font-family:var(--mono);text-align:right}
-.excl{font-size:12px;color:var(--muted);margin-top:10px}
-/* chart + log */
+.excl{font-size:12px;color:var(--muted);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+/* pricing */
 .chartbox{overflow-x:auto}
 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
-.kpi{border-left:2px solid var(--accent);padding:2px 0 2px 10px}
-.kpi b{display:block;font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi{border-left:2px solid var(--reach);padding:2px 0 2px 10px}
+.kpi b{display:block;font-family:var(--display);font-size:23px;font-weight:700;font-variant-numeric:tabular-nums}
 .kpi span{font-size:12px;color:var(--muted)}
-.log{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border-radius:8px;padding:10px 12px;min-height:160px;max-height:280px;overflow:auto;margin-top:12px}
-.log div{padding:2px 0}
-.log .w{color:var(--accent-ink)} .log .ok{color:var(--good);font-weight:500} .log .no{color:var(--muted)} .log .x{color:var(--bad)}
+.settings{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}
+.settings .eyebrow{grid-column:1/-1}
+/* waves */
+.waves{display:grid;gap:8px}
+.wave{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:8px;background:var(--sunk);font-size:13.5px}
+.wave .w{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.wave .ppl{display:flex;flex-wrap:wrap;gap:5px}
+.wave .ppl span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.wave .ppl span.win{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+.wave.ok{background:var(--accent-soft)}
+.wave.fail{background:var(--sunk);color:var(--muted)}
+.waiting{font-size:13.5px;color:var(--muted);padding:18px;border:1px dashed var(--line);border-radius:8px;text-align:center}
+/* settle */
 table{border-collapse:collapse;width:100%;font-size:13.5px}
-th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{font-size:11.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
-td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.n{font-family:var(--mono);text-align:right;white-space:nowrap}
 tr.tot td{font-weight:600;border-bottom:none}
-.note{font-size:12.5px;color:var(--muted);margin-top:10px;max-width:70ch}
-.notif{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-.notif .app{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
-.notif .h{font-weight:600;margin-top:4px}
-.claim{margin-top:10px}
-.claim .price{font-family:var(--display);font-size:26px;font-weight:700}
-.claim .was{text-decoration:line-through;color:var(--muted);font-family:var(--mono);font-size:13px;margin-left:8px}
-.badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
-.badges span{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
-.why{font-size:12.5px;color:var(--muted);background:var(--sunk);padding:8px 10px;border-radius:8px}
-.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.guard{display:grid;gap:10px;font-size:13.5px}
-.guard div b{display:block;font-size:13.5px}
-.guard div span{color:var(--muted)}
-.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 12px}
-.out{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
-.foot{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
-@media (max-width:1100px){.grid3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.grid3 .mapp{grid-column:1/-1;order:-1}}
-@media (max-width:760px){.hero,.grid3,.grid2,.cols2{grid-template-columns:minmax(0,1fr)}.checks,.out{grid-template-columns:repeat(2,minmax(0,1fr))}.calc{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+/* beyond */
+.beyond{margin-top:12px;border-top:1px solid var(--line);padding-top:32px}
+.bgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;margin-top:16px}
+.guard{display:grid;gap:12px;font-size:13.5px}
+.guard b{display:block}
+.guard span{color:var(--muted)}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+.out{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.out .kpi{border-color:var(--biz)}
+.foot{margin-top:32px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 @keyframes pulse{0%{r:6}70%{r:16;opacity:0}100%{r:16;opacity:0}}
 .pulse{animation:pulse 1.6s ease-out infinite}
+@keyframes rise{from{opacity:.3;transform:translateY(4px)}to{opacity:1;transform:none}}
+.wave{animation:rise .35s ease-out}
+@media (max-width:900px){
+  .step{grid-template-columns:40px minmax(0,1fr);gap:12px 14px}
+  .step::before{left:19px;top:40px}
+  .num{width:40px;height:40px;font-size:18px}
+  .show{grid-column:2}
+  .rank{grid-template-columns:minmax(0,1fr)}
+  .scene{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .bgrid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){.scene,.calc,.settings{grid-template-columns:minmax(0,1fr)}.funnel{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi b{font-size:19px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
-<style>body{margin:0}.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:14px}.back:hover{color:var(--ink)}</style>
 </head>
 <body>
-
 <div class="wrap">
   <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
-  <header class="hero">
-    <div>
-      <div class="eyebrow">Live demo · Food delivery app "Sahn" (fictional) · Feature: Ready Now</div>
-      <h1>Let customers cancel after dispatch, and get the meal to someone nearby who wants it.</h1>
-      <p>When a customer cancels an order that is already on the road, the engine predicts who within a 20-minute ride will take it, prices it, and offers it in waves. Every number on this page is computed live from the scenario you set on the left.</p>
-    </div>
-    <div class="rules" aria-label="Business rules">
-      <div><b>Reach</b><span>Only customers within 20 minutes' travel of the rider, by road time, not straight-line distance</span></div>
-      <div><b>Rescued</b><span>Cancelling customer pays a small fee. New customer gets a discount and a faster drop</span></div>
-      <div><b>Not rescued</b><span>Cancelling customer pays the full order amount, as today</span></div>
-      <div><b>Safety</b><span>Sealed packs only. No ice cream or shakes. Never offered back to the same household</span></div>
+  <header class="intro">
+    <div class="eyebrow">Live demo · Food delivery app &ldquo;Sahn&rdquo; (fictional) · Feature: Ready Now</div>
+    <h1>Cancel a food order after it&rsquo;s left the kitchen, and get the meal to someone nearby.</h1>
+    <p class="lead">Follow one order from the moment a customer cancels to the moment someone else eats it. Seven steps, top to bottom. Every number is computed live.</p>
+    <div class="legend">
+      <span><span class="lane cust">Customer screen</span>&nbsp; what people see in the app</span>
+      <span><span class="lane ai">AI engine</span>&nbsp; what runs behind the scenes</span>
+      <span><span class="lane biz">Business</span>&nbsp; who pays what</span>
     </div>
   </header>
 
-  <section class="grid3">
-    <div class="panel">
-      <div class="ph"><span class="step">1</span><h2>The order</h2></div>
-      <label for="preset">Order on the road</label>
-      <select id="preset"></select>
-      <label for="tod">Time of day</label>
-      <select id="tod">
-        <option value="lunch">13:10 · lunch</option>
-        <option value="afternoon">16:20 · afternoon</option>
-        <option value="dinner" selected>19:45 · dinner peak</option>
-        <option value="late">23:30 · late night</option>
-      </select>
-      <label for="prog">Rider progress to the customer <span class="val" id="progV"></span></label>
-      <input type="range" id="prog" min="5" max="95" value="35">
-      <label for="fee">Cancel fee if rescued (% of order) <span class="val" id="feeV"></span></label>
-      <input type="range" id="fee" min="5" max="35" value="20">
-      <label for="lam">New-customer priority <span class="val" id="lamV"></span></label>
-      <input type="range" id="lam" min="0" max="150" value="60">
-      <div class="row">
-        <button class="btn ghost" id="reseed">New neighbourhood</button>
-      </div>
-
-      <div class="phone" aria-label="Cancelling customer's screen">
-        <div class="eyebrow" style="margin-bottom:8px">Cancelling customer sees</div>
-        <div class="sheet" id="sheet"></div>
-      </div>
-    </div>
-
-    <div class="panel mapp">
-      <div class="ph"><span class="step">2</span><h2>Who can the rider reach in 20 minutes?</h2></div>
-      <div class="mapbox"><svg id="map" role="img" aria-label="Neighbourhood grid showing 20-minute travel-time zone around the rider"></svg></div>
-      <div class="legend">
-        <span><i style="background:var(--reach)"></i>20-min ride zone (darker = closer)</span>
-        <span><i style="background:var(--accent)"></i>Top-ranked customers</span>
-        <span><i style="background:var(--muted)"></i>Other app users</span>
-        <span><i style="background:var(--bad)"></i>Excluded</span>
-      </div>
-      <div class="checks" id="checks"></div>
-    </div>
-
-    <div class="panel">
-      <div class="ph"><span class="step">3</span><h2>Ranked by likelihood to claim</h2></div>
-      <div class="thead"><span>#</span><span>Customer</span><span>ETA</span><span>P(claim)</span></div>
-      <div class="cands" id="cands"></div>
-      <div class="explain" id="explain"></div>
-      <div class="excl" id="excl"></div>
-    </div>
+  <section class="scene" aria-label="Scenario">
+    <div class="t"><h3>The order</h3><span>A customer ordered dinner and the rider is on the way. Change these to see every step adapt.</span></div>
+    <div><label for="preset">What was ordered</label><select id="preset"></select></div>
+    <div><label for="tod">Time</label><select id="tod">
+      <option value="lunch">13:10 · lunch</option>
+      <option value="afternoon">16:20 · afternoon</option>
+      <option value="dinner" selected>19:45 · dinner peak</option>
+      <option value="late">23:30 · late night</option></select></div>
+    <div><label for="prog">How far the rider has got <span class="val" id="progV"></span></label><input type="range" id="prog" min="5" max="95" value="35"></div>
+    <div><button class="btn ghost" id="reseed" type="button">Different neighbourhood</button></div>
   </section>
 
-  <section class="grid2">
-    <div class="panel">
-      <div class="ph"><span class="step">4</span><h2>Price it: the discount that earns the most</h2></div>
-      <p class="note" style="margin-top:0">For every discount level the model re-scores everyone in reach, works out the chance someone claims it within the food-quality window, and adds what the platform earns: cancel fee + delivery fee − discount − rider's extra leg, plus the value of acquiring a new customer.</p>
-      <div class="chartbox"><svg id="chart" role="img" aria-label="Expected value and rescue chance by discount"></svg></div>
-      <div class="kpis" id="kpisPrice"></div>
-    </div>
-    <div class="panel">
-      <div class="ph"><span class="step">5</span><h2>Offer it in waves, not a broadcast</h2></div>
-      <p class="note" style="margin-top:0">Five customers per wave, best first, every 90 seconds. Small waves keep the offer feeling personal and stop people learning to wait for cancelled food.</p>
-      <div class="row" style="margin-top:4px">
-        <button class="btn" id="run">Run this rescue</button>
-        <button class="btn ghost" id="mc">Simulate 2,000 times</button>
+  <div class="story">
+    <section class="step cust" id="s1">
+      <div class="num">1</div>
+      <div class="say">
+        <span class="lane cust">Customer screen · person who ordered</span>
+        <h2>The customer&rsquo;s plans change. They tap cancel.</h2>
+        <p>Before confirming, they see exactly what it will cost: a small fee if someone nearby takes the meal, the full price if no one does. The chance shown comes from the engine in steps 2 to 5.</p>
+        <p class="result" id="r1"></p>
       </div>
-      <div class="log" id="log" aria-live="polite"><div class="no">Press "Run this rescue" to dispatch the offer.</div></div>
-      <div class="kpis" id="kpisMc"></div>
-    </div>
-  </section>
+      <div class="show"><div class="phones"><div class="phone"><div class="bar"><span>Sahn</span><span id="clock1">19:45</span></div><div class="sheet" id="sheet"></div></div></div></div>
+    </section>
 
-  <section class="grid2">
-    <div class="panel">
-      <div class="ph"><span class="step">6</span><h2>Who pays what</h2></div>
-      <div style="overflow-x:auto"><table id="settle"></table></div>
-      <p class="note" id="settleNote"></p>
-    </div>
-    <div class="panel">
-      <div class="ph"><span class="step">7</span><h2>What the new customer sees</h2></div>
-      <div class="cols2">
+    <section class="step ai" id="s2">
+      <div class="num">2</div>
+      <div class="say">
+        <span class="lane ai">AI engine · reach</span>
+        <h2>Find everyone within 20 minutes of the rider.</h2>
+        <p>Reach is measured in road time from where the rider is right now, not as a circle on the map. Expressways stretch the zone; side streets shrink it.</p>
+        <p>Then safety and fairness rules remove anyone who shouldn&rsquo;t get it.</p>
+        <p class="result" id="r2"></p>
+      </div>
+      <div class="show panel">
+        <div class="mapbox"><svg id="map" role="img" aria-label="Neighbourhood grid showing the 20-minute travel-time zone around the rider"></svg></div>
+        <div class="mlegend">
+          <span><i style="background:var(--reach)"></i>20-min zone (darker = closer)</span>
+          <span><i style="background:var(--accent)"></i>Top 10 matches</span>
+          <span><i style="background:var(--muted)"></i>Other app users</span>
+          <span><i style="background:var(--bad)"></i>Excluded by rules</span>
+        </div>
+        <div class="funnel" id="funnel"></div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s3">
+      <div class="num">3</div>
+      <div class="say">
+        <span class="lane ai">AI engine · prediction</span>
+        <h2>Predict who is most likely to want this meal.</h2>
+        <p>A model scores each eligible customer on taste, whether the app is open, past orders, mealtime, distance and price sensitivity.</p>
+        <p>Click a name to see why they scored what they did.</p>
+        <p class="result" id="r3"></p>
+      </div>
+      <div class="show panel rank">
         <div>
-          <div class="notif" id="notif"></div>
-          <div class="claim sheet" id="claim"></div>
+          <div class="thead"><span>#</span><span>Customer</span><span>Away</span><span>Chance</span></div>
+          <div class="cands" id="cands"></div>
         </div>
-        <div class="guard">
-          <div><b>Name it for what it is: ready food, nearby</b><span>"Ready Now" sells speed and freshness. The word "cancelled" never appears in the offer.</span></div>
-          <div><b>Be open about why</b><span>One plain line explains the plans changed after it left the kitchen. Hiding it would backfire the first time someone found out.</span></div>
-          <div><b>Proof it was never opened</b><span>Kitchen seal time, tamper-evident sticker, and the rider's photo of the seal at pickup.</span></div>
-          <div><b>Only send what they'd order anyway</b><span>Offers go to people whose order history matches the cuisine. Vegetarians only ever see vegetarian orders.</span></div>
-        </div>
+        <div id="explain"></div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="grid2">
-    <div class="panel">
-      <div class="ph"><h2>Guardrails against gaming</h2></div>
-      <div class="guard">
-        <div><b>No buying back your own order</b><span>The cancelling account, its address and its devices are excluded, so no one can cancel and reclaim at a discount.</span></div>
+    <section class="step ai" id="s4">
+      <div class="num">4</div>
+      <div class="say">
+        <span class="lane ai">AI engine · pricing</span>
+        <h2>Choose the discount that earns the most.</h2>
+        <p>A bigger discount makes a rescue more likely but earns less. The engine tries every level from 10% to 40% and picks the peak of the orange line.</p>
+        <p class="result" id="r4"></p>
+      </div>
+      <div class="show panel">
+        <div class="chartbox"><svg id="chart" role="img" aria-label="Expected value and rescue chance by discount"></svg></div>
+        <div class="kpis" id="kpisPrice"></div>
+        <div class="settings">
+          <div class="eyebrow">Business settings</div>
+          <div><label for="fee">Cancel fee if rescued (% of order) <span class="val" id="feeV"></span></label><input type="range" id="fee" min="5" max="35" value="20"></div>
+          <div><label for="lam">Priority for first-time customers <span class="val" id="lamV"></span></label><input type="range" id="lam" min="0" max="150" value="60"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s5">
+      <div class="num">5</div>
+      <div class="say">
+        <span class="lane ai">AI engine · notifications</span>
+        <h2>Send the offer in small waves, best matches first.</h2>
+        <p>Five people at a time, every 90 seconds, until someone claims it or the food-quality window closes. Small waves keep it personal and stop people learning to wait for cancelled food.</p>
+        <p class="result" id="r5"></p>
+      </div>
+      <div class="show panel">
+        <div class="waves" id="waves"></div>
+        <div class="row" style="margin-top:12px"><button class="btn ghost" id="again" type="button">Replay the waves</button><button class="btn ghost" id="mc" type="button">Run it 2,000 times</button></div>
+        <div class="kpis" id="kpisMc"></div>
+      </div>
+    </section>
+
+    <section class="step cust" id="s6">
+      <div class="num">6</div>
+      <div class="say">
+        <span class="lane cust">Customer screen · person nearby</span>
+        <h2>Someone nearby gets the offer and claims it.</h2>
+        <ul>
+          <li>Called &ldquo;Ready Now&rdquo;: fresh food, close by. The word &ldquo;cancelled&rdquo; never appears.</li>
+          <li>One honest line says why it&rsquo;s available.</li>
+          <li>Proof it was never opened: seal time, tamper-evident sticker, rider&rsquo;s photo.</li>
+        </ul>
+        <p class="result" id="r6"></p>
+      </div>
+      <div class="show"><div class="phones">
+        <div class="phone"><div class="bar"><span>Lock screen</span><span id="clock2">19:47</span></div><div class="notif" id="notif"></div><div class="sheet" id="claim"></div></div>
+      </div></div>
+    </section>
+
+    <section class="step biz" id="s7">
+      <div class="num">7</div>
+      <div class="say">
+        <span class="lane biz">Business · settlement</span>
+        <h2>Settle up. Everyone comes out ahead.</h2>
+        <p>The restaurant is paid as normal either way. The platform earns a fee and a second delivery, and may win a new customer.</p>
+        <p class="result" id="r7"></p>
+      </div>
+      <div class="show panel"><div style="overflow-x:auto"><table id="settle"></table></div><p class="note" id="settleNote"></p></div>
+    </section>
+  </div>
+
+  <section class="beyond">
+    <span class="lane biz">Business · beyond this one order</span>
+    <h2 style="margin-top:8px">Rules that keep it fair, and what it&rsquo;s worth at scale</h2>
+    <div class="bgrid">
+      <div class="panel guard">
+        <div><b>No buying back your own order</b><span>The cancelling account, address and devices are excluded, so no one can cancel and reclaim it cheaper.</span></div>
         <div><b>Weekly claim cap</b><span>Three rescues per customer per week, so it stays a pleasant surprise rather than a way to shop.</span></div>
-        <div><b>Repeat cancellers pay more</b><span>The cancel fee steps up for accounts that cancel often after dispatch.</span></div>
-        <div><b>No cannibalisation</b><span>Customers with their own order in progress, or who opened the app to order in the last 10 minutes, are skipped.</span></div>
-        <div><b>Restaurant is paid as normal</b><span>The kitchen receives its usual payout whether or not the meal is rescued.</span></div>
+        <div><b>Repeat cancellers pay more</b><span>The fee steps up for accounts that often cancel after dispatch.</span></div>
+        <div><b>No cannibalisation</b><span>Anyone with their own order in progress is skipped.</span></div>
+        <div><b>Chilled food never travels twice</b><span>Ice cream, shakes and smoothies can&rsquo;t be cancelled once on the road.</span></div>
       </div>
-    </div>
-    <div class="panel">
-      <div class="ph"><h2>What it's worth at scale</h2></div>
-      <div class="calc">
-        <div><label for="cOrders">Orders per month</label><input type="number" id="cOrders" value="3000000" step="100000"></div>
-        <div><label for="cRate">Cancel attempts after dispatch (%)</label><input type="number" id="cRate" value="1.2" step="0.1"></div>
-        <div><label for="cElig">Eligible (sealed, not chilled) %</label><input type="number" id="cElig" value="85" step="1"></div>
-        <div><label for="cRescue">Rescue rate %</label><input type="number" id="cRescue" value="70" step="1"></div>
-        <div><label for="cNew">Claimed by new customers %</label><input type="number" id="cNew" value="25" step="1"></div>
-        <div><label for="cCac">Cost to acquire a customer (AED)</label><input type="number" id="cCac" value="35" step="1"></div>
+      <div class="panel">
+        <div class="calc">
+          <div><label for="cOrders">Orders per month</label><input type="number" id="cOrders" value="3000000" step="100000"></div>
+          <div><label for="cRate">Cancel attempts after dispatch %</label><input type="number" id="cRate" value="1.2" step="0.1"></div>
+          <div><label for="cElig">Eligible (sealed, not chilled) %</label><input type="number" id="cElig" value="85" step="1"></div>
+          <div><label for="cRescue">Rescue rate %</label><input type="number" id="cRescue" value="70" step="1"></div>
+          <div><label for="cNew">Claimed by new customers %</label><input type="number" id="cNew" value="25" step="1"></div>
+          <div><label for="cCac">Cost to win a customer (AED)</label><input type="number" id="cCac" value="35" step="1"></div>
+        </div>
+        <div class="out" id="out"></div>
+        <p class="note">Editable assumptions, to be replaced with real data. For reference, a large Indian delivery app reported that about three in four eligible cancelled orders were being claimed after it launched a similar feature. Margin per rescue comes from step 4.</p>
       </div>
-      <div class="out" id="out"></div>
-      <p class="note">Assumptions are editable placeholders, to be replaced with the platform's own data. For reference, a large Indian food delivery app reported that about three in four eligible cancelled orders were being claimed after it launched a similar feature. Average margin per rescue comes from step 4.</p>
     </div>
   </section>
 
   <div class="foot">Designed and built by Syed Sarfaraz Ahmed · scenario data is synthetic · brand names are fictional</div>
 </div>
-
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -396,16 +474,31 @@ function compute(){
 }
 
 // --- render ---
+const CLOCK={lunch:[13,10],afternoon:[16,20],dinner:[19,45],late:[23,30]};
+function clockAt(min){const[h,m]=CLOCK[$("#tod").value];const t=h*60+m+Math.round(min);return String(Math.floor(t/60)%24).padStart(2,"0")+":"+String(t%60).padStart(2,"0")}
+function fmt(m){const s=Math.round(m*60);return`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
+const first=n=>n.split(" ")[0];
+
 function renderSheet(){
-  const{order,fee,best,blocked,toCust}=state;
-  const el=$("#sheet");
-  if(blocked){el.innerHTML=`<div class="t">Cancel order?</div><div class="s">${order.rest} · ${order.item}</div><div class="chance closed" style="margin-top:12px">${blocked}</div>`;return}
+  const{order,fee,best,blocked,toCust}=state;const el=$("#sheet");
+  $("#clock1").textContent=clockAt(0);
+  if(blocked){el.innerHTML=`<div class="t">Cancel order?</div><div class="s">${order.rest} · ${order.item}</div><div class="chance closed" style="margin-top:12px">${blocked}</div>`;
+    $("#r1").innerHTML="This order can&rsquo;t enter the rescue flow, so no offer goes out. Pick another order above to follow the full story.";return}
   const p=best.pr,exp=p*fee+(1-p)*order.value;
-  el.innerHTML=`<div class="t">Cancel order?</div><div class="s">${order.rest} · ${order.item} · arriving in ${Math.round(toCust)} min</div>
-  <div class="quote"><span>If someone nearby takes it</span><span class="n">${aed(fee)}</span><span>If no one does</span><span class="n">${aed(order.value)}</span></div>
-  <div class="chance">${Math.round(p*100)}% chance it finds a new home in the next ${Math.round(state.window)} min. Expected charge ${aed(exp)}.</div>
-  <div class="row"><button class="btn ghost" style="flex:1" tabindex="-1">Keep order</button><button class="btn" style="flex:1" tabindex="-1">Cancel</button></div>`;
+  const head=`<div class="t">Cancel order?</div><div class="s">${order.rest} · ${order.item} · arriving in ${Math.round(toCust)} min</div>
+  <div class="quote"><span>If someone nearby takes it</span><span class="n">${aed(fee)}</span><span>If no one does</span><span class="n">${aed(order.value)}</span></div>`;
+  if(state.cancelled){
+    const s=state.sim;
+    el.innerHTML=head+`<div class="chance done">${s&&s.winner?`Good news: someone nearby took your meal. You were charged ${aed(fee)}.`:`No one nearby took it in time, so the full ${aed(order.value)} was charged.`}</div><div class="row"><button class="btn ghost" type="button" id="undo">Start again</button></div>`;
+    $("#undo").onclick=()=>{state.cancelled=false;state.sim=simulate(rng(1000+seed),false);renderAfter()};
+  }else{
+    el.innerHTML=head+`<div class="chance">${Math.round(p*100)}% chance someone nearby takes it in the next ${Math.round(state.window)} min.</div>
+    <div class="row"><button class="btn ghost" type="button" tabindex="-1" aria-disabled="true">Keep order</button><button class="btn" type="button" id="doCancel">Cancel order</button></div>`;
+    $("#doCancel").onclick=cancelNow;
+  }
+  $("#r1").innerHTML=`Rescue chance <b>${Math.round(p*100)}%</b> · expected charge <b>${aed(exp)}</b> instead of ${aed(order.value)}${state.cancelled?"":"<br><span style='color:var(--muted)'>Tap <b>Cancel order</b> to play the rest of the story.</span>"}`;
 }
+
 function renderMap(){
   const svg=$("#map"),{fromRider,rest,cust,rider,path,cand,best,sim}=state;
   svg.setAttribute("viewBox",`0 0 ${W*CS} ${H*CS}`);svg.setAttribute("width",W*CS);svg.style.maxWidth="100%";svg.style.height="auto";
@@ -419,41 +512,40 @@ function renderMap(){
   [7,18].forEach(x=>s+=`<rect x="${x*CS+9}" y="0" width="6" height="${H*CS}" fill="var(--muted)" fill-opacity=".35"/>`);
   s+=`<text x="6" y="${4*CS+7}" font-size="9" fill="var(--muted)">EXPRESSWAY</text>`;
   const pts=path.map(c=>`${(c%W)*CS+12},${((c/W)|0)*CS+12}`).join(" ");
-  s+=`<polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/>`;
+  s+=`<polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 4" opacity=".5"/>`;
+  const winId=sim&&sim.winner?sim.winner.id:null;
   cand.forEach(u=>{const cx=u.x*CS+12,cy=u.y*CS+12;
-    if(u.reason&&u.reason!=="out"){s+=`<path d="M${cx-4} ${cy-4}L${cx+4} ${cy+4}M${cx+4} ${cy-4}L${cx-4} ${cy+4}" stroke="var(--bad)" stroke-width="2"/>`}
-    else if(top.has(u.id)){const win=sim&&sim.winner&&sim.winner.id===u.id;s+=`<circle cx="${cx}" cy="${cy}" r="${win?8:5.5}" fill="var(--accent)" stroke="${win?'var(--ink)':'var(--surface)'}" stroke-width="${win?2.5:1.5}"/>`}
+    if(u.reason&&u.reason!=="out")s+=`<path d="M${cx-4} ${cy-4}L${cx+4} ${cy+4}M${cx+4} ${cy-4}L${cx-4} ${cy+4}" stroke="var(--bad)" stroke-width="2"/>`;
+    else if(top.has(u.id)){const win=u.id===winId;s+=`<circle cx="${cx}" cy="${cy}" r="${win?8:5.5}" fill="var(--accent)" stroke="${win?'var(--ink)':'var(--surface)'}" stroke-width="${win?2.5:1.5}"/>`;if(win)s+=`<text x="${cx}" y="${cy-12}" text-anchor="middle" font-size="10" fill="var(--ink)">${first(u.name)}</text>`}
     else s+=`<circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--muted)" opacity="${u.reason==='out'?.45:.9}"/>`});
   s+=`<rect x="${rest.x*CS+4}" y="${rest.y*CS+4}" width="16" height="16" rx="3" fill="var(--ink)"/><text x="${rest.x*CS+12}" y="${rest.y*CS-3}" text-anchor="middle" font-size="10" fill="var(--ink)">Kitchen</text>`;
-  s+=`<path d="M${cust.x*CS+12} ${cust.y*CS+2}l9 10-9 10-9-10z" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><text x="${cust.x*CS+12}" y="${cust.y*CS+34}" text-anchor="middle" font-size="10" fill="var(--ink)">Cancelled</text>`;
+  s+=`<path d="M${cust.x*CS+12} ${cust.y*CS+2}l9 10-9 10-9-10z" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><text x="${cust.x*CS+12}" y="${cust.y*CS+34}" text-anchor="middle" font-size="10" fill="var(--ink)">Step 1 customer</text>`;
   const rx=rider.x*CS+12,ry=rider.y*CS+12;
   s+=`<circle class="pulse" cx="${rx}" cy="${ry}" r="6" fill="none" stroke="var(--reach)" stroke-width="2"/><circle cx="${rx}" cy="${ry}" r="7" fill="var(--reach)" stroke="var(--surface)" stroke-width="2"/><text x="${rx+11}" y="${ry-9}" font-size="10" fill="var(--ink)">Rider</text>`;
   svg.innerHTML=s;
-  const inReach=cand.filter(u=>u.reason!=="out");
-  const excluded=cand.filter(u=>u.reason&&u.reason!=="out");
-  $("#checks").innerHTML=[
-    ["Sealed for",Math.round(state.age)+" min",state.age<MAX_AGE-8],
-    ["Offer window",state.blocked?"closed":Math.round(state.window)+" min",!state.blocked],
-    ["Users in reach",inReach.length,inReach.length>0],
-    ["Eligible",state.elig.length,state.elig.length>0]
-  ].map(([k,v,ok])=>`<div class="chk ${ok?'pass':'fail'}">${k}<b>${v}</b></div>`).join("");
-  $("#excl").textContent=excluded.length?"Excluded: "+excluded.map(u=>u.reason).filter((v,i,a)=>a.indexOf(v)===i).map(r=>`${r} (${excluded.filter(u=>u.reason===r).length})`).join(" · "):"";
+  const inReach=cand.filter(u=>u.reason!=="out"),excluded=cand.filter(u=>u.reason&&u.reason!=="out");
+  $("#funnel").innerHTML=[["App users nearby",cand.length],["Within 20 min",inReach.length],["Removed by rules",excluded.length],["Eligible",state.elig.length]].map(([k,v])=>`<div class="fstep"><b>${v}</b>${k}</div>`).join("");
+  const reasons=excluded.map(u=>u.reason).filter((v,i,a)=>a.indexOf(v)===i).map(r=>`${r.toLowerCase()} (${excluded.filter(u=>u.reason===r).length})`);
+  $("#r2").innerHTML=`<b>${inReach.length}</b> people within 20 min, <b>${state.elig.length}</b> eligible.${reasons.length?`<br><span style="color:var(--muted)">Removed: ${reasons.join(", ")}.</span>`:""}`;
 }
+
 function renderCands(){
-  const{best,blocked}=state;
-  const list=best.ranked.slice(0,10);
-  if(blocked||!list.length){$("#cands").innerHTML=`<p class="note">${blocked?"No offer goes out for this order.":"No eligible customers in reach."}</p>`;$("#explain").innerHTML="";return}
+  const{best,blocked}=state;const list=best.ranked.slice(0,10);
+  if(!list.length){$("#cands").innerHTML=`<p class="note">No eligible customers in reach.</p>`;$("#explain").innerHTML="";$("#r3").textContent="";return}
   if(!state.sel||!list.find(r=>r.u.id===state.sel))state.sel=list[0].u.id;
-  $("#cands").innerHTML=list.map((r,i)=>`<button class="cand ${r.u.id===state.sel?'sel':''}" data-id="${r.u.id}"><span class="rk">${i+1}</span><span class="nm">${r.u.name}${r.u.isNew?'<span class="tag">NEW</span>':''}</span><span class="n">${r.u.eta.toFixed(0)}m</span><span class="n">${Math.round(r.p*100)}%</span></button>`).join("");
+  $("#cands").innerHTML=list.map((r,i)=>`<button type="button" class="cand ${r.u.id===state.sel?'sel':''}" data-id="${r.u.id}"><span class="rk">${i+1}</span><span class="nm">${r.u.name}${r.u.isNew?'<span class="tag">NEW</span>':''}</span><span class="n">${r.u.eta.toFixed(0)}m</span><span class="n">${Math.round(r.p*100)}%</span></button>`).join("");
   document.querySelectorAll(".cand").forEach(b=>b.onclick=()=>{state.sel=+b.dataset.id;renderCands()});
-  const u=list.find(r=>r.u.id===state.sel).u;
-  const f=state.feats(u,best.d),max=3.2;
-  $("#explain").innerHTML=`<h3>Why ${u.name.split(" ")[0]} scores ${Math.round(state.pOf(u,best.d)*100)}%</h3><p class="note" style="margin:2px 0 8px">Each factor pushes the log-odds up or down (at the ${Math.round(best.d*100)}% discount).</p>`+
-    f.map(([k,v])=>{const w=Math.min(Math.abs(v)/max,1)*50;return`<div class="bar"><span>${k}</span><span class="track"><span class="mid"></span><span class="fill" style="${v>=0?`left:50%;width:${w}%;background:var(--reach)`:`right:50%;width:${w}%;background:var(--bad)`}"></span></span><span class="n">${v>=0?'+':''}${v.toFixed(2)}</span></div>`}).join("");
+  const u=list.find(r=>r.u.id===state.sel).u,f=state.feats(u,best.d),max=3.2;
+  $("#explain").innerHTML=`<h3>Why ${first(u.name)} scores ${Math.round(state.pOf(u,best.d)*100)}%</h3><p class="note" style="margin:2px 0 10px">Green pushes the chance up, red pulls it down.</p>`+
+    f.map(([k,v])=>{const w=Math.min(Math.abs(v)/max,1)*50;return`<div class="bar"><span>${k}</span><span class="track"><span class="mid"></span><span class="fill" style="${v>=0?`left:50%;width:${w}%;background:var(--reach)`:`right:50%;width:${w}%;background:var(--bad)`}"></span></span><span class="n">${v>=0?'+':''}${v.toFixed(2)}</span></div>`}).join("")+
+    `<p class="note">The model adds these up and turns the total into a probability. In production it would be trained on real offer and claim history.</p>`;
+  const t=list[0];
+  $("#r3").innerHTML=`Best match: <b>${t.u.name}</b>, ${Math.round(t.p*100)}% likely, ${Math.round(t.u.eta)} min away.${list.some(r=>r.u.isNew)?`<br><span style="color:var(--muted)">First-time customers get a boost (step 4 setting).</span>`:""}`;
 }
+
 function renderChart(){
   const{curve,best,blocked}=state;const svg=$("#chart");
-  const Wc=560,Hc=230,l=52,r=48,t=14,b=34,iw=Wc-l-r,ih=Hc-t-b;
+  const Wc=600,Hc=230,l=52,r=48,t=16,b=34,iw=Wc-l-r,ih=Hc-t-b;
   svg.setAttribute("viewBox",`0 0 ${Wc} ${Hc}`);svg.setAttribute("width",Wc);svg.style.maxWidth="100%";svg.style.height="auto";
   const evs=curve.map(c=>c.ev);let lo=Math.min(0,...evs),hi=Math.max(1,...evs);
   const step=hi-lo>40?10:5;lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
@@ -461,103 +553,114 @@ function renderChart(){
   let s="";
   for(let v=lo;v<=hi+1e-9;v+=step)s+=`<line x1="${l}" x2="${l+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${l-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`;
   [0,.25,.5,.75,1].forEach(p=>s+=`<text x="${l+iw+6}" y="${Yp(p)+4}" font-size="10" fill="var(--reach)">${p*100}%</text>`);
-  [0.1,0.15,0.2,0.25,0.3,0.35,0.4].forEach(d=>s+=`<text x="${X(d)}" y="${Hc-14}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(d*100)}%</text>`);
-  s+=`<text x="${l+iw/2}" y="${Hc-1}" text-anchor="middle" font-size="10" fill="var(--muted)">discount offered to the new customer</text>`;
-  s+=`<text x="${l-6}" y="${t-3}" text-anchor="end" font-size="9.5" fill="var(--accent-ink)">AED/order</text>`;
+  [0.1,0.15,0.2,0.25,0.3,0.35,0.4].forEach(d=>s+=`<text x="${X(d)}" y="${Hc-16}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(d*100)}%</text>`);
+  s+=`<text x="${l+iw/2}" y="${Hc-2}" text-anchor="middle" font-size="10" fill="var(--muted)">discount offered to the person nearby</text>`;
+  s+=`<text x="${l-6}" y="${t-5}" text-anchor="end" font-size="9.5" fill="var(--accent-ink)">AED per order</text><text x="${l+iw+6}" y="${t-5}" font-size="9.5" fill="var(--reach)">rescue</text>`;
   if(lo<0)s+=`<line x1="${l}" x2="${l+iw}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
   s+=`<polyline fill="none" stroke="var(--reach)" stroke-width="2" stroke-dasharray="5 4" points="${curve.map(c=>X(c.d)+","+Yp(c.pr)).join(" ")}"/>`;
   s+=`<path d="M${X(curve[0].d)},${Y(Math.max(lo,0))} ${curve.map(c=>"L"+X(c.d)+","+Y(c.ev)).join(" ")} L${X(curve[curve.length-1].d)},${Y(Math.max(lo,0))}Z" fill="var(--accent)" fill-opacity=".12"/>`;
   s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${curve.map(c=>X(c.d)+","+Y(c.ev)).join(" ")}"/>`;
-  if(!blocked){s+=`<line x1="${X(best.d)}" x2="${X(best.d)}" y1="${t}" y2="${t+ih}" stroke="var(--ink)" stroke-dasharray="2 3"/><circle cx="${X(best.d)}" cy="${Y(best.ev)}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
-    const lx=X(best.d)>l+iw-120?X(best.d)-8:X(best.d)+8;s+=`<text x="${lx}" y="${t+12}" text-anchor="${X(best.d)>l+iw-120?'end':'start'}" font-size="11" fill="var(--ink)">best: ${Math.round(best.d*100)}% off</text>`}
-  s+=`<text x="${l+6}" y="${t+ih-6}" font-size="10" fill="var(--accent-ink)">— expected value</text><text x="${l+110}" y="${t+ih-6}" font-size="10" fill="var(--reach)">- - chance of rescue</text>`;
+  if(!blocked){const bx=X(best.d),right=bx>l+iw-140;
+    s+=`<line x1="${bx}" x2="${bx}" y1="${t}" y2="${t+ih}" stroke="var(--ink)" stroke-dasharray="2 3"/><circle cx="${bx}" cy="${Y(best.ev)}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+    s+=`<text x="${right?bx-8:bx+8}" y="${t+12}" text-anchor="${right?'end':'start'}" font-size="11" fill="var(--ink)">chosen: ${Math.round(best.d*100)}% off</text>`}
+  s+=`<text x="${l+8}" y="${t+ih-8}" font-size="10" fill="var(--accent-ink)">— value to the platform</text><text x="${l+160}" y="${t+ih-8}" font-size="10" fill="var(--reach)">- - chance of rescue</text>`;
   svg.innerHTML=s;
   $("#kpisPrice").innerHTML=blocked?`<div class="kpi"><b>—</b><span>No offer for this order</span></div>`:
-   `<div class="kpi"><b>${Math.round(best.d*100)}%</b><span>discount chosen</span></div><div class="kpi"><b>${Math.round(best.pr*100)}%</b><span>predicted rescue chance</span></div><div class="kpi"><b>${aed(best.margin)}</b><span>platform margin if rescued</span></div>`;
+   `<div class="kpi"><b>${Math.round(best.d*100)}%</b><span>discount chosen</span></div><div class="kpi"><b>${Math.round(best.pr*100)}%</b><span>chance of rescue</span></div><div class="kpi"><b>${aed(best.margin)}</b><span>platform margin if rescued</span></div>`;
+  $("#r4").innerHTML=blocked?"":`Chosen discount <b>${Math.round(best.d*100)}%</b>. The meal will be offered at <b>${aed(state.order.value*(1-best.d))}</b> instead of ${aed(state.order.value)}.`;
 }
-function renderSettle(){
-  const{order,fee,best,blocked,sim}=state;
-  const d=best.d,newPays=order.value*(1-d),rider=3+0.25*(sim&&sim.winner?sim.winner.eta:10),comm=0.25;
-  const rows=[
-    ["Cancelling customer","pays "+aed(fee)+" fee","pays "+aed(order.value)],
-    ["New customer",`pays ${aed(newPays)} + ${aed(DELIVERY_FEE)} delivery, gets it in ~${sim&&sim.winner?Math.round(sim.winner.eta):"10"} min`,"—"],
-    ["Restaurant",`gets ${aed(order.value*(1-comm))} (usual payout)`,`gets ${aed(order.value*(1-comm))} (usual payout)`],
-    ["Rider","extra leg paid "+aed(rider),"returns food to hub"],
-    ["Food","eaten","binned"]
-  ];
-  $("#settle").innerHTML=`<thead><tr><th></th><th>Rescued</th><th>Not rescued</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}
-  <tr class="tot"><td>Platform, vs. today</td><td class="n">${blocked?"—":(best.margin>=0?"+":"")+aed(best.margin)}</td><td class="n">AED 0.00</td></tr></tbody>`;
-  $("#settleNote").textContent=blocked?"This order can't enter the rescue flow.":`Today the customer can't cancel and pays ${aed(order.value)}. With Ready Now the platform keeps its normal margin, ${best.margin>=0?`adds ${aed(best.margin)} per rescue`:`gives up ${aed(-best.margin)} on this rescue`}, and ${best.pNew>0.05?`a ${Math.round(best.pNew/Math.max(best.pr,1e-6)*100)}% chance the meal lands with a first-time customer, worth about ${aed0(state.cac)} in avoided acquisition cost`:"a happier customer who was allowed to change plans"}.`;
+
+// structured simulation: waves of 5, first claim wins
+function simulate(r){
+  const{best,nWaves,blocked}=state;const out={waves:[],winner:null,t:null};
+  if(blocked)return out;
+  for(let w=0;w<nWaves;w++){
+    const batch=best.ranked.slice(w*WAVE,w*WAVE+WAVE);if(!batch.length)break;
+    const t0=w*WAVE_GAP;let firstHit=null;
+    batch.forEach(b=>{const p=b.p*(b.u.active?0.9:0.35);if(r()<p){const t=t0+0.4+r()*1.0;if(!firstHit||t<firstHit.t)firstHit={t,u:b.u}}});
+    out.waves.push({n:w+1,t0,people:batch.map(b=>b.u),win:firstHit?firstHit.u:null,t:firstHit?firstHit.t:null});
+    if(firstHit){out.winner=firstHit.u;out.t=firstHit.t;break}
+  }
+  return out;
 }
-function renderNotif(){
-  const{order,best,blocked,age,sim}=state;
-  const u=sim&&sim.winner?sim.winner:(best.ranked[0]&&best.ranked[0].u);
-  if(blocked||!u){$("#notif").innerHTML=`<div class="app"><span>SAHN</span><span>now</span></div><div class="h">No offer sent</div><div class="s note" style="margin:0">This order isn't eligible.</div>`;$("#claim").innerHTML="";return}
-  const price=order.value*(1-best.d);
-  $("#notif").innerHTML=`<div class="app"><span>SAHN · READY NOW</span><span>now</span></div><div class="h">${u.name.split(" ")[0]}, ${order.item.split(",")[0].toLowerCase()} is ready ${Math.round(u.eta)} min from you</div><div style="font-size:13px;color:var(--muted)">${order.rest} · ${Math.round(best.d*100)}% off · sealed at the kitchen</div>`;
-  $("#claim").innerHTML=`<div class="eyebrow">Ready Now · 1 available</div><div style="font-weight:600;margin-top:4px">${order.item}</div><div style="font-size:13px;color:var(--muted)">${order.rest}</div>
-  <div><span class="price">${aed(price)}</span><span class="was">${aed(order.value)}</span></div>
-  <div class="badges"><span>Arrives in ~${Math.round(u.eta)} min</span><span>Sealed ${Math.round(age)} min ago</span><span>Tamper-evident seal</span><span>Never opened</span></div>
-  <div class="why">Why is this available? The original customer changed plans after it left the kitchen. It's still sealed, and our rider photographed the seal at pickup.</div>
-  <div class="row"><button class="btn" style="flex:1" tabindex="-1">Claim · offer ends in ${Math.max(1,Math.round(WAVE_GAP))}:30</button></div>`;
+let timers=[];
+function renderWaves(animate){
+  timers.forEach(clearTimeout);timers=[];
+  const s=state.sim,box=$("#waves");
+  if(state.blocked){box.innerHTML=`<div class="waiting">No offer goes out for this order.</div>`;$("#r5").textContent="";return}
+  const html=s.waves.map(w=>`<div class="wave ${w.win?'ok':''}"><span class="w">Wave ${w.n}<br>+${fmt(w.t0)}</span><div><div class="ppl">${w.people.map(u=>`<span class="${w.win&&w.win.id===u.id?'win':''}">${first(u.name)}</span>`).join("")}</div><div style="margin-top:5px;font-size:12.5px;color:var(--muted)">${w.win?`${w.win.name} claimed it at +${fmt(w.t)}. Rider rerouted, ${Math.round(w.win.eta)} min away.`:"No one claimed it. Next wave in 90 seconds."}</div></div></div>`);
+  if(!s.winner)html.push(`<div class="wave fail"><span class="w">Closed<br>+${fmt(state.nWaves*WAVE_GAP)}</span><div>The food-quality window closed with no claim. The original customer pays the full price.</div></div>`);
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!animate||reduce){box.innerHTML=html.join("")}
+  else{box.innerHTML="";html.forEach((h,i)=>timers.push(setTimeout(()=>box.insertAdjacentHTML("beforeend",h),500*i)))}
+  $("#r5").innerHTML=s.winner?`Claimed by <b>${s.winner.name}</b> in wave ${s.waves.length}, <b>${fmt(s.t)}</b> after the cancel.`:`No claim within <b>${Math.round(state.window)} min</b>. It happens: try the 2,000-run simulation to see how often.`;
 }
 function renderMcKpis(){
   const m=state.mc;
-  $("#kpisMc").innerHTML=m?`<div class="kpi"><b>${Math.round(m.rate*100)}%</b><span>rescued across 2,000 runs</span></div><div class="kpi"><b>${m.med?m.med.toFixed(1)+" min":"—"}</b><span>median time to claim</span></div><div class="kpi"><b>${Math.round(m.newShare*100)}%</b><span>of rescues went to new customers</span></div>`:"";
+  $("#kpisMc").innerHTML=m?`<div class="kpi"><b>${Math.round(m.rate*100)}%</b><span>of 2,000 runs rescued</span></div><div class="kpi"><b>${m.med?fmt(m.med):"—"}</b><span>typical time to claim</span></div><div class="kpi"><b>${Math.round(m.newShare*100)}%</b><span>went to first-time customers</span></div>`:"";
 }
-function all(){compute();renderSheet();renderMap();renderCands();renderChart();renderSettle();renderNotif();renderMcKpis();calc()}
 
-// --- dispatch simulation ---
-function simulate(r,quiet){
-  const{best,nWaves,pOf}=state;const ranked=best.ranked;const lines=[];
-  for(let w=0;w<nWaves;w++){
-    const batch=ranked.slice(w*WAVE,w*WAVE+WAVE);if(!batch.length)break;
-    const t0=w*WAVE_GAP;
-    if(!quiet)lines.push([`w`,`${fmt(t0)}  Wave ${w+1}: offer sent to ${batch.map(b=>b.u.name.split(" ")[0]).join(", ")}`]);
-    let first=null;
-    batch.forEach(b=>{const p=b.p*(b.u.active?0.9:0.35);if(r()<p){const t=t0+0.15+r()*1.25;if(!first||t<first.t)first={t,u:b.u}}});
-    if(first){if(!quiet)lines.push(["ok",`${fmt(first.t)}  ${first.u.name} claimed it (${Math.round(pOf(first.u,best.d)*100)}% predicted). Rider rerouted, ${Math.round(first.u.eta)} min away.`]);return{winner:first.u,t:first.t,lines}}
-    if(!quiet)lines.push(["no",`${fmt(t0+WAVE_GAP)}  No claim in wave ${w+1}`]);
-  }
-  if(!quiet)lines.push(["x",`${fmt(nWaves*WAVE_GAP)}  Window closed. Not rescued: original customer charged ${aed(state.order.value)}.`]);
-  return{winner:null,lines};
+function renderNotif(){
+  const{order,best,blocked,age,sim}=state;
+  const u=sim&&sim.winner?sim.winner:(best.ranked[0]&&best.ranked[0].u);
+  $("#clock2").textContent=clockAt(sim&&sim.t?sim.t:1);
+  if(blocked||!u){$("#notif").innerHTML=`<div class="app"><span>SAHN</span><span>now</span></div><div class="h">No offer sent</div>`;$("#claim").innerHTML=`<div class="s note" style="margin:0">This order isn&rsquo;t eligible for Ready Now.</div>`;$("#r6").textContent="";return}
+  const price=order.value*(1-best.d);
+  $("#notif").innerHTML=`<div class="app"><span>SAHN · READY NOW</span><span>now</span></div><div class="h">${first(u.name)}, ${order.item.split(",")[0].toLowerCase()} is ready ${Math.round(u.eta)} min from you</div><div style="font-size:12.5px;color:var(--muted)">${order.rest} · ${Math.round(best.d*100)}% off · sealed at the kitchen</div>`;
+  $("#claim").innerHTML=`<div class="eyebrow">Ready Now · 1 available</div><div style="font-weight:600;margin-top:4px">${order.item}</div><div style="font-size:13px;color:var(--muted)">${order.rest}</div>
+  <div><span class="price">${aed(price)}</span><span class="was">${aed(order.value)}</span></div>
+  <div class="badges"><span>Arrives in ~${Math.round(u.eta)} min</span><span>Sealed ${Math.round(age)} min ago</span><span>Never opened</span></div>
+  <div class="why">Why is this available? The original customer changed plans after it left the kitchen. It&rsquo;s still sealed, and the rider photographed the seal at pickup.</div>
+  <div class="row"><button class="btn" type="button" tabindex="-1">${sim&&sim.winner?"Claimed ✓":"Claim · 1:30 left"}</button></div>`;
+  $("#r6").innerHTML=sim&&sim.winner?`<b>${first(u.name)}</b> pays <b>${aed(price+DELIVERY_FEE)}</b> including delivery and eats in about <b>${Math.round(u.eta)} min</b>.`:`This is what <b>${first(u.name)}</b> saw. No one claimed it this time.`;
 }
-function fmt(m){const s=Math.round(m*60);return`+${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
-let timers=[];
-$("#run").onclick=()=>{
-  if(state.blocked){$("#log").innerHTML=`<div class="x">${state.blocked}</div>`;return}
-  timers.forEach(clearTimeout);timers=[];
-  const res=simulate(rng(Date.now()&0xffff),false);
-  state.sim=null;$("#log").innerHTML=`<div class="w">+0:00  Cancel accepted. Fee if rescued ${aed(state.fee)}. Discount set at ${Math.round(state.best.d*100)}%.</div>`;
-  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  res.lines.forEach((l,i)=>timers.push(setTimeout(()=>{$("#log").insertAdjacentHTML("beforeend",`<div class="${l[0]}">${l[1]}</div>`);$("#log").scrollTop=1e6;
-    if(i===res.lines.length-1){state.sim=res;renderMap();renderSettle();renderNotif()}},reduce?0:380*(i+1))));
-};
+
+function renderSettle(){
+  const{order,fee,best,blocked,sim}=state;const ok=!!(sim&&sim.winner);
+  const d=best.d,newPays=order.value*(1-d),rider=3+0.25*(ok?sim.winner.eta:10),comm=0.25;
+  const rows=[
+    ["Customer who cancelled","pays "+aed(fee)+" fee","pays "+aed(order.value)],
+    ["Person nearby",`pays ${aed(newPays)} + ${aed(DELIVERY_FEE)} delivery`,"—"],
+    ["Restaurant",`gets ${aed(order.value*(1-comm))}, as normal`,`gets ${aed(order.value*(1-comm))}, as normal`],
+    ["Rider","paid "+aed(rider)+" for the extra leg","returns food to hub"],
+    ["The meal","eaten","thrown away"]];
+  const hl=i=>blocked?"":(ok===(i===1)?' style="background:var(--accent-soft)"':"");
+  $("#settle").innerHTML=`<thead><tr><th></th><th${hl(1)}>If rescued${ok?" · this run":""}</th><th${hl(2)}>If not rescued${!ok&&!blocked?" · this run":""}</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td${hl(1)}>${r[1]}</td><td${hl(2)}>${r[2]}</td></tr>`).join("")}
+  <tr class="tot"><td>Platform, vs. today</td><td class="n"${hl(1)}>${blocked?"—":(best.margin>=0?"+":"")+aed(best.margin)}</td><td class="n"${hl(2)}>AED 0.00</td></tr></tbody>`;
+  $("#settleNote").textContent=blocked?"":`Today this customer couldn't cancel at all. ${ok&&sim.winner.isNew?`${first(sim.winner.name)} is a first-time customer, worth about ${aed0(state.cac)} in acquisition cost the platform didn't have to spend.`:"The platform also earns goodwill from a customer who was allowed to change plans."}`;
+  $("#r7").innerHTML=blocked?"":ok?`Platform earns <b>${(best.margin>=0?"+":"")+aed(best.margin)}</b> on top of its normal margin, the customer saves <b>${aed(order.value-fee)}</b>, and the meal isn&rsquo;t wasted.`:`Not rescued this time: the customer pays in full, exactly as today. Nobody is worse off than now.`;
+}
+
+function renderAfter(animate){renderSheet();renderMap();renderWaves(animate);renderNotif();renderSettle()}
+function all(){compute();state.sim=simulate(rng(1000+seed));renderSheet();renderMap();renderCands();renderChart();renderWaves(false);renderNotif();renderSettle();renderMcKpis();calc()}
+
+function cancelNow(){
+  state.cancelled=true;state.sim=simulate(rng((Date.now()&0xffff)+1));
+  renderAfter(true);
+  document.getElementById("s2").scrollIntoView({block:"start"});
+}
+$("#again").onclick=()=>{if(state.blocked)return;state.sim=simulate(rng((Date.now()&0xffff)+3));renderAfter(true)};
 $("#mc").onclick=()=>{
   if(state.blocked){state.mc={rate:0,med:null,newShare:0};renderMcKpis();return}
   const r=rng(12345);let ok=0,nw=0;const ts=[];
-  for(let i=0;i<2000;i++){const s=simulate(r,true);if(s.winner){ok++;ts.push(s.t);if(s.winner.isNew)nw++}}
-  ts.sort((a,b)=>a-b);
-  state.mc={rate:ok/2000,med:ts.length?ts[ts.length>>1]:null,newShare:ok?nw/ok:0};renderMcKpis();
+  for(let i=0;i<2000;i++){const s=simulate(r);if(s.winner){ok++;ts.push(s.t);if(s.winner.isNew)nw++}}
+  ts.sort((a,b)=>a-b);state.mc={rate:ok/2000,med:ts.length?ts[ts.length>>1]:null,newShare:ok?nw/ok:0};renderMcKpis();
 };
 
-// --- calculator ---
 function calc(){
   const g=id=>+$(id).value||0;
-  const att=g("#cOrders")*g("#cRate")/100*g("#cElig")/100, resc=att*g("#cRescue")/100, nu=resc*g("#cNew")/100;
+  const att=g("#cOrders")*g("#cRate")/100*g("#cElig")/100,resc=att*g("#cRescue")/100,nu=resc*g("#cNew")/100;
   const m=state.blocked?Math.max(0,state.curve.reduce((a,c)=>Math.max(a,c.margin),0)):state.best.margin;
-  const money=resc*m+nu*g("#cCac");
-  $("#out").innerHTML=`<div class="kpi"><b>${Math.round(resc).toLocaleString("en-US")}</b><span>meals rescued / month</span></div><div class="kpi"><b>${aed0(money)}</b><span>margin + acquisition value / month</span></div><div class="kpi"><b>${Math.round(nu).toLocaleString("en-US")}</b><span>new customers / month</span></div><div class="kpi"><b>${Math.round(resc*0.6/1000).toLocaleString("en-US")} t</b><span>food kept out of landfill (0.6 kg/meal)</span></div>`;
+  $("#out").innerHTML=`<div class="kpi"><b>${Math.round(resc).toLocaleString("en-US")}</b><span>meals rescued a month</span></div><div class="kpi"><b>${aed0(resc*m+nu*g("#cCac"))}</b><span>extra margin + acquisition value a month</span></div><div class="kpi"><b>${Math.round(nu).toLocaleString("en-US")}</b><span>first-time customers a month</span></div><div class="kpi"><b>${Math.round(resc*0.6/1000).toLocaleString("en-US")} tonnes</b><span>food kept out of landfill (0.6 kg a meal)</span></div>`;
 }
-["#cOrders","#cRate","#cElig","#cRescue","#cNew","#cCac"].forEach(id=>$(id).addEventListener("input",calc));
+["#cOrders","#cRate","#cElig","#cRescue","#cNew"].forEach(id=>$(id).addEventListener("input",calc));
+$("#cCac").addEventListener("input",()=>{state.cac=+$("#cCac").value||0;all()});
 
-// --- wiring ---
-$("#preset").innerHTML=PRESETS.map(p=>`<option value="${p.id}">${p.rest} · AED ${p.value}${p.chilled?" · chilled":""}</option>`).join("");
+$("#preset").innerHTML=PRESETS.map(p=>`<option value="${p.id}">${p.rest} · ${p.item.split(",")[0]} · AED ${p.value}${p.chilled?" (chilled)":""}</option>`).join("");
 function labels(){$("#progV").textContent=$("#prog").value+"%";$("#feeV").textContent=$("#fee").value+"%";$("#lamV").textContent="×"+(1+$("#lam").value/100).toFixed(1)}
-["#preset","#tod","#prog","#fee","#lam"].forEach(id=>$(id).addEventListener("input",()=>{labels();state.sim=null;state.mc=null;$("#log").innerHTML='<div class="no">Scenario changed. Press "Run this rescue" to dispatch the offer.</div>';all()}));
-$("#reseed").onclick=()=>{seed=(seed*7919+13)%100000;build();$("#log").innerHTML='<div class="no">New neighbourhood loaded.</div>';all()};
-state.cac=CAC_DEFAULT;$("#cCac").addEventListener("input",()=>{state.cac=+$("#cCac").value||0;all()});
-labels();build();all();
+["#preset","#tod","#prog","#fee","#lam"].forEach(id=>$(id).addEventListener("input",()=>{labels();state.cancelled=false;state.mc=null;all()}));
+$("#reseed").onclick=()=>{seed=(seed*7919+13)%100000;build();state.cancelled=false;state.mc=null;all()};
+state.cac=CAC_DEFAULT;labels();build();all();
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
