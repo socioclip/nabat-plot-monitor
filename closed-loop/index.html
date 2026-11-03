@@ -98,6 +98,19 @@ button{font:inherit;cursor:pointer}
 .chips span{font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .chips span.on{background:var(--brand-soft);border-color:var(--brand-soft);color:var(--brand-ink);font-weight:600}
 .typed{font-size:13px;background:var(--sunk);border-radius:10px;padding:9px 10px;min-height:54px}
+.sv-text{width:100%;font:inherit;font-size:13px;background:var(--sunk);border:1px solid transparent;border-radius:10px;padding:9px 10px;min-height:64px;resize:vertical;color:var(--ink)}
+.sv-text:focus{border-color:var(--head);outline:none;background:#fff}
+.sv-sel{font:inherit;font-size:12.5px;color:var(--ink);border:0;border-bottom:1px dashed var(--muted);border-radius:0;background:transparent;padding:0 2px;width:auto;max-width:150px}
+.stars button{font-size:24px;line-height:1;color:var(--line);background:none;border:0;padding:0 1px;cursor:pointer}
+.stars button.on{color:var(--accent)}
+.chips button{font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:#fff}
+.chips button.on{background:var(--brand-soft);border-color:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.sv-hint{font-size:11.5px;color:var(--muted);margin-top:6px}
+.sv-err{font-size:12px;color:var(--bad);margin-top:6px}
+.sv-done{background:var(--good-soft);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.fb.you{border-color:var(--head);background:var(--head-soft)}
+.pill.you{background:var(--head);color:#fff}
+.pill.neu{background:var(--sunk);color:var(--muted)}
 .notif{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:10px}
 .notif .app{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between}
 .notif .h{font-weight:600;margin-top:3px;font-size:14px}
@@ -249,6 +262,7 @@ svg text{font-family:var(--mono)}
         <span class="lane cust">Customer · listen</span>
         <h2>Customers tell you, in their own words, wherever they are.</h2>
         <p>A two-tap survey from the receipt QR code, app ratings, public reviews, WhatsApp and the call centre all land in one stream, in English and Arabic.</p>
+        <p>Try it: rate a visit on the phone and press Send. Your comment joins the feed, and the AI sorts it into a theme.</p>
         <p class="result" id="r1"></p>
       </div>
       <div class="show"><div class="phones">
@@ -456,7 +470,7 @@ const THEMES=[
    neg:["Pump 4 out of order again","The tyre air machine is broken","Nozzle kept clicking off every few seconds"],
    negAr:["المضخة رقم ٤ معطلة مرة أخرى","جهاز نفخ الإطارات لا يعمل"],
    pos:["Everything working, quick fill-up"],posAr:["كل شيء يعمل بشكل ممتاز"],
-   key:["pump","nozzle","air","tyre","tire","broken","out of order","machine","المضخة","الإطارات","يعمل","معطلة"]},
+   key:["pump","nozzle","air machine","air pump","tyre","tire","out of order","car wash","المضخة","الإطارات","معطلة"]},
   {id:"stock",name:"Product availability",base:.5,posRate:.1,sev:.6,mult:{city:1,residential:1.1,industrial:1,highway:1.2},hot:2,
    owner:"Supply Chain",fix:"Auto-reorder from point-of-sale stock levels",metric:"availability complaints",
    driver:"Stock-out hours per week",dLo:2,dHi:30,dUnit:"h",
@@ -477,7 +491,7 @@ const CHANNELS=["Receipt QR survey","App rating","Google review","WhatsApp","Cal
 const NEG_W=["not","no ","never","rude","dirty","broken","slow","waited","declin","lukewarm","stale","poor","terrible","burnt","ignored","unsafe","forever","out of","empty","closed","didn't","isn't","smell","worst","bad","غير","لا ","لم ","سيئ","معطلة","ضعيفة","باردة","رفض","مغلقة","طويل","خطير","أكثر من"];
 const POS_W=["great","excellent","friendly","quick","clean","spotless","seamless","love","thank","best","helpful","polite","safe","well lit","everything","ممتاز","رائع","نظيفة","سريعة","شكراً","لطيف","سهل","آمنة","متوفر"];
 
-let seed=11, S={};
+let seed=11, S={userComments:[],draft:{stars:2,theme:null,text:"",sid:null,done:false,busy:false}};
 
 // ---------- data ----------
 function build(){
@@ -526,6 +540,7 @@ function compute(){
   const rate=(tid,sid,w0,w1)=>{let c=0,tx=0;for(let w=w0;w<w1;w++){c+=neg[tid][sid][w];tx+=stations[sid].tx}return c/tx*1000};
   // theme table on the last 4 pre-launch weeks
   const themeRows=THEMES.map(t=>{let n=0,p=0;stations.forEach(s=>{for(let w=LAUNCH-4;w<LAUNCH;w++){n+=neg[t.id][s.id][w];p+=pos[t.id][s.id][w]}});
+    (S.userComments||[]).forEach(c=>{if(c.tid===t.id){if(c.neg)n++;else p++}});
     return{t,n,p,total:n+p,negShare:n/Math.max(1,n+p),impact:n*t.sev}}).sort((a,b)=>b.impact-a.impact);
   // weekly series per group
   const series=ids=>Array.from({length:WEEKS},(_,w)=>{let c=0,tx=0;ids.forEach(i=>{c+=neg[focus][i][w];tx+=stations[i].tx});return c/tx*1000});
@@ -576,14 +591,39 @@ function localClassify(text){
 }
 
 // ---------- render ----------
+const SHORT={queue:"Queues",washroom:"Washroom",coffee:"Coffee",staff:"Staff",payment:"Payment",equipment:"Pumps",stock:"Stock",safety:"Safety"};
 function renderSurvey(){
-  const t=TH[S.focus],pilotName=S.data.stations[S.pilot[0]].name;
-  $("#survey").innerHTML=`<div class="t">How was your visit?</div><div class="s">Meridian ${esc(pilotName)} · just now</div>
-  <div class="stars" aria-label="2 out of 5 stars"><span class="on">★</span><span class="on">★</span><span>★</span><span>★</span><span>★</span></div>
-  <div class="s" style="margin-bottom:2px">What could we do better?</div>
-  <div class="chips">${THEMES.slice(0,6).map(x=>`<span class="${x.id===t.id?'on':''}">${esc(x.name.split(" &")[0].split(" ")[0])}</span>`).join("")}</div>
-  <div class="typed">${esc(t.neg[0])}</div>
-  <div style="margin-top:12px"><button class="btn" type="button" style="width:100%" tabindex="-1" aria-disabled="true">Send</button></div>`;
+  const D=S.draft,{stations}=S.data;
+  if(D.sid==null||!stations[D.sid])D.sid=S.pilot[0];
+  const stars=[1,2,3,4,5].map(n=>`<button type="button" data-n="${n}" class="${n<=D.stars?'on':''}" aria-label="${n} star${n>1?'s':''}" aria-pressed="${n<=D.stars}">★</button>`).join("");
+  const chips=THEMES.map(x=>`<button type="button" data-id="${x.id}" class="${x.id===D.theme?'on':''}" aria-pressed="${x.id===D.theme}">${SHORT[x.id]}</button>`).join("");
+  $("#survey").innerHTML=`<div class="t">How was your visit?</div>
+  <div class="s">Meridian <select class="sv-sel" id="svStation" aria-label="Station">${stations.map(st=>`<option value="${st.id}" ${st.id===D.sid?'selected':''}>${esc(st.name)}</option>`).join("")}</select></div>
+  <div class="stars" role="group" aria-label="Rating">${stars}</div>
+  <div class="s" style="margin-bottom:2px">${D.stars>=4?"What did we get right?":"What could we do better?"} <span style="opacity:.7">(optional)</span></div>
+  <div class="chips" role="group" aria-label="Topic">${chips}</div>
+  <textarea class="sv-text" id="svText" maxlength="300" placeholder="Tell us what happened, in English or Arabic" aria-label="Your comment">${esc(D.text)}</textarea>
+  <div id="svMsg">${D.done?`<div class="sv-done">Thank you. Your comment is now at the top of the feed, and counted in step 2.</div>`:`<div class="sv-hint">Tap the stars, pick a topic if you like, and write anything.</div>`}</div>
+  <div style="margin-top:10px"><button class="btn" type="button" id="svSend" style="width:100%">${D.busy?"Sending…":D.done?"Send another":"Send"}</button></div>`;
+  document.querySelectorAll("#survey .stars button").forEach(b=>b.onclick=()=>{D.stars=+b.dataset.n;D.done=false;renderSurvey()});
+  document.querySelectorAll("#survey .chips button").forEach(b=>b.onclick=()=>{D.theme=D.theme===b.dataset.id?null:b.dataset.id;D.done=false;renderSurvey()});
+  $("#svStation").onchange=e=>{D.sid=+e.target.value;D.done=false};
+  $("#svText").oninput=e=>{D.text=e.target.value;if(D.done){D.done=false;$("#svSend").textContent="Send";$("#svMsg").innerHTML=""}};
+  $("#svSend").onclick=sendSurvey;
+}
+async function sendSurvey(){
+  const D=S.draft;
+  if(D.busy)return;
+  if(D.done){Object.assign(D,{text:"",theme:null,stars:2,done:false});renderSurvey();$("#svText").focus();return}
+  const text=D.text.trim();
+  if(!text){$("#svMsg").innerHTML=`<div class="sv-err">Write a few words first.</div>`;$("#svText").focus();return}
+  D.busy=true;renderSurvey();
+  const res=await classifyText(text);
+  const tid=D.theme||(TH[res.theme]?res.theme:null)||S.focus;
+  const sentiment=D.stars<=2?"negative":D.stars>=4?"positive":(res.sentiment||"neutral");
+  S.userComments.unshift({sid:D.sid,tid,ar:/[\u0600-\u06FF]/.test(text),neg:sentiment==="negative",sentiment,text,ch:"Meridian app",you:true,stars:D.stars,auto:!D.theme,src:res.source});
+  Object.assign(D,{busy:false,done:true});
+  compute();renderSurvey();renderFeed();renderThemes();
 }
 function renderFeed(){
   const{stations}=S.data,r=rng(seed*31+S.focus.length);
@@ -593,9 +633,12 @@ function renderFeed(){
   // a feed that leans toward the most talked-about themes
   const picks=[],used=new Set();const top=S.themeRows.slice(0,4).map(x=>x.t.id);
   for(let k=0;k<6;k++){const tid=k<3?S.focus:top[k%top.length];const sid=S.hot[Math.floor(r()*S.hot.length)];picks.push(...commentsFor(sid,tid,1,r,k<2,used))}
+  const U=S.userComments;total+=U.length;negs+=U.filter(c=>c.neg).length;ar+=U.filter(c=>c.ar).length;
   $("#feedkpis").innerHTML=[["Comments this week",total.toLocaleString("en-US")],["Stations",stations.length],["In Arabic",Math.round(ar/total*100)+"%"],["Negative",Math.round(negs/total*100)+"%"]].map(([k,v])=>`<div class="fstep"><b>${v}</b>${k}</div>`).join("");
-  $("#feed").innerHTML=picks.map(c=>`<div class="fb"><div class="meta"><span>${esc(c.ch)}</span><span>Meridian ${esc(stations[c.sid].name)}</span><span class="pill ${c.neg?'neg':'pos'}">${c.neg?'negative':'positive'}</span></div><div class="txt" ${c.ar?'dir="rtl" lang="ar"':''}>${esc(c.text)}</div></div>`).join("");
-  $("#r1").innerHTML=`<b>${total.toLocaleString("en-US")}</b> comments in the last week from <b>${stations.length}</b> stations, about a third in Arabic.`;
+  const sentOf=c=>c.sentiment||(c.neg?"negative":"positive");
+  const card=c=>`<div class="fb ${c.you?'you':''}"><div class="meta">${c.you?`<span class="pill you">You · just now</span>`:""}<span>${esc(c.ch)}</span><span>Meridian ${esc(stations[c.sid].name)}</span>${c.you?`<span>${"★".repeat(c.stars)}</span>`:""}<span class="pill ${sentOf(c)==="negative"?'neg':sentOf(c)==="positive"?'pos':'neu'}">${sentOf(c)}</span>${c.you?`<span class="pill th">${esc(TH[c.tid].name)}${c.auto?" · auto":""}</span>`:""}</div><div class="txt" ${c.ar?'dir="rtl" lang="ar"':''}>${esc(c.text)}</div></div>`;
+  $("#feed").innerHTML=U.slice(0,4).map(card).join("")+picks.slice(0,Math.max(2,6-U.length)).map(card).join("");
+  $("#r1").innerHTML=`<b>${total.toLocaleString("en-US")}</b> comments in the last week from <b>${stations.length}</b> stations, about a third in Arabic.${U.length?`<br><span style="color:var(--muted)">Including <b>${U.length}</b> from you.</span>`:`<br><span style="color:var(--muted)">Try the survey on the phone to add your own.</span>`}`;
 }
 function renderThemes(){
   const max=S.themeRows[0].impact;
@@ -608,6 +651,15 @@ function renderSamples(){
   const ex=["Waited 15 minutes for someone to come to the pump","الحمامات مغلقة مرة أخرى","Card declined twice, then the app said payment failed","Lovely karak and the attendant was so friendly"];
   $("#samples").innerHTML=ex.map(e=>`<button type="button" ${/[؀-ۿ]/.test(e)?'dir="rtl" lang="ar"':''}>${esc(e)}</button>`).join("");
   document.querySelectorAll("#samples button").forEach(b=>b.onclick=()=>{$("#tryText").value=b.textContent;classify()});
+}
+async function classifyText(text){
+  try{
+    const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),15000);
+    const r=await fetch("/api/closed-loop",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({comment:text}),signal:ctrl.signal});
+    clearTimeout(tm);
+    if(r.ok){const j=await r.json();if(j&&j.theme)return{...j,source:j.model?("AI model · "+j.model):"AI model"}}
+  }catch(e){}
+  return localClassify(text);
 }
 async function classify(){
   const text=$("#tryText").value.trim();const out=$("#tryOut");
@@ -776,7 +828,7 @@ function renderCalc(){
   const kept=avoided*hidden*loss;
   $("#out").innerHTML=`<div class="kpi"><b>${big(avoided)}</b><span>complaints avoided a year</span></div><div class="kpi"><b>${big(kept)}</b><span>customers kept a year</span></div><div class="kpi"><b>AED ${big(kept*val)}</b><span>yearly spend kept</span></div>`;
 }
-function update(){compute();renderSurvey();renderFeed();renderThemes();renderMap();renderDetail();renderScatter();renderAction();renderTrend();renderClose();renderCalc()}
+function update(){compute();renderFeed();renderThemes();renderMap();renderDetail();renderScatter();renderAction();renderTrend();renderClose();renderCalc()}
 
 // ---------- init ----------
 $("#focus").innerHTML=THEMES.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
@@ -788,12 +840,13 @@ setEff();
 $("#focus").onchange=()=>{S.selStation=null;update()};
 $("#eff").oninput=()=>{setEff();update()};
 $("#conf").onchange=update;
-$("#reshuffle").onclick=()=>{seed=1+Math.floor(Math.random()*9999);build();S.selStation=null;$("#focus").value="queue";compute();$("#focus").value=S.themeRows[0].t.id;update()};
+$("#reshuffle").onclick=()=>{seed=1+Math.floor(Math.random()*9999);build();S.selStation=null;S.draft.sid=null;$("#focus").value="queue";compute();$("#focus").value=S.themeRows[0].t.id;update();renderSurvey()};
 ["#cSites","#cTx","#cShare","#cHidden","#cLoss","#cVal"].forEach(id=>$(id).oninput=renderCalc);
 $("#cRed").oninput=()=>{S.userRed=true;renderCalc()};
 $("#tryBtn").onclick=classify;
 renderSamples();
 update();
+renderSurvey();
 })();
 </script>
 </body>
