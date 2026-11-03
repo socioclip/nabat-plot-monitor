@@ -22,7 +22,7 @@
   --biz:#3949AB; --biz-soft:#E8EAF8;
   --accent:#D97706; --accent-soft:#FEF3DC;
   --bad:#C62828; --bad-soft:#FBE9E9; --good:#0F7A4D; --good-soft:#E2F4EA;
-  --cmp:#6B7280;
+  --cmp:#6B7280; --logo:#1D5FD1;
   --display:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
   --body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -43,7 +43,7 @@ p{margin:0}
 .back:hover{color:var(--ink)}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:18px;margin-bottom:26px;border-bottom:1px solid var(--line)}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
-.logo .mk{width:36px;height:36px;border-radius:11px;background:var(--brand);display:grid;place-items:center}
+.logo .mk{width:36px;height:36px;border-radius:11px;background:var(--logo);display:grid;place-items:center}
 .eyebrow{font-size:13px;font-weight:600;color:var(--brand-ink)}
 .intro{max-width:780px}
 .intro p.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:66ch}
@@ -217,7 +217,7 @@ svg text{font-family:var(--mono)}
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div class="logo"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4.5h-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="#fff"/></svg></span><span>closed <span style="color:var(--brand)">loop</span></span></div>
+    <div class="logo"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4.5h-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="#fff"/></svg></span><span>closed <span style="color:var(--logo)">loop</span></span></div>
     <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
   </div>
   <header class="intro">
