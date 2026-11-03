@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closed Loop · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="Customer feedback from a network of fuel and convenience stations, turned into themes, hotspots, a fix, an honest pilot measurement and a reply to every customer who spoke up.">
+<meta property="og:title" content="Closed Loop · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="Listen, understand, act, measure honestly, and close the loop with customers. A working demo on a fictional station network.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/closed-loop">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/closed-loop">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Arabic:wght@400;600&display=swap">
+<style>
+/* Same story layout as Sahn Rescue: numbered rail, explanation column + what it looks like. Lane colour says whose view it is. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F5F5F3; --line:#E7E5E1;
+  --ink:#1C1A19; --muted:#6B6762;
+  --brand:#C2410C; --brand-soft:#FDEDE4; --brand-ink:#9A3412;
+  --ai:#0F766E; --ai-soft:#DFF2EF;
+  --biz:#3949AB; --biz-soft:#E8EAF8;
+  --accent:#D97706; --accent-soft:#FEF3DC;
+  --bad:#C62828; --bad-soft:#FBE9E9; --good:#0F7A4D; --good-soft:#E2F4EA;
+  --cmp:#6B7280;
+  --display:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --arabic:"Noto Sans Arabic","Plus Jakarta Sans",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.4vw,46px);line-height:1.08;font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(20px,2.4vw,24px);line-height:1.2;font-weight:800;letter-spacing:-.01em}
+h3{font-size:14.5px;font-weight:600;font-family:var(--body)}
+p{margin:0}
+[dir=rtl]{font-family:var(--arabic)}
+.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:18px;margin-bottom:26px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo .mk{width:36px;height:36px;border-radius:11px;background:var(--brand);display:grid;place-items:center}
+.eyebrow{font-size:13px;font-weight:600;color:var(--brand-ink)}
+.intro{max-width:780px}
+.intro p.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:66ch}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:20px;font-size:13.5px;color:var(--muted)}
+.lane{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;justify-self:start}
+.lane::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.lane.cust{background:var(--brand-soft);color:var(--brand-ink)}
+.lane.ai{background:var(--ai-soft);color:var(--ai)}
+.lane.biz{background:var(--biz-soft);color:var(--biz)}
+/* scene bar */
+.scene{margin-top:28px;background:var(--sunk);border-radius:16px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.3fr) auto;gap:14px 18px;align-items:end}
+.scene .t{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.scene .t span{color:var(--muted);font-size:13.5px}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 4px}
+select,input[type=number],textarea{width:100%;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:62px}
+input[type=range]{width:100%;accent-color:var(--brand);margin:6px 0 0}
+.val{float:right;font-family:var(--mono);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:700;font-size:14px}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.trow:focus-visible,a:focus-visible,.stn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* story rail */
+.story{margin-top:36px;position:relative}
+.step{display:grid;grid-template-columns:52px minmax(0,300px) minmax(0,1fr);gap:0 22px;padding-bottom:44px;position:relative}
+.step::before{content:"";position:absolute;left:25px;top:52px;bottom:0;width:2px;background:var(--line)}
+.step:last-child::before{display:none}
+.num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:22px;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1}
+.step.cust .num{border-color:var(--brand);color:var(--brand)}
+.step.ai .num{border-color:var(--ai);color:var(--ai)}
+.step.biz .num{border-color:var(--biz);color:var(--biz)}
+.say{padding-top:6px;display:grid;gap:10px;align-content:start}
+.say p{color:var(--muted);font-size:14.5px}
+.say ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:grid;gap:4px}
+.say .result{color:var(--ink);font-size:14px;border-left:2px solid var(--line);padding-left:10px}
+.say .result b{font-family:var(--mono);font-weight:500}
+.show{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0;box-shadow:0 1px 2px rgba(28,26,25,.04)}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+/* phones */
+.phones{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.phone{width:300px;max-width:100%;border:8px solid #1C1A19;border-radius:34px;padding:12px;background:var(--sunk)}
+.phone .bar{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:2px 8px 8px}
+.sheet{background:var(--surface);border-radius:16px;padding:14px;border:1px solid var(--line)}
+.sheet .t{font-weight:600;font-size:15px}
+.sheet .s{font-size:12.5px;color:var(--muted)}
+.stars{display:flex;gap:4px;margin:10px 0 8px}
+.stars span{font-size:22px;line-height:1;color:var(--line)}
+.stars span.on{color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chips span{font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chips span.on{background:var(--brand-soft);border-color:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.typed{font-size:13px;background:var(--sunk);border-radius:10px;padding:9px 10px;min-height:54px}
+.notif{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:10px}
+.notif .app{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between}
+.notif .h{font-weight:600;margin-top:3px;font-size:14px}
+.notif .b{font-size:13px;color:var(--muted);margin-top:2px}
+/* feed */
+.feed{display:grid;gap:8px}
+.fb{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13.5px;display:grid;gap:5px}
+.fb .meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.fb .txt[dir=rtl]{text-align:right;font-size:14px}
+.pill{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;font-family:var(--body)}
+.pill.neg{background:var(--bad-soft);color:var(--bad)}
+.pill.pos{background:var(--good-soft);color:var(--good)}
+.pill.th{background:var(--ai-soft);color:var(--ai)}
+.feedkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.fstep{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.fstep b{display:block;font-family:var(--display);font-weight:800;font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+/* theme table */
+.thead,.trow{display:grid;grid-template-columns:minmax(0,1.4fr) 58px 58px minmax(0,1.3fr);gap:10px;align-items:center}
+.thead{padding:0 8px 6px;font-size:10.5px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.thead span:nth-child(2),.thead span:nth-child(3){text-align:right}
+.trow{padding:7px 8px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink);text-align:left;font-size:13.5px;width:100%}
+.trow:hover{background:var(--sunk)}
+.trow.sel{border-color:var(--ai);background:var(--ai-soft)}
+.trow .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;font-size:12.5px}
+.ibar{height:10px;background:var(--sunk);border-radius:2px;position:relative;overflow:hidden}
+.ibar i{position:absolute;left:0;top:0;bottom:0;background:var(--ai);border-radius:2px}
+.try{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);display:grid;gap:10px}
+.tryrow{display:flex;gap:8px;flex-wrap:wrap}
+.tryrow .btn{padding:8px 14px;font-size:13px}
+.samples{display:flex;flex-wrap:wrap;gap:6px}
+.samples button{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.samples button:hover{color:var(--ink);border-color:var(--muted)}
+.verdictbox{border-radius:10px;padding:10px 12px;background:var(--sunk);font-size:13.5px;display:grid;gap:6px}
+.verdictbox .src{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+/* map */
+.mapgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.mapbox{overflow-x:auto}
+svg text{font-family:var(--mono)}
+.stn{cursor:pointer}
+.mlegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:8px;align-items:center}
+.ramp{display:inline-block;width:90px;height:9px;border-radius:2px;background:linear-gradient(90deg,#F3E7DA,#E9A16B,#C2410C,#7C2D12);vertical-align:-1px;margin:0 4px}
+.sdetail h3{font-size:15px}
+.sdetail .q{font-size:13px;border-left:2px solid var(--brand);padding:4px 0 4px 10px;margin-top:8px}
+.sdetail .q[dir=rtl]{border-left:0;border-right:2px solid var(--brand);padding:4px 10px 4px 0}
+.mini{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:4px 8px;font-size:12.5px;margin-top:10px}
+.mini .n{font-family:var(--mono);text-align:right}
+.hot{display:grid;gap:4px;margin-top:10px}
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.kpi{border-left:2px solid var(--ai);padding:2px 0 2px 10px}
+.kpi b{display:block;font-family:var(--display);font-size:23px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi.b2{border-color:var(--biz)}
+.kpi.br{border-color:var(--brand)}
+.chartbox{overflow-x:auto}
+/* action card */
+.acard{display:grid;gap:12px}
+.acard .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.acard .fix{font-size:17px;font-weight:700;font-family:var(--display)}
+.kv{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 12px;font-size:13.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.grp{display:flex;flex-wrap:wrap;gap:5px}
+.grp span{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.grp.p span{background:var(--brand-soft);border-color:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.col{background:var(--sunk);border-radius:10px;padding:9px 10px;font-size:12.5px;min-height:64px}
+.col b{display:block;font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:500;margin-bottom:5px}
+.col.now{background:var(--biz-soft)}
+.col.now b{color:var(--biz)}
+/* verdict */
+.verdict{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:12px 14px;margin-top:14px;font-size:14px}
+.verdict .vh{font-weight:800;font-family:var(--display);font-size:16px}
+.verdict.ok{background:var(--good-soft)}
+.verdict.mid{background:var(--accent-soft)}
+.verdict.no{background:var(--sunk)}
+.verdict.warn{background:var(--bad-soft)}
+.cmp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.cmpbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted)}
+.cmpbox b{display:block;font-family:var(--display);font-size:22px;font-weight:800;color:var(--ink)}
+.cmpbox.bad b{color:var(--bad);text-decoration:line-through;text-decoration-thickness:2px}
+/* beyond */
+.beyond{margin-top:12px;border-top:1px solid var(--line);padding-top:32px}
+.bgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;margin-top:16px}
+.guard{display:grid;gap:12px;font-size:13.5px}
+.guard b{display:block}
+.guard span{color:var(--muted)}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+.out{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.out .kpi{border-color:var(--biz)}
+.foot{margin-top:32px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@keyframes rise{from{opacity:.3;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fb{animation:rise .35s ease-out}
+@media (max-width:900px){
+  .step{grid-template-columns:40px minmax(0,1fr);gap:12px 14px}
+  .step::before{left:19px;top:40px}
+  .num{width:40px;height:40px;font-size:18px}
+  .show{grid-column:2}
+  .scene{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .bgrid,.mapgrid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .scene,.calc{grid-template-columns:minmax(0,1fr)}
+  .feedkpis,.board{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpis,.out{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi b{font-size:18px}
+  .thead,.trow{grid-template-columns:minmax(0,1.5fr) 40px 40px minmax(0,.7fr);gap:6px}
+  .thead{font-size:8.5px;letter-spacing:0;padding:0 6px 6px}
+  .trow{padding:7px 6px;font-size:13px}
+  .kv{grid-template-columns:minmax(0,1fr)}
+  .kv dt{margin-top:4px}
+  .cmp{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4.5h-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="#fff"/></svg></span><span>closed <span style="color:var(--brand)">loop</span></span></div>
+    <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  </div>
+  <header class="intro">
+    <div class="eyebrow">Closed Loop · a customer experience demo for a fuel &amp; convenience network (Meridian Stations is fictional)</div>
+    <h1>Turn what customers say into a fix, prove it worked, and tell them.</h1>
+    <p class="lead">Follow one problem from the first comment to the reply customers get back. Seven steps, top to bottom: listen, understand, locate, find the cause, act, measure honestly, close the loop. Every number is computed live.</p>
+    <div class="legend">
+      <span><span class="lane cust">Customer</span>&nbsp; what customers say and see</span>
+      <span><span class="lane ai">AI engine</span>&nbsp; what runs behind the scenes</span>
+      <span><span class="lane biz">Experience team</span>&nbsp; decisions, owners and delivery</span>
+    </div>
+  </header>
+
+  <section class="scene" aria-label="Scenario">
+    <div class="t"><h3>The scenario</h3><span>18 stations across Abu Dhabi, 8 weeks of feedback, then a 6-week pilot. Change these to see every step adapt.</span></div>
+    <div><label for="focus">Problem to work on</label><select id="focus"></select></div>
+    <div><label for="eff">How well the fix really works <span class="val" id="effV"></span></label><input type="range" id="eff" min="0" max="40" value="25" step="1"></div>
+    <div><label for="conf">Something else changed during the pilot</label><select id="conf">
+      <option value="none">Nothing else changed</option>
+      <option value="weather">Cooler weather cut complaints everywhere</option>
+      <option value="promo">A staff incentive ran only at pilot stations</option></select></div>
+    <div><button class="btn ghost" id="reshuffle" type="button">New data</button></div>
+  </section>
+
+  <div class="story">
+    <section class="step cust" id="s1">
+      <div class="num">1</div>
+      <div class="say">
+        <span class="lane cust">Customer · listen</span>
+        <h2>Customers tell you, in their own words, wherever they are.</h2>
+        <p>A two-tap survey from the receipt QR code, app ratings, public reviews, WhatsApp and the call centre all land in one stream, in English and Arabic.</p>
+        <p class="result" id="r1"></p>
+      </div>
+      <div class="show"><div class="phones">
+        <div class="phone"><div class="bar"><span>Meridian app</span><span>07:52</span></div><div class="sheet" id="survey"></div></div>
+        <div class="panel" style="flex:1;min-width:260px"><div class="feedkpis" id="feedkpis"></div><div class="feed" id="feed"></div></div>
+      </div></div>
+    </section>
+
+    <section class="step ai" id="s2">
+      <div class="num">2</div>
+      <div class="say">
+        <span class="lane ai">AI engine · understand</span>
+        <h2>Sort every comment into themes, and rank them by impact.</h2>
+        <p>Each comment gets a theme and a sentiment. Impact weighs volume by severity, so a few safety complaints can outrank many about coffee.</p>
+        <p>Click a theme to work on it, or paste a comment of your own below.</p>
+        <p class="result" id="r2"></p>
+      </div>
+      <div class="show panel">
+        <div class="thead"><span>Theme · last 4 weeks</span><span>Total</span><span>Neg.</span><span>Impact</span></div>
+        <div id="themes"></div>
+        <div class="try">
+          <h3>Try the classifier</h3>
+          <textarea id="tryText" maxlength="500" placeholder="Type a comment in English or Arabic, e.g. “Waited 15 minutes for someone to come to the pump”"></textarea>
+          <div class="samples" id="samples"></div>
+          <div class="tryrow"><button class="btn" id="tryBtn" type="button">Classify</button></div>
+          <div id="tryOut"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s3">
+      <div class="num">3</div>
+      <div class="say">
+        <span class="lane ai">AI engine · locate</span>
+        <h2>Find where it hurts most.</h2>
+        <p>Complaints are counted per 1,000 transactions, so a busy highway site isn&rsquo;t flagged just for being busy.</p>
+        <p>Click a station to read what its customers said.</p>
+        <p class="result" id="r3"></p>
+      </div>
+      <div class="show panel mapgrid">
+        <div>
+          <div class="mapbox"><svg id="map" role="img" aria-label="Schematic map of 18 stations across Abu Dhabi coloured by complaint rate for the chosen theme"></svg></div>
+          <div class="mlegend"><span>Complaints per 1,000 transactions: low<span class="ramp"></span>high</span><span>Dot size = transactions</span></div>
+        </div>
+        <div class="sdetail" id="sdetail"></div>
+      </div>
+    </section>
+
+    <section class="step ai" id="s4">
+      <div class="num">4</div>
+      <div class="say">
+        <span class="lane ai">AI engine · find the cause</span>
+        <h2>Line complaints up against what the operation records.</h2>
+        <p>Feedback is joined with operational data: staffing, cleaning logs, terminal uptime, maintenance tickets. Where they move together, there&rsquo;s a likely cause.</p>
+        <p>A pattern is a lead, not proof. That&rsquo;s why step 6 exists.</p>
+        <p class="result" id="r4"></p>
+      </div>
+      <div class="show panel"><div class="chartbox"><svg id="scatter" role="img" aria-label="Scatter of complaint rate against an operational driver per station"></svg></div></div>
+    </section>
+
+    <section class="step biz" id="s5">
+      <div class="num">5</div>
+      <div class="say">
+        <span class="lane biz">Experience team · act</span>
+        <h2>Agree one fix, one owner, and how success will be judged, before it starts.</h2>
+        <p>The ten worst stations are split at random: half get the fix now, half carry on as normal for comparison, and get it later if it works.</p>
+        <p>The metric and the decision rule are written down up front, so the result can&rsquo;t be bent to fit afterwards.</p>
+        <p class="result" id="r5"></p>
+      </div>
+      <div class="show panel"><div class="acard" id="acard"></div></div>
+    </section>
+
+    <section class="step ai" id="s6">
+      <div class="num">6</div>
+      <div class="say">
+        <span class="lane ai">AI engine · measure honestly</span>
+        <h2>Did the fix work, or did something else change?</h2>
+        <p>A simple before-and-after at the pilot stations picks up everything else that changed too: weather, seasons, campaigns. Comparing against the stations that didn&rsquo;t get the fix removes what both groups shared.</p>
+        <p>Try the &ldquo;something else changed&rdquo; options in the scenario bar.</p>
+        <p class="result" id="r6"></p>
+      </div>
+      <div class="show panel">
+        <div class="chartbox"><svg id="trend" role="img" aria-label="Weekly complaint rate at pilot and comparison stations before and after the fix"></svg></div>
+        <div class="cmp" id="cmp"></div>
+        <div id="verdict"></div>
+      </div>
+    </section>
+
+    <section class="step cust" id="s7">
+      <div class="num">7</div>
+      <div class="say">
+        <span class="lane cust">Customer · close the loop</span>
+        <h2>Go back to the people who spoke up.</h2>
+        <ul>
+          <li>Everyone who complained about this at a pilot station gets a personal reply.</li>
+          <li>The reply only claims what step 6 proved.</li>
+          <li>Customers learn that feedback leads somewhere, so they keep giving it.</li>
+        </ul>
+        <p class="result" id="r7"></p>
+      </div>
+      <div class="show"><div class="phones">
+        <div class="phone"><div class="bar"><span>Lock screen</span><span>18:05</span></div><div class="notif" id="notif"></div><div class="sheet" id="reply"></div></div>
+        <div class="panel" style="flex:1;min-width:260px" id="decision"></div>
+      </div></div>
+    </section>
+  </div>
+
+  <section class="beyond">
+    <span class="lane biz">Experience team · beyond one fix</span>
+    <h2 style="margin-top:8px">Rules that keep it trustworthy, and what it&rsquo;s worth across a network</h2>
+    <div class="bgrid">
+      <div class="panel guard">
+        <div><b>Blame the process, not people</b><span>Station and shift level only. Comments naming staff are masked before anyone reads them.</span></div>
+        <div><b>Personal data stays out</b><span>Phone numbers, plates and card digits are stripped on arrival.</span></div>
+        <div><b>Arabic is first-class</b><span>Gulf dialect and mixed English–Arabic comments are classified natively, not translated first.</span></div>
+        <div><b>Decide the rule before the result</b><span>Metric, pilot length and decision rule are fixed in step 5 and can&rsquo;t be changed mid-pilot.</span></div>
+        <div><b>Say &ldquo;we don&rsquo;t know yet&rdquo;</b><span>When two changes overlap, the result is reported as not separable rather than credited to either.</span></div>
+      </div>
+      <div class="panel">
+        <div class="calc">
+          <div><label for="cSites">Stations in the network</label><input type="number" id="cSites" value="450" step="10" min="1"></div>
+          <div><label for="cTx">Transactions per station per week</label><input type="number" id="cTx" value="9000" step="500" min="0"></div>
+          <div><label for="cShare">Stations with this problem %</label><input type="number" id="cShare" value="20" step="1" min="0" max="100"></div>
+          <div><label for="cRed">Reduction from the pilot %</label><input type="number" id="cRed" value="20" step="1"></div>
+          <div><label for="cHidden">Bad experiences per complaint</label><input type="number" id="cHidden" value="5" step="1" min="1"></div>
+          <div><label for="cLoss">Of those, customers who stop coming %</label><input type="number" id="cLoss" value="3" step="1" min="0" max="100"></div>
+          <div><label for="cVal">Yearly spend per regular customer (AED)</label><input type="number" id="cVal" value="3500" step="100" min="0"></div>
+        </div>
+        <div class="out" id="out"></div>
+        <p class="note">Editable assumptions, to be replaced with real data. The complaint rate comes from the pilot stations&rsquo; baseline in step 6, and the reduction is pre-filled from the honest estimate there. Most unhappy customers never complain, which is what &ldquo;bad experiences per complaint&rdquo; allows for.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">Designed and built by Syed Sarfaraz Ahmed · feedback, stations and operational data are synthetic · Meridian Stations is fictional</div>
+</div>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const mean=a=>a.reduce((s,x)=>s+x,0)/(a.length||1);
+const sd=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/Math.max(1,a.length-1))};
+const pct=x=>{const v=Math.round(clamp(x,-1,1)*100);return(v<0?"−":"")+Math.abs(v)+"%"};
+const lc=s=>/^[A-Z]{2}/.test(s)||/^[A-Z][A-Z]/.test(s)?s:s[0].toLowerCase()+s.slice(1);
+const f2=x=>(Math.round(x*100)/100).toFixed(2);
+const aed0=x=>"AED "+Math.round(x).toLocaleString("en-US");
+const big=x=>x>=1e6?(x/1e6).toFixed(1)+"M":x>=1e4?Math.round(x/1e3)+"k":Math.round(x).toLocaleString("en-US");
+
+const WEEKS=14, LAUNCH=8, HOT=10;
+const STATIONS=[
+  {name:"Corniche",type:"city",x:92,y:70},{name:"Al Khalidiyah",type:"city",x:62,y:112},
+  {name:"Al Bateen",type:"residential",x:78,y:160},{name:"Al Mushrif",type:"residential",x:146,y:150},
+  {name:"Al Reem Island",type:"city",x:196,y:62},{name:"Al Zahiyah",type:"city",x:150,y:92},
+  {name:"Saadiyat",type:"residential",x:258,y:36},{name:"Yas Island",type:"city",x:368,y:66},
+  {name:"Al Raha Beach",type:"residential",x:322,y:118},{name:"Khalifa City A",type:"residential",x:392,y:168},
+  {name:"MBZ City",type:"residential",x:330,y:226},{name:"Mussafah M-10",type:"industrial",x:256,y:224},
+  {name:"Mussafah Industrial",type:"industrial",x:220,y:274},{name:"Shakhbout City",type:"residential",x:420,y:256},
+  {name:"Al Shamkha",type:"residential",x:494,y:208},{name:"Al Wathba (E22)",type:"highway",x:572,y:262},
+  {name:"Al Samha (E11)",type:"highway",x:500,y:84},{name:"Ghantoot (E11)",type:"highway",x:604,y:40}
+];
+const TYPE_TX={city:13500,residential:9500,industrial:8000,highway:15500};
+const TYPE_LABEL={city:"City",residential:"Residential",industrial:"Industrial",highway:"Highway"};
+const THEMES=[
+  {id:"queue",name:"Queues & wait time",base:1.55,posRate:.55,sev:1.2,mult:{city:1.4,residential:1,industrial:1.1,highway:.8},hot:5,
+   owner:"Retail Operations",fix:"Second forecourt attendant at the 7–10am and 5–8pm peaks",metric:"queue complaints",
+   driver:"Transactions per staff-hour at peak",dLo:28,dHi:62,dUnit:"",
+   neg:["Waited 12 minutes at the pump, only one attendant on shift","The queue at the shop till was out the door at 8am","Took forever to get served on the forecourt"],
+   negAr:["انتظرت أكثر من عشر دقائق عند المضخة","الطابور طويل جداً عند الكاشير في الصباح"],
+   pos:["In and out in three minutes, great service","Quick service even at rush hour"],posAr:["خدمة سريعة جداً، شكراً"],
+   key:["wait","queue","line","slow","forever","minutes","rush","served","انتظر","الطابور","طابور","سريعة","بطيء"]},
+  {id:"washroom",name:"Washroom cleanliness",base:.85,posRate:.25,sev:1,mult:{city:.8,residential:.9,industrial:1.3,highway:1.9},hot:3,
+   owner:"Facilities",fix:"Hourly cleaning check with QR sign-off and live alerts",metric:"washroom complaints",
+   driver:"Hours between logged cleaning checks",dLo:1.5,dHi:6,dUnit:"h",
+   neg:["Washroom was dirty and out of soap","Toilets closed for cleaning again","The restroom smelled terrible"],
+   negAr:["دورة المياه غير نظيفة ولا يوجد صابون","الحمامات مغلقة مرة أخرى"],
+   pos:["Spotless washrooms, rare for a highway stop","Clean toilets, thank you"],posAr:["الحمامات نظيفة جداً"],
+   key:["washroom","toilet","restroom","bathroom","soap","smell","دورة المياه","الحمامات","حمام"]},
+  {id:"coffee",name:"Coffee & fresh food",base:.7,posRate:.7,sev:.7,mult:{city:1.1,residential:1,industrial:.9,highway:1},hot:2,
+   owner:"Food & Beverage",fix:"Daily machine calibration and fresh-batch timers",metric:"coffee and food complaints",
+   driver:"Days since coffee machine service",dLo:4,dHi:40,dUnit:"d",
+   neg:["Coffee was lukewarm","The sandwiches looked stale","Karak tasted burnt today"],
+   negAr:["القهوة كانت باردة","الساندويتش لم يكن طازجاً"],
+   pos:["Karak was excellent","Best coffee on my commute"],posAr:["الكرك ممتاز"],
+   key:["coffee","karak","tea","sandwich","food","stale","lukewarm","burnt","القهوة","قهوة","الكرك","الساندويتش","طازج","شاي"]},
+  {id:"staff",name:"Staff courtesy",base:.6,posRate:.9,sev:1.1,mult:{city:1,residential:1,industrial:1,highway:1},hot:2,
+   owner:"Site Operations & HR",fix:"Service refresher and on-shift recognition",metric:"courtesy complaints",
+   driver:"Staff turnover, last 12 months",dLo:12,dHi:48,dUnit:"%",
+   neg:["Attendant was rude when I asked for a receipt","Nobody greeted me at the counter","Staff ignored me while chatting"],
+   negAr:["الموظف لم يكن مهذباً معي","تعامل الموظفين سيئ"],
+   pos:["Very friendly attendant, even cleaned my windscreen","Polite and helpful staff"],posAr:["الموظف كان لطيفاً جداً"],
+   key:["rude","friendly","staff","polite","greet","ignored","helpful","manager","الموظف","الموظفين","مهذب","لطيف","تعامل"]},
+  {id:"payment",name:"Payment & app issues",base:.75,posRate:.3,sev:1.3,mult:{city:1,residential:1,industrial:1.4,highway:1.1},hot:2,
+   owner:"Payments & Digital",fix:"Replace ageing card terminals and alert on repeat declines",metric:"payment complaints",
+   driver:"Card terminal downtime",dLo:.5,dHi:7,dUnit:"%",
+   neg:["Card machine declined twice, had to pay cash","Rewards points didn't show up in the app","Tap to pay not working at pump 3"],
+   negAr:["جهاز الدفع رفض بطاقتي مرتين","نقاط المكافآت لم تظهر في التطبيق"],
+   pos:["Paying through the app was seamless"],posAr:["الدفع عبر التطبيق سهل"],
+   key:["card","payment","pay","app","points","rewards","declin","terminal","cash","الدفع","بطاقتي","بطاقة","نقاط","التطبيق"]},
+  {id:"equipment",name:"Pumps & equipment",base:.65,posRate:.1,sev:1.2,mult:{city:.9,residential:.9,industrial:1.5,highway:1.3},hot:2,
+   owner:"Maintenance",fix:"Predictive maintenance on pumps and air machines",metric:"equipment complaints",
+   driver:"Open maintenance tickets",dLo:1,dHi:14,dUnit:"",
+   neg:["Pump 4 out of order again","The tyre air machine is broken","Nozzle kept clicking off every few seconds"],
+   negAr:["المضخة رقم ٤ معطلة مرة أخرى","جهاز نفخ الإطارات لا يعمل"],
+   pos:["Everything working, quick fill-up"],posAr:["كل شيء يعمل بشكل ممتاز"],
+   key:["pump","nozzle","air","tyre","tire","broken","out of order","machine","المضخة","الإطارات","يعمل","معطلة"]},
+  {id:"stock",name:"Product availability",base:.5,posRate:.1,sev:.6,mult:{city:1,residential:1.1,industrial:1,highway:1.2},hot:2,
+   owner:"Supply Chain",fix:"Auto-reorder from point-of-sale stock levels",metric:"availability complaints",
+   driver:"Stock-out hours per week",dLo:2,dHi:30,dUnit:"h",
+   neg:["No water bottles left in the fridge","Ran out of premium fuel","Shelves half empty in the evening"],
+   negAr:["لا يوجد ماء في الثلاجة","البنزين الممتاز غير متوفر"],
+   pos:["Had everything I needed"],posAr:["كل ما احتاجه متوفر"],
+   key:["out of stock","no water","ran out","empty","shelves","fridge","available","الثلاجة","متوفر","لا يوجد ماء"]},
+  {id:"safety",name:"Forecourt safety & lighting",base:.28,posRate:.05,sev:1.6,mult:{city:1,residential:1,industrial:1.3,highway:1.4},hot:2,
+   owner:"Health, Safety & Environment",fix:"LED lighting upgrade and repainted lanes",metric:"safety complaints",
+   driver:"Lighting faults logged, last 90 days",dLo:0,dHi:9,dUnit:"",
+   neg:["Forecourt lighting is poor at night","Cars cutting across the exit lane","Felt unsafe filling up after dark"],
+   negAr:["الإضاءة ضعيفة جداً في الليل","السيارات تقطع مسار الخروج بشكل خطير"],
+   pos:["Well lit and feels safe at night"],posAr:["المحطة آمنة ومضاءة جيداً"],
+   key:["light","dark","safety","unsafe","lane","dangerous","night","الإضاءة","خطير","آمنة","مسار","مضاءة"]}
+];
+const TH=Object.fromEntries(THEMES.map(t=>[t.id,t]));
+const CHANNELS=["Receipt QR survey","App rating","Google review","WhatsApp","Call centre"];
+const NEG_W=["not","no ","never","rude","dirty","broken","slow","waited","declin","lukewarm","stale","poor","terrible","burnt","ignored","unsafe","forever","out of","empty","closed","didn't","isn't","smell","worst","bad","غير","لا ","لم ","سيئ","معطلة","ضعيفة","باردة","رفض","مغلقة","طويل","خطير","أكثر من"];
+const POS_W=["great","excellent","friendly","quick","clean","spotless","seamless","love","thank","best","helpful","polite","safe","well lit","everything","ممتاز","رائع","نظيفة","سريعة","شكراً","لطيف","سهل","آمنة","متوفر"];
+
+let seed=11, S={};
+
+// ---------- data ----------
+function build(){
+  const r=rng(seed),rn=rng(seed*7+3);
+  const stations=STATIONS.map((s,i)=>({...s,id:i,tx:Math.round(TYPE_TX[s.type]*(0.75+0.5*r()))}));
+  const base={};
+  THEMES.forEach(t=>{
+    base[t.id]=stations.map(s=>t.base*t.mult[s.type]*Math.exp(0.32*gauss(r)));
+    const order=stations.map(s=>s.id).sort(()=>r()-.5).slice(0,t.hot);
+    order.forEach(i=>base[t.id][i]*=1.7+0.8*r());
+  });
+  // operational driver per station and theme, related to the theme's underlying rate
+  const driver={};
+  THEMES.forEach(t=>{const b=base[t.id],mn=Math.min(...b),mx=Math.max(...b);
+    driver[t.id]=b.map(v=>{const z=(v-mn)/(mx-mn||1);return clamp(t.dLo+(t.dHi-t.dLo)*(0.15+0.7*z+0.22*gauss(r)),t.dLo*0.6,t.dHi*1.1)})});
+  // stable noise draws: [theme][station][week] for negative and positive counts, plus station drift
+  const zN={},zP={},drift={},weekN=[];
+  for(let w=0;w<WEEKS;w++)weekN.push(1+0.04*gauss(rn));
+  THEMES.forEach(t=>{zN[t.id]=stations.map(()=>Array.from({length:WEEKS},()=>gauss(rn)));zP[t.id]=stations.map(()=>Array.from({length:WEEKS},()=>gauss(rn)));drift[t.id]=stations.map(()=>0.04*gauss(rn))});
+  const assign=rng(seed*13+5);const shuffleKeys=stations.map(()=>assign());
+  S.data={stations,base,driver,zN,zP,drift,weekN,shuffleKeys};
+}
+function sample(lam,z){return Math.max(0,Math.round(lam+Math.sqrt(Math.max(lam,0.01))*z))}
+function compute(){
+  const{stations,base,zN,zP,drift,weekN,shuffleKeys}=S.data;
+  const focus=$("#focus").value,eff=+$("#eff").value/100,conf=$("#conf").value;
+  // baseline rates in the last 4 pre-launch weeks decide hotspots for the focus theme
+  const neg={},pos={};
+  THEMES.forEach(t=>{neg[t.id]=stations.map(()=>[]);pos[t.id]=stations.map(()=>[])});
+  // pre-period first (independent of the pilot)
+  const preRate=stations.map(s=>base[focus][s.id]);
+  const hot=stations.map(s=>s.id).sort((a,b)=>preRate[b]-preRate[a]).slice(0,HOT);
+  const shuffled=hot.slice().sort((a,b)=>shuffleKeys[a]-shuffleKeys[b]);
+  const pilot=shuffled.slice(0,HOT/2),comp=shuffled.slice(HOT/2);
+  const isPilot=new Set(pilot);
+  THEMES.forEach(t=>stations.forEach(s=>{for(let w=0;w<WEEKS;w++){
+    let lam=s.tx/1000*base[t.id][s.id]*weekN[w];
+    if(w>=LAUNCH){
+      lam*=1+drift[t.id][s.id];
+      if(conf==="weather")lam*=0.85;
+      if(t.id===focus&&isPilot.has(s.id)){lam*=1-eff;if(conf==="promo")lam*=0.82}
+    }
+    neg[t.id][s.id][w]=sample(lam,zN[t.id][s.id][w]);
+    pos[t.id][s.id][w]=sample(s.tx/1000*t.posRate*weekN[w],zP[t.id][s.id][w]);
+  }}));
+  const rate=(tid,sid,w0,w1)=>{let c=0,tx=0;for(let w=w0;w<w1;w++){c+=neg[tid][sid][w];tx+=stations[sid].tx}return c/tx*1000};
+  // theme table on the last 4 pre-launch weeks
+  const themeRows=THEMES.map(t=>{let n=0,p=0;stations.forEach(s=>{for(let w=LAUNCH-4;w<LAUNCH;w++){n+=neg[t.id][s.id][w];p+=pos[t.id][s.id][w]}});
+    return{t,n,p,total:n+p,negShare:n/Math.max(1,n+p),impact:n*t.sev}}).sort((a,b)=>b.impact-a.impact);
+  // weekly series per group
+  const series=ids=>Array.from({length:WEEKS},(_,w)=>{let c=0,tx=0;ids.forEach(i=>{c+=neg[focus][i][w];tx+=stations[i].tx});return c/tx*1000});
+  const pS=series(pilot),cS=series(comp);
+  // station-level difference-in-differences with a t-interval
+  const diff=i=>rate(focus,i,LAUNCH,WEEKS)-rate(focus,i,0,LAUNCH);
+  const dp=pilot.map(diff),dc=comp.map(diff);
+  const preP=mean(pilot.map(i=>rate(focus,i,0,LAUNCH))),preC=mean(comp.map(i=>rate(focus,i,0,LAUNCH)));
+  const postP=mean(pilot.map(i=>rate(focus,i,LAUNCH,WEEKS)));
+  const did=mean(dp)-mean(dc);
+  const se=Math.sqrt(sd(dp)**2/dp.length+sd(dc)**2/dc.length);
+  const tcrit=2.306; // 95%, 8 degrees of freedom
+  const red=-did/preP,redLo=-(did+tcrit*se)/preP,redHi=-(did-tcrit*se)/preP;
+  const naive=-(postP-preP)/preP;
+  let verdict;
+  if(conf==="promo")verdict="overlap";
+  else if(redLo>0)verdict="proven";
+  else if(red>0.03)verdict="promising";
+  else verdict="none";
+  Object.assign(S,{focus,eff,conf,neg,pos,rate,themeRows,hot,pilot,comp,pS,cS,preP,preC,postP,did,se,red,redLo,redHi,naive,verdict});
+  if(S.selStation==null||!stations[S.selStation])S.selStation=hot[0];
+}
+
+// ---------- feedback text ----------
+function commentsFor(sid,tid,n,r,onlyNeg,used){
+  const t=TH[tid],out=[];used=used||new Set();
+  for(let k=0;k<n;k++){
+    let c=null;
+    for(let tries=0;tries<12&&!c;tries++){
+      const ar=r()<0.32,isNeg=onlyNeg||r()<0.8;
+      const pool=isNeg?(ar?t.negAr:t.neg):(ar?t.posAr:t.pos);
+      const text=pool[Math.floor(r()*pool.length)];
+      if(!used.has(text)||tries===11)c={sid,tid,ar,neg:isNeg,text,ch:CHANNELS[Math.floor(r()*CHANNELS.length)]};
+    }
+    used.add(c.text);out.push(c);
+  }
+  return out;
+}
+
+// ---------- local classifier (fallback when the AI endpoint is unavailable) ----------
+function localClassify(text){
+  const low=" "+text.toLowerCase()+" ";
+  let best=null,bs=0;
+  THEMES.forEach(t=>{const sc=t.key.reduce((s,k)=>s+(low.includes(k.toLowerCase())?1:0),0);if(sc>bs){bs=sc;best=t}});
+  const n=NEG_W.reduce((s,k)=>s+(low.includes(k)?1:0),0),p=POS_W.reduce((s,k)=>s+(low.includes(k)?1:0),0);
+  const ar=/[؀-ۿ]/.test(text);
+  return{theme:best?best.id:"other",sentiment:n>p?"negative":p>n?"positive":(n?"negative":"neutral"),language:ar?"Arabic":"English",source:"on-page keyword rules"};
+}
+
+// ---------- render ----------
+function renderSurvey(){
+  const t=TH[S.focus],pilotName=S.data.stations[S.pilot[0]].name;
+  $("#survey").innerHTML=`<div class="t">How was your visit?</div><div class="s">Meridian ${esc(pilotName)} · just now</div>
+  <div class="stars" aria-label="2 out of 5 stars"><span class="on">★</span><span class="on">★</span><span>★</span><span>★</span><span>★</span></div>
+  <div class="s" style="margin-bottom:2px">What could we do better?</div>
+  <div class="chips">${THEMES.slice(0,6).map(x=>`<span class="${x.id===t.id?'on':''}">${esc(x.name.split(" &")[0].split(" ")[0])}</span>`).join("")}</div>
+  <div class="typed">${esc(t.neg[0])}</div>
+  <div style="margin-top:12px"><button class="btn" type="button" style="width:100%" tabindex="-1" aria-disabled="true">Send</button></div>`;
+}
+function renderFeed(){
+  const{stations}=S.data,r=rng(seed*31+S.focus.length);
+  let total=0,ar=0,negs=0;
+  stations.forEach(s=>THEMES.forEach(t=>{total+=S.neg[t.id][s.id][LAUNCH-1]+S.pos[t.id][s.id][LAUNCH-1];negs+=S.neg[t.id][s.id][LAUNCH-1]}));
+  ar=Math.round(total*0.32);
+  // a feed that leans toward the most talked-about themes
+  const picks=[],used=new Set();const top=S.themeRows.slice(0,4).map(x=>x.t.id);
+  for(let k=0;k<6;k++){const tid=k<3?S.focus:top[k%top.length];const sid=S.hot[Math.floor(r()*S.hot.length)];picks.push(...commentsFor(sid,tid,1,r,k<2,used))}
+  $("#feedkpis").innerHTML=[["Comments this week",total.toLocaleString("en-US")],["Stations",stations.length],["In Arabic",Math.round(ar/total*100)+"%"],["Negative",Math.round(negs/total*100)+"%"]].map(([k,v])=>`<div class="fstep"><b>${v}</b>${k}</div>`).join("");
+  $("#feed").innerHTML=picks.map(c=>`<div class="fb"><div class="meta"><span>${esc(c.ch)}</span><span>Meridian ${esc(stations[c.sid].name)}</span><span class="pill ${c.neg?'neg':'pos'}">${c.neg?'negative':'positive'}</span></div><div class="txt" ${c.ar?'dir="rtl" lang="ar"':''}>${esc(c.text)}</div></div>`).join("");
+  $("#r1").innerHTML=`<b>${total.toLocaleString("en-US")}</b> comments in the last week from <b>${stations.length}</b> stations, about a third in Arabic.`;
+}
+function renderThemes(){
+  const max=S.themeRows[0].impact;
+  $("#themes").innerHTML=S.themeRows.map(x=>`<button type="button" class="trow ${x.t.id===S.focus?'sel':''}" data-id="${x.t.id}"><span>${esc(x.t.name)}</span><span class="n">${x.total}</span><span class="n">${Math.round(x.negShare*100)}%</span><span class="ibar"><i style="width:${(x.impact/max*100).toFixed(1)}%"></i></span></button>`).join("");
+  document.querySelectorAll(".trow").forEach(b=>b.onclick=()=>{$("#focus").value=b.dataset.id;S.selStation=null;update()});
+  const top=S.themeRows[0],cur=S.themeRows.find(x=>x.t.id===S.focus);
+  $("#r2").innerHTML=`Highest impact: <b>${esc(top.t.name)}</b>, ${top.n} negative mentions in 4 weeks.${cur.t.id!==top.t.id?`<br><span style="color:var(--muted)">You&rsquo;re working on ${esc(cur.t.name.toLowerCase())}, ranked ${S.themeRows.indexOf(cur)+1} of 8.</span>`:""}`;
+}
+function renderSamples(){
+  const ex=["Waited 15 minutes for someone to come to the pump","الحمامات مغلقة مرة أخرى","Card declined twice, then the app said payment failed","Lovely karak and the attendant was so friendly"];
+  $("#samples").innerHTML=ex.map(e=>`<button type="button" ${/[؀-ۿ]/.test(e)?'dir="rtl" lang="ar"':''}>${esc(e)}</button>`).join("");
+  document.querySelectorAll("#samples button").forEach(b=>b.onclick=()=>{$("#tryText").value=b.textContent;classify()});
+}
+async function classify(){
+  const text=$("#tryText").value.trim();const out=$("#tryOut");
+  if(!text){out.innerHTML=`<p class="note">Type or pick a comment first.</p>`;return}
+  $("#tryBtn").disabled=true;out.innerHTML=`<div class="verdictbox"><span class="src">Classifying…</span></div>`;
+  let res=null;
+  try{
+    const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),15000);
+    const r=await fetch("/api/closed-loop",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({comment:text}),signal:ctrl.signal});
+    clearTimeout(tm);
+    if(r.ok){const j=await r.json();if(j&&j.theme)res={...j,source:j.model?("AI model · "+j.model):"AI model"}}
+  }catch(e){}
+  if(!res)res=localClassify(text);
+  const t=TH[res.theme];
+  out.innerHTML=`<div class="verdictbox">
+    <div><span class="pill th">${esc(t?t.name:"Other / unclear")}</span> <span class="pill ${res.sentiment==="positive"?"pos":"neg"}">${esc(res.sentiment||"neutral")}</span> <span style="font-size:12.5px;color:var(--muted)">${esc(res.language||"")}</span></div>
+    ${t?`<div style="font-size:13px">Routed to <b>${esc(t.owner)}</b>${res.sentiment==="negative"?", and counted toward the hotspot map in step 3.":"."}</div>`:""}
+    ${res.reply?`<div style="font-size:13px"><span style="color:var(--muted)">Suggested first reply:</span> <span ${/[؀-ۿ]/.test(res.reply)?'dir="rtl" lang="ar"':''}>${esc(res.reply)}</span></div>`:""}
+    <span class="src">Classified by ${esc(res.source)}</span></div>`;
+  $("#tryBtn").disabled=false;
+}
+function heat(v,lo,hi){const z=clamp((v-lo)/(hi-lo||1),0,1);const stops=[[243,231,218],[233,161,107],[194,65,12],[124,45,18]];const p=z*3,i=Math.min(2,Math.floor(p)),f=p-i;const c=stops[i].map((a,k)=>Math.round(a+(stops[i+1][k]-a)*f));return`rgb(${c.join(",")})`}
+function renderMap(){
+  const{stations}=S.data,svg=$("#map");const Wm=640,Hm=310;
+  svg.setAttribute("viewBox",`0 0 ${Wm} ${Hm}`);svg.setAttribute("width",Wm);svg.style.maxWidth="100%";svg.style.height="auto";
+  const rates=stations.map(s=>S.rate(S.focus,s.id,LAUNCH-4,LAUNCH));const lo=Math.min(...rates),hi=Math.max(...rates);
+  const maxTx=Math.max(...stations.map(s=>s.tx));
+  let s=`<rect width="${Wm}" height="${Hm}" fill="#E4EEF2"/>`;
+  s+=`<path d="M300 0 L640 0 L640 310 L150 310 L170 250 L230 200 L290 160 L300 100 L330 40 Z" fill="#F4F2EC" stroke="#DCD8CF"/>`;
+  s+=`<path d="M30 80 Q60 40 120 44 Q190 30 230 52 Q248 88 228 120 Q200 178 120 190 Q50 196 34 150 Q22 112 30 80 Z" fill="#F4F2EC" stroke="#DCD8CF"/>`;
+  s+=`<path d="M232 22 Q262 14 290 26 Q286 46 256 50 Q236 46 232 22 Z" fill="#F4F2EC" stroke="#DCD8CF"/>`;
+  s+=`<path d="M340 52 Q372 40 396 58 Q392 82 362 84 Q340 78 340 52 Z" fill="#F4F2EC" stroke="#DCD8CF"/>`;
+  s+=`<path d="M200 70 L330 116 L500 84 L620 30" fill="none" stroke="#C9C4B8" stroke-width="5" stroke-linecap="round"/><text x="560" y="34" font-size="9" fill="var(--muted)">E11</text>`;
+  s+=`<path d="M300 130 L420 200 L580 270" fill="none" stroke="#C9C4B8" stroke-width="5" stroke-linecap="round"/><text x="590" y="290" font-size="9" fill="var(--muted)">E22</text>`;
+  s+=`<text x="70" y="216" font-size="10" fill="var(--muted)">ABU DHABI ISLAND</text><text x="22" y="292" font-size="10" fill="#7E9AA6">ARABIAN GULF</text>`;
+  const pilot=new Set(S.pilot),comp=new Set(S.comp);
+  stations.forEach(st=>{const v=rates[st.id],rad=6+7*st.tx/maxTx,sel=st.id===S.selStation;
+    s+=`<g class="stn" data-id="${st.id}" tabindex="0" role="button" aria-label="${esc(st.name)}: ${f2(v)} complaints per 1,000 transactions">`;
+    s+=`<circle cx="${st.x}" cy="${st.y}" r="${rad+(sel?3:0)}" fill="${heat(v,lo,hi)}" stroke="${sel?'var(--ink)':'#fff'}" stroke-width="${sel?2.5:1.5}"/>`;
+    if(S.hot.includes(st.id)||sel)s+=`<text x="${st.x+rad+4}" y="${st.y+3}" font-size="9.5" fill="var(--ink)">${esc(st.name)}</text>`;
+    s+=`</g>`});
+  svg.innerHTML=s;
+  svg.querySelectorAll(".stn").forEach(g=>{const go=()=>{S.selStation=+g.dataset.id;renderMap();renderDetail()};g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
+  const worst=stations.slice().sort((a,b)=>rates[b.id]-rates[a.id])[0];
+  const avg=mean(rates);
+  $("#r3").innerHTML=`Worst: <b>${esc(worst.name)}</b> at <b>${f2(rates[worst.id])}</b> per 1,000 transactions, ${(rates[worst.id]/avg).toFixed(1)}× the network average. The ${HOT} worst go into step 5.`;
+}
+function renderDetail(){
+  const st=S.data.stations[S.selStation],t=TH[S.focus];
+  const v=S.rate(S.focus,st.id,LAUNCH-4,LAUNCH);
+  const all=S.data.stations.map(s=>S.rate(S.focus,s.id,LAUNCH-4,LAUNCH)).sort((a,b)=>b-a);
+  const rank=all.indexOf(v)+1;
+  const themesHere=THEMES.map(x=>({x,v:S.rate(x.id,st.id,LAUNCH-4,LAUNCH)})).sort((a,b)=>b.v-a.v).slice(0,4);
+  const qs=commentsFor(st.id,S.focus,3,rng(seed*100+st.id*7+S.focus.length),true);
+  $("#sdetail").innerHTML=`<h3>Meridian ${esc(st.name)}</h3><p class="note" style="margin-top:2px">${TYPE_LABEL[st.type]} site · ${st.tx.toLocaleString("en-US")} transactions a week · ranked ${rank} of 18 for ${esc(t.name.toLowerCase())}</p>
+  ${qs.map(q=>`<div class="q" ${q.ar?'dir="rtl" lang="ar"':''}>${esc(q.text)}</div>`).join("")}
+  <div class="mini"><span style="color:var(--muted);font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em">Top themes here</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono);text-align:right">/1k</span>${themesHere.map(o=>`<span>${esc(o.x.name)}</span><span class="n">${f2(o.v)}</span>`).join("")}</div>`;
+}
+function renderScatter(){
+  const t=TH[S.focus],{stations,driver}=S.data,svg=$("#scatter");
+  const Wc=600,Hc=250,l=48,r=16,tp=14,b=40,iw=Wc-l-r,ih=Hc-tp-b;
+  svg.setAttribute("viewBox",`0 0 ${Wc} ${Hc}`);svg.setAttribute("width",Wc);svg.style.maxWidth="100%";svg.style.height="auto";
+  const xs=stations.map(s=>driver[S.focus][s.id]),ys=stations.map(s=>S.rate(S.focus,s.id,0,LAUNCH));
+  const x0=Math.min(...xs),x1=Math.max(...xs),y1=Math.max(...ys)*1.1;
+  const X=v=>l+(v-x0)/(x1-x0||1)*iw,Y=v=>tp+(1-v/y1)*ih;
+  const mx=mean(xs),my=mean(ys);let sxy=0,sxx=0,syy=0;xs.forEach((x,i)=>{sxy+=(x-mx)*(ys[i]-my);sxx+=(x-mx)**2;syy+=(ys[i]-my)**2});
+  const rr=sxy/Math.sqrt(sxx*syy),slope=sxy/sxx,ic=my-slope*mx;
+  let s="";
+  for(let k=0;k<=4;k++){const v=y1*k/4;s+=`<line x1="${l}" x2="${l+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${l-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v.toFixed(1)}</text>`}
+  for(let k=0;k<=4;k++){const v=x0+(x1-x0)*k/4;s+=`<text x="${X(v)}" y="${tp+ih+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${v<10?v.toFixed(1):Math.round(v)}${t.dUnit}</text>`}
+  s+=`<text x="${l+iw/2}" y="${Hc-4}" text-anchor="middle" font-size="10.5" fill="var(--ink)">${esc(t.driver)}</text>`;
+  s+=`<text x="${l}" y="${tp-3}" font-size="9.5" fill="var(--brand-ink)">${esc(t.metric)} per 1,000 transactions</text>`;
+  s+=`<line x1="${X(x0)}" y1="${Y(ic+slope*x0)}" x2="${X(x1)}" y2="${Y(ic+slope*x1)}" stroke="var(--ai)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  const hot=new Set(S.hot);
+  stations.forEach((st,i)=>{s+=`<circle cx="${X(xs[i])}" cy="${Y(ys[i])}" r="${hot.has(st.id)?6:4.5}" fill="${hot.has(st.id)?'var(--brand)':'var(--cmp)'}" fill-opacity="${hot.has(st.id)?.9:.55}" stroke="#fff" stroke-width="1.2"><title>${esc(st.name)}</title></circle>`});
+  s+=`<g font-size="10"><circle cx="${l+iw-150}" cy="${tp+8}" r="5" fill="var(--brand)"/><text x="${l+iw-141}" y="${tp+11}" fill="var(--muted)">10 worst stations</text><circle cx="${l+iw-150}" cy="${tp+24}" r="4" fill="var(--cmp)" fill-opacity=".55"/><text x="${l+iw-141}" y="${tp+27}" fill="var(--muted)">others</text></g>`;
+  svg.innerHTML=s;
+  const strength=rr>0.7?"strong":rr>0.45?"moderate":rr>0.2?"weak":"no clear";
+  const hiS=xs.map((x,i)=>[x,ys[i]]).sort((a,b)=>b[0]-a[0]),q=Math.ceil(hiS.length/3);
+  const top=mean(hiS.slice(0,q).map(p=>p[1])),bot=mean(hiS.slice(-q).map(p=>p[1]));
+  $("#r4").innerHTML=`A <b>${strength}</b> link (r = <b>${rr.toFixed(2)}</b>). Stations in the top third for ${esc(t.driver.toLowerCase())} get <b>${(top/bot).toFixed(1)}×</b> the complaints of the bottom third.<br><span style="color:var(--muted)">Lead to test: ${esc(lc(t.fix))}.</span>`;
+}
+function renderAction(){
+  const t=TH[S.focus],{stations}=S.data,nm=i=>esc(stations[i].name);
+  $("#acard").innerHTML=`<div class="top"><span class="lane biz">Action ${S.focus.toUpperCase().slice(0,3)}-01</span><span class="note" style="margin:0">Theme: ${esc(t.name)}</span></div>
+  <div class="fix">${esc(t.fix)}</div>
+  <dl class="kv">
+    <dt>Owner</dt><dd>${esc(t.owner)}</dd>
+    <dt>Pilot stations</dt><dd><div class="grp p">${S.pilot.map(i=>`<span>${nm(i)}</span>`).join("")}</div></dd>
+    <dt>Comparison</dt><dd><div class="grp">${S.comp.map(i=>`<span>${nm(i)}</span>`).join("")}</div><div class="note" style="margin-top:4px">Picked at random from the same 10 hotspots. They get the fix after the pilot if it works.</div></dd>
+    <dt>Success metric</dt><dd>${esc(t.metric[0].toUpperCase()+t.metric.slice(1))} per 1,000 transactions, pilot vs comparison</dd>
+    <dt>Decision rule</dt><dd>Roll out if the reduction is clear of zero at 95% confidence after 6 weeks</dd>
+  </dl>
+  <div class="board">
+    <div class="col"><b>Weeks 1–8</b>Baseline from feedback</div>
+    <div class="col"><b>Week 9</b>Fix live at 5 pilot stations</div>
+    <div class="col now"><b>Weeks 9–14</b>Pilot running</div>
+    <div class="col"><b>Week 15</b>Decide: roll out, extend or stop</div>
+  </div>`;
+  $("#r5").innerHTML=`<b>5</b> pilot and <b>5</b> comparison stations, owner <b>${esc(t.owner)}</b>, decision in week 15.`;
+}
+function renderTrend(){
+  const svg=$("#trend"),Wc=600,Hc=250,l=44,r=16,tp=22,b=34,iw=Wc-l-r,ih=Hc-tp-b;
+  svg.setAttribute("viewBox",`0 0 ${Wc} ${Hc}`);svg.setAttribute("width",Wc);svg.style.maxWidth="100%";svg.style.height="auto";
+  const{pS,cS}=S;const preGap=mean(pS.slice(0,LAUNCH))-mean(cS.slice(0,LAUNCH));
+  const cf=cS.map(v=>v+preGap);
+  const y1=Math.max(...pS,...cS,...cf)*1.12;
+  const X=w=>l+(w+0.5)/WEEKS*iw,Y=v=>tp+(1-v/y1)*ih;
+  let s=`<rect x="${X(LAUNCH-0.5)}" y="${tp}" width="${X(WEEKS-0.5)-X(LAUNCH-0.5)}" height="${ih}" fill="var(--biz-soft)" opacity=".6"/>`;
+  for(let k=0;k<=4;k++){const v=y1*k/4;s+=`<line x1="${l}" x2="${l+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${l-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v.toFixed(1)}</text>`}
+  for(let w=0;w<WEEKS;w++)s+=`<text x="${X(w)}" y="${tp+ih+14}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${w+1}</text>`;
+  s+=`<text x="${l+iw/2}" y="${Hc-2}" text-anchor="middle" font-size="10" fill="var(--muted)">week</text>`;
+  s+=`<text x="${X(LAUNCH-0.5)+6}" y="${tp+12}" font-size="10" fill="var(--biz)">fix live at pilot stations</text>`;
+  s+=`<text x="${l}" y="${tp-8}" font-size="9.5" fill="var(--muted)">${esc(TH[S.focus].metric)} per 1,000 transactions</text>`;
+  const line=(arr,from,to,col,dash,w)=>`<polyline fill="none" stroke="${col}" stroke-width="${w||2.2}" ${dash?`stroke-dasharray="${dash}"`:""} points="${arr.slice(from,to).map((v,i)=>X(from+i)+","+Y(v)).join(" ")}"/>`;
+  s+=line(cS,0,WEEKS,"var(--cmp)");
+  s+=line(cf,LAUNCH-1,WEEKS,"var(--brand)","4 4",1.6);
+  s+=line(pS,0,WEEKS,"var(--brand)",null,2.6);
+  pS.forEach((v,w)=>s+=`<circle cx="${X(w)}" cy="${Y(v)}" r="2.6" fill="var(--brand)"/>`);
+  s+=`<g font-size="10"><line x1="${l+8}" x2="${l+26}" y1="${tp+ih-26}" y2="${tp+ih-26}" stroke="var(--brand)" stroke-width="2.6"/><text x="${l+30}" y="${tp+ih-23}" fill="var(--ink)">pilot stations</text>
+  <line x1="${l+8}" x2="${l+26}" y1="${tp+ih-12}" y2="${tp+ih-12}" stroke="var(--cmp)" stroke-width="2.2"/><text x="${l+30}" y="${tp+ih-9}" fill="var(--ink)">comparison stations</text>
+  <line x1="${l+150}" x2="${l+168}" y1="${tp+ih-26}" y2="${tp+ih-26}" stroke="var(--brand)" stroke-width="1.6" stroke-dasharray="4 4"/><text x="${l+172}" y="${tp+ih-23}" fill="var(--ink)">pilot without the fix (estimated)</text></g>`;
+  svg.innerHTML=s;
+  const naiveWrong=Math.abs(S.naive-S.red)>0.05;
+  $("#cmp").innerHTML=`<div class="cmpbox ${naiveWrong?'bad':''}"><b>${pct(S.naive)}</b>Simple before vs after at pilot stations${naiveWrong?" · misleading here":""}</div>
+  <div class="cmpbox"><b style="color:var(--ai)">${pct(S.red)}</b>Pilot vs comparison · 95% range ${pct(S.redLo)} to ${pct(S.redHi)}</div>`;
+  const V={
+    proven:["ok","The fix worked.",`Complaints fell about ${pct(S.red)} more at pilot stations than at comparison stations, and the 95% range stays clear of zero. Roll it out.`],
+    promising:["mid","Promising, not proven.",`The best estimate is a ${pct(S.red)} reduction, but the 95% range includes zero. Extend the pilot or add stations before rolling out.`],
+    none:["no","No measurable effect.",`Pilot stations didn&rsquo;t improve more than comparison stations. Stop, and test the next idea from step 4.`],
+    overlap:["warn","Can&rsquo;t separate the fix from the incentive.",`Complaints did fall, but the staff incentive ran at the same stations in the same weeks. The comparison can&rsquo;t tell which one did it. Re-run the pilot at stations without the incentive.`]
+  }[S.verdict];
+  $("#verdict").innerHTML=`<div class="verdict ${V[0]}"><div><div class="vh">${V[1]}</div><div style="margin-top:3px">${V[2]}</div></div></div>`;
+  const truth=S.eff;
+  let extra="";
+  if(S.conf==="weather")extra=`<br><span style="color:var(--muted)">Cooler weather cut complaints everywhere, so before-vs-after shows ${pct(S.naive)}. The comparison removes it.</span>`;
+  if(S.conf==="promo")extra=`<br><span style="color:var(--muted)">The true effect of the fix alone was set to ${pct(truth)}, but the data can&rsquo;t show that.</span>`;
+  $("#r6").innerHTML=`Honest estimate: <b>${pct(S.red)}</b> (95% range ${pct(S.redLo)} to ${pct(S.redHi)}). The scenario&rsquo;s true effect: <b>${pct(truth)}</b>.${extra}`;
+}
+function renderClose(){
+  const t=TH[S.focus],{stations}=S.data,st=stations[S.pilot[0]];
+  let people=0;S.pilot.forEach(i=>{for(let w=0;w<LAUNCH;w++)people+=S.neg[S.focus][i][w]});
+  const proven=S.verdict==="proven";
+  const fixLower=lc(t.fix);
+  $("#notif").innerHTML=`<div class="app"><span>MERIDIAN</span><span>now</span></div><div class="h">You told us. Here&rsquo;s what changed.</div><div class="b">About ${esc(t.name.toLowerCase())} at Meridian ${esc(st.name)}</div>`;
+  $("#reply").innerHTML=proven?
+    `<div class="t">Thank you for your feedback</div><div class="s" style="margin:4px 0 10px">Your comment from week ${2+(seed%5)}</div>
+     <p style="font-size:13.5px">You told us about ${esc(t.name.toLowerCase())} at our ${esc(st.name)} station. Since then we&rsquo;ve introduced: <b>${esc(fixLower)}</b>.</p>
+     <p style="font-size:13.5px;margin-top:8px">Over six weeks, ${esc(t.metric)} there fell by about <b>${Math.floor(S.red*100)}%</b> compared with similar stations.</p>
+     <div class="row" style="margin-top:12px;display:flex;gap:8px"><button class="btn ghost" type="button" style="flex:1" tabindex="-1" aria-disabled="true">Still an issue</button><button class="btn" type="button" style="flex:1" tabindex="-1" aria-disabled="true">Thanks</button></div>`:
+    `<div class="t">Thank you for your feedback</div><div class="s" style="margin:4px 0 10px">Your comment from week ${2+(seed%5)}</div>
+     <p style="font-size:13.5px">You told us about ${esc(t.name.toLowerCase())} at our ${esc(st.name)} station. We&rsquo;re testing a change there now and will update you when we know whether it&rsquo;s worked.</p>
+     <div class="row" style="margin-top:12px;display:flex;gap:8px"><button class="btn" type="button" style="flex:1" tabindex="-1" aria-disabled="true">OK</button></div>`;
+  const nextStep={proven:"Roll out to the 5 comparison stations, then to every station above the network average.",promising:"Extend the pilot by 4 weeks and add stations, then decide.",none:"Stop the fix. Test the next lead from step 4.",overlap:"Re-run the pilot at stations without the incentive."}[S.verdict];
+  $("#decision").innerHTML=`<span class="lane biz">Experience team · week 15</span><h3 style="margin-top:10px;font-size:16px">Decision: ${{proven:"roll out",promising:"extend the pilot",none:"stop",overlap:"re-run cleanly"}[S.verdict]}</h3><p class="note" style="margin-top:4px">${nextStep}</p>
+  <div class="kpis"><div class="kpi br"><b>${people}</b><span>customers replied to</span></div><div class="kpi"><b>${proven?Math.floor(S.red*100)+"%":"—"}</b><span>claimed in the reply</span></div><div class="kpi b2"><b>${proven?"10":"5"}</b><span>stations with the fix next</span></div></div>
+  <p class="note">The reply quotes the honest estimate, rounded down, never the simple before-and-after.</p>`;
+  $("#r7").innerHTML=`<b>${people}</b> customers who complained at pilot stations get a reply.${proven?"":` Because the result isn&rsquo;t proven, the reply promises an update instead of claiming success.`}`;
+  if(!S.userRed){$("#cRed").value=Math.max(0,Math.round((S.verdict==="overlap"?0:S.red)*100))}
+}
+function renderCalc(){
+  const g=id=>Math.max(0,+$(id).value||0);
+  const sites=g("#cSites"),tx=g("#cTx"),share=g("#cShare")/100,redc=g("#cRed")/100,hidden=Math.max(1,g("#cHidden")),loss=g("#cLoss")/100,val=g("#cVal");
+  const perYear=sites*share*tx*52/1000*S.preP;
+  const avoided=perYear*redc;
+  const kept=avoided*hidden*loss;
+  $("#out").innerHTML=`<div class="kpi"><b>${big(avoided)}</b><span>complaints avoided a year</span></div><div class="kpi"><b>${big(kept)}</b><span>customers kept a year</span></div><div class="kpi"><b>AED ${big(kept*val)}</b><span>yearly spend kept</span></div>`;
+}
+function update(){compute();renderSurvey();renderFeed();renderThemes();renderMap();renderDetail();renderScatter();renderAction();renderTrend();renderClose();renderCalc()}
+
+// ---------- init ----------
+$("#focus").innerHTML=THEMES.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
+build();
+// start on the highest-impact theme
+$("#focus").value="queue";compute();$("#focus").value=S.themeRows[0].t.id;
+const setEff=()=>$("#effV").textContent=$("#eff").value+"% fewer";
+setEff();
+$("#focus").onchange=()=>{S.selStation=null;update()};
+$("#eff").oninput=()=>{setEff();update()};
+$("#conf").onchange=update;
+$("#reshuffle").onclick=()=>{seed=1+Math.floor(Math.random()*9999);build();S.selStation=null;$("#focus").value="queue";compute();$("#focus").value=S.themeRows[0].t.id;update()};
+["#cSites","#cTx","#cShare","#cHidden","#cLoss","#cVal"].forEach(id=>$(id).oninput=renderCalc);
+$("#cRed").oninput=()=>{S.userRed=true;renderCalc()};
+$("#tryBtn").onclick=classify;
+renderSamples();
+update();
+})();
+</script>
+</body>
+</html>
