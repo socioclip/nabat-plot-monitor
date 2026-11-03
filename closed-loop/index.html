@@ -19,10 +19,10 @@
   --ink:#1C1A19; --muted:#6B6762;
   --brand:#C2410C; --brand-soft:#FDEDE4; --brand-ink:#9A3412;
   --ai:#0F766E; --ai-soft:#DFF2EF;
-  --biz:#3949AB; --biz-soft:#E8EAF8;
+  --biz:#6D28D9; --biz-soft:#EFE7FB;
   --accent:#D97706; --accent-soft:#FEF3DC;
   --bad:#C62828; --bad-soft:#FBE9E9; --good:#0F7A4D; --good-soft:#E2F4EA;
-  --cmp:#6B7280; --logo:#1D5FD1;
+  --cmp:#6B7280; --logo:#1D5FD1; --head:#1D5FD1; --head-soft:#E5EEFC; --head-ink:#1A4FAE;
   --display:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
   --body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -44,13 +44,13 @@ p{margin:0}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:18px;margin-bottom:26px;border-bottom:1px solid var(--line)}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
 .logo .mk{width:36px;height:36px;border-radius:11px;background:var(--logo);display:grid;place-items:center}
-.eyebrow{font-size:13px;font-weight:600;color:var(--brand-ink)}
+.eyebrow{font-size:13px;font-weight:600;color:var(--head-ink)}
 .intro{max-width:780px}
 .intro p.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:66ch}
 .legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:20px;font-size:13.5px;color:var(--muted)}
 .lane{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;justify-self:start}
 .lane::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
-.lane.cust{background:var(--brand-soft);color:var(--brand-ink)}
+.lane.cust{background:var(--head-soft);color:var(--head-ink)}
 .lane.ai{background:var(--ai-soft);color:var(--ai)}
 .lane.biz{background:var(--biz-soft);color:var(--biz)}
 /* scene bar */
@@ -73,7 +73,7 @@ button{font:inherit;cursor:pointer}
 .step::before{content:"";position:absolute;left:25px;top:52px;bottom:0;width:2px;background:var(--line)}
 .step:last-child::before{display:none}
 .num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:22px;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1}
-.step.cust .num{border-color:var(--brand);color:var(--brand)}
+.step.cust .num{border-color:var(--head);color:var(--head)}
 .step.ai .num{border-color:var(--ai);color:var(--ai)}
 .step.biz .num{border-color:var(--biz);color:var(--biz)}
 .say{padding-top:6px;display:grid;gap:10px;align-content:start}
@@ -221,9 +221,9 @@ svg text{font-family:var(--mono)}
     <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
   </div>
   <header class="intro">
-    <div class="eyebrow">Closed Loop · a customer experience demo for a fuel &amp; convenience network (Meridian Stations is fictional)</div>
-    <h1>Turn what customers say into a fix, prove it worked, and tell them.</h1>
-    <p class="lead">Follow one problem from the first comment to the reply customers get back. Seven steps, top to bottom: listen, understand, locate, find the cause, act, measure honestly, close the loop. Every number is computed live.</p>
+    <div class="eyebrow">Closed Loop · a customer experience demo for a convenience network (Meridian Stations is fictional)</div>
+    <h1>Listen to customers, fix what bothers them, and prove it worked.</h1>
+    <p class="lead">Follow one customer complaint all the way through: from the comment someone leaves, to the fix, to the reply they get back. Seven simple steps, top to bottom. Every number on this page is calculated live.</p>
     <div class="legend">
       <span><span class="lane cust">Customer</span>&nbsp; what customers say and see</span>
       <span><span class="lane ai">AI engine</span>&nbsp; what runs behind the scenes</span>
