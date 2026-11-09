@@ -242,13 +242,17 @@ function renderChecks(r,q){
 let lastQ="";
 async function liveReply(){
   const bubble=addMsg("a think","Reading your results…");
-  ctl=new AbortController();let r,data={};
+  ctl=new AbortController();let r,data={},timedOut=false;
+  // Keep the member informed, and never wait more than 27s: then show the guided answer.
+  const steps=[[4000,"Comparing your baseline and retest…"],[9000,"Checking every number against your results…"],[16000,"The AI service is busy, still working…"]].map(([ms,t])=>setTimeout(()=>{bubble.textContent=t},ms));
+  const guard=setTimeout(()=>{timedOut=true;ctl.abort()},27000);
   try{r=await fetch("/api/ask-results",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,body:JSON.stringify({messages:turns})});data=await r.json().catch(()=>({}))}
-  catch(e){if(e&&e.name==="AbortError"){bubble.remove();return}r=null}
+  catch(e){if(e&&e.name==="AbortError"&&!timedOut){bubble.remove();steps.forEach(clearTimeout);clearTimeout(guard);return}r=null}
+  steps.forEach(clearTimeout);clearTimeout(guard);
   bubble.remove();
   if(!r||!r.ok||!data.answer){
     turns.pop();
-    if(!r||[502,503,404,504].includes(r.status)){goScripted(true);return scriptedReply(lastQ,true)}
+    if(!r||[502,503,404,504,429].includes(r.status)){goScripted(true);return scriptedReply(lastQ,true)}
     addMsg("a",data.error||"Sorry, I lost the connection. Please ask again.");return;
   }
   addAnswer(data);renderChecks(data,lastQ);

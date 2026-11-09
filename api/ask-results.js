@@ -14,7 +14,7 @@ const D = require('../ask-your-results/data.js');
 
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GEMINI_MODELS = process.env.RESULTS_GEMINI_MODEL ? [process.env.RESULTS_GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-3.8-flash'];
-const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 18000, GEMINI_TIMEOUT_MS = 12000, TOTAL_BUDGET_MS = 50000;
+const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 9000, GEMINI_TIMEOUT_MS = 9000, TOTAL_BUDGET_MS = 24000; // the page gives up at 27s and shows the guided answer
 const IDS = new Set(D.MARKERS.map(m => m.id));
 
 const URGENT = /chest pain|crushing|can'?t breathe|cannot breathe|short(ness)? of breath|faint(ed|ing)?|passed out|collapsed|stroke|face (is )?droop|slurred|numb(ness)? (in|on|down)|severe (pain|headache|bleeding)|vomiting blood|suicid|kill myself|end my life|harm myself|overdose/i;
@@ -95,13 +95,14 @@ async function askGemini(history, log, deadline) {
   // abandoned quickly and the other model tried (normal answers take 4-8s).
   const plan = [...GEMINI_MODELS, ...GEMINI_MODELS, ...GEMINI_MODELS];
   for (let i = 0; i < plan.length; i++) {
-    const model = plan[i];
+    const model = plan[i]; if (!model) continue;
     if (i && /50[34]/.test(log[log.length - 1] || '')) await new Promise(r => setTimeout(r, 600));
     const ms = Math.min(GEMINI_TIMEOUT_MS, deadline - Date.now()); if (ms < 3000) return null;
     const { status, data } = await post(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'x-goog-api-key': key },
       { systemInstruction: { parts: [{ text: RULES }] }, contents,
         generationConfig: { temperature: 0.2, maxOutputTokens: 900, responseMimeType: 'application/json', responseSchema: SCHEMA, ...(/^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: 'low' } } : {}) } }, ms);
     log.push(`${model} ${status}` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
+    if (status === 429 || status === 400 || status === 404) { for (let j = i + 1; j < plan.length; j++) if (plan[j] === model) plan[j] = null; }
     if (status !== 200) continue;
     const text = (data?.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
     try { const out = JSON.parse(text); out.model = model; return out; } catch { log.push(`${model} unreadable (${data?.candidates?.[0]?.finishReason || '?'}, ${text.length} chars)`); }
@@ -173,7 +174,7 @@ module.exports = async (req, res) => {
   let out = clean(raw), numbers = D.checkNumbers(out.answer), retried = false;
 
   // 2. Numbers that are not in the results: ask once more, naming them.
-  if (numbers.unmatched.length && deadline - Date.now() > 8000) {
+  if (numbers.unmatched.length && deadline - Date.now() > 7000) {
     retried = true;
     const again = await ask(turn.concat([{ role: 'assistant', content: JSON.stringify(raw) }, { role: 'user',
       content: `[System check: your answer used numbers that are not in my results: ${numbers.unmatched.join(', ')}. Rewrite the same answer using only numbers from the data, or none.]` }]), log, deadline);
