@@ -11,7 +11,7 @@
 //   1. K2 Think (MBZUAI): K2_API_KEY. Optional K2_BASE_URL, K2_MODEL (otherwise the
 //      official endpoints are tried and the model id is read from /models).
 //   2. Groq (GROQ_API_KEY) as the fallback.
-//   3. Google Gemini (GEMINI_API_KEY) only when neither K2 nor Groq is configured.
+//   3. Google Gemini (GEMINI_API_KEY) as a last resort if both fail.
 // Optional: RESULTS_GROQ_MODEL, RESULTS_GEMINI_MODEL, K2_TIMEOUT_MS.
 
 const D = require('../ask-your-results/data.js');
@@ -165,8 +165,8 @@ async function askGemini(history, log, deadline) {
 async function ask(history, log, deadline) {
   const out = (await askK2(history, log, deadline)) || (await askGroq(history, log, deadline));
   if (out) return out;
-  // Gemini is the last resort only when no K2 or Groq key is set (it was the slow path).
-  return process.env.K2_API_KEY || process.env.GROQ_API_KEY ? null : askGemini(history, log, deadline);
+  // Gemini is the last resort, only when K2 and Groq both failed or are not set (it was the slow path).
+  return askGemini(history, log, deadline);
 }
 
 // ---------- checks ----------
