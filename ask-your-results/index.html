@@ -56,6 +56,17 @@ h3{font-size:12px;font-family:var(--body);text-transform:uppercase;letter-spacin
 .inrange .meter{flex:1;height:8px;border-radius:99px;background:var(--sunk);overflow:hidden;position:relative}
 .inrange .meter i{position:absolute;inset:0 auto 0 0;border-radius:99px}
 .inrange b{color:var(--ink)}
+.pickl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.person{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);text-align:left;min-width:0;transition:border-color .15s,background .15s,transform .15s}
+.person:hover{transform:translateY(-1px);border-color:var(--accent)}
+.person[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.person .pa{width:32px;height:32px;border-radius:11px;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:none;font-family:var(--display)}
+.person b{display:block;font-size:13.5px;line-height:1.15}
+.person small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.switching{animation:fade .35s ease-out}
+@keyframes fade{from{opacity:.25}}
 /* columns */
 .cols{display:grid;grid-template-columns:380px minmax(0,1fr) 320px;gap:18px;align-items:start}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px;min-width:0;box-shadow:var(--shadow)}
@@ -197,6 +208,7 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
   .bot span{display:none}
   .bot b{font-size:17px}
   .snap{padding:14px;border-radius:20px}
+  .people{display:flex;overflow-x:auto;scrollbar-width:none;margin:0 -14px 14px;padding:0 14px}.people::-webkit-scrollbar{display:none}.person{flex:none;width:140px}
   .tiles{gap:8px}.tile{padding:10px;border-radius:14px}.tile .big{font-size:28px}.tile .lbl{font-size:11.5px}
   .chat{height:min(640px,calc(100svh - 24px));border-radius:20px}
   .chathead{padding:12px 14px}
@@ -231,8 +243,10 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
       <p>Ask about your blood tests in plain words. Answers come only from your own results, every number is double-checked, and anything that needs a doctor goes to one.</p>
       <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
     </div>
-    <div class="snap" aria-label="Your retest at a glance">
-      <div class="top"><div class="avatar" aria-hidden="true">RS</div><div><b>Your retest at a glance</b><span id="snapSub"></span></div></div>
+    <div class="snap" aria-label="Choose a member and see their retest at a glance">
+      <div class="pickl">Choose a member</div>
+      <div class="people" id="people" role="group" aria-label="Members"></div>
+      <div class="top"><div class="avatar" id="snapAv" aria-hidden="true"></div><div><b id="snapTitle">Retest at a glance</b><span id="snapSub"></span></div></div>
       <div class="tiles" id="tiles"></div>
       <div class="inrange" id="inrange"></div>
     </div>
@@ -286,7 +300,11 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
 (function(){
 const R=window.ASK_RESULTS, $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const byId=Object.fromEntries(R.MARKERS.map(m=>[m.id,m]));
+// The selected member. Everything on the page renders from V.
+const AV={rami:"linear-gradient(135deg,#FF7A59,#6C4CF5)",layla:"linear-gradient(135deg,#FF8FB1,#B05CF0)",ahmed:"linear-gradient(135deg,#F2A93B,#E0444B)",sofia:"linear-gradient(135deg,#3FD39A,#2D8CF0)"};
+let V,byId={};
+function setView(id){V=R.view(id);byId=Object.fromEntries(V.MARKERS.map(m=>[m.id,m]))}
+setView((new URLSearchParams(location.search).get("member")||"rami").toLowerCase());
 const LBL={ok:"In range",watch:"Watch",out:"Out of range"};
 let turns=[],busy=false,live=true,ctl=null,queue=[];
 
@@ -313,10 +331,10 @@ function rbar(m){
 }
 function renderResults(cited){
   cited=new Set(cited||[]);
-  $("#who").textContent=R.MEMBER.name;$("#whoSub").textContent=`${R.MEMBER.age}`;
-  $("#tA").textContent=R.TESTS.a.date.replace(/^\d+ /,"").replace(" 20"," ’");$("#tB").textContent=R.TESTS.b.date.replace(/^\d+ /,"").replace(" 20"," ’");
+  $("#who").textContent=V.MEMBER.name;$("#whoSub").textContent=`${V.MEMBER.age}`;
+  $("#tA").textContent=V.TESTS.a.date.replace(/^\d+ /,"").replace(" 20"," ’");$("#tB").textContent=V.TESTS.b.date.replace(/^\d+ /,"").replace(" 20"," ’");
   let html="",g="";
-  for(const m of R.MARKERS){
+  for(const m of V.MARKERS){
     if(m.group!==g){g=m.group;const[e,bg]=ICON[g]||["•","var(--sunk)"];html+=`<div class="grp"><span class="ic" style="background:${bg}">${e}</span>${esc(g)}</div>`}
     const sb=R.status(m,R.latest(m)),c=R.change(m),tgt=R.targetText(m);
     const arr=!c?"":c.dir==="same"?`<span class="arr flat">→</span>`:`<span class="arr ${c.good==null?"flat":c.good?"good":"bad"}">${c.dir==="up"?"↑":"↓"}</span>`;
@@ -330,18 +348,29 @@ function renderResults(cited){
   document.querySelectorAll(".mk").forEach(b=>b.onclick=()=>send(`What does my ${byId[b.dataset.id].name} result mean?`));
 }
 // Snapshot tiles in the hero.
-(function snapshot(){
-  const re=R.MARKERS.filter(m=>m.b!=null);
+function renderSnapshot(){
+  $("#snapAv").textContent=V.MEMBER.initials;$("#snapAv").style.background=AV[V.id]||"";$("#snapTitle").textContent=`${V.MEMBER.first}'s retest at a glance`;
+  const re=V.MARKERS.filter(m=>m.b!=null);
   const improved=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).length;
-  const watch=R.MARKERS.filter(m=>R.status(m,R.latest(m))==="watch").length;
-  const out=R.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;
+  const watch=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="watch").length;
+  const out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;
   const okA=re.filter(m=>R.status(m,m.a)==="ok").length,okB=re.filter(m=>R.status(m,m.b)==="ok").length,n=re.length;
-  $("#snapSub").textContent=`${R.TESTS.a.date} → ${R.TESTS.b.date}`;
+  $("#snapSub").textContent=`${V.TESTS.a.date} → ${V.TESTS.b.date}`;
   $("#tiles").innerHTML=`<div class="tile g"><div class="big">${improved}</div><div class="lbl">improved 🎉</div></div><div class="tile y"><div class="big">${watch}</div><div class="lbl">to watch</div></div><div class="tile r"><div class="big">${out}</div><div class="lbl">for the clinician</div></div>`;
   $("#inrange").innerHTML=`<span>In range</span><span class="meter"><i style="width:${okA/n*100}%;background:var(--line)"></i><i style="width:${okB/n*100}%;background:linear-gradient(90deg,var(--ok),#3FD39A);opacity:.9"></i></span><span><b>${okA} → ${okB}</b> of ${n}</span>`;
-})();
-$("#protoSet").textContent="Set "+R.PROTOCOL.set;
-$("#proto").innerHTML=R.PROTOCOL.items.map(i=>`<li>${esc(i)}</li>`).join("");
+}
+function renderProto(){$("#protoSet").textContent="Set "+V.PROTOCOL.set;$("#proto").innerHTML=V.PROTOCOL.items.map(i=>`<li>${esc(i)}</li>`).join("")}
+function renderPeople(){
+  $("#people").innerHTML=R.MEMBERS.map(p=>`<button type="button" class="person" data-id="${p.id}" aria-pressed="${p.id===V.id}"><span class="pa" style="background:${AV[p.id]||"var(--accent)"}">${esc(p.initials)}</span><span style="min-width:0"><b>${esc(p.first)}, ${p.age}</b><small>${esc(p.tag)}</small></span></button>`).join("");
+  document.querySelectorAll(".person").forEach(b=>b.onclick=()=>switchMember(b.dataset.id));
+}
+function switchMember(id){
+  if(id===V.id)return;
+  setView(id);
+  try{const u=new URL(location.href);u.searchParams.set("member",id);history.replaceState(null,"",u)}catch(e){}
+  renderPeople();renderSnapshot();renderProto();reset();
+  document.querySelectorAll(".snap .tiles,.cols").forEach(el=>{el.classList.remove("switching");void el.offsetWidth;el.classList.add("switching")});
+}
 
 // ---------- chat ----------
 function addMsg(cls,text){const d=document.createElement("div");d.className="m "+cls;d.textContent=text;$("#msgs").appendChild(d);$("#msgs").scrollTop=1e6;return d}
@@ -353,10 +382,14 @@ function addAnswer(r){
   if(r.escalate==="clinician"){const e=document.createElement("div");e.className="esc";e.textContent="↳ Flagged for the Kinra clinician to review";$("#msgs").appendChild(e)}
   $("#msgs").scrollTop=1e6;
 }
-const STARTERS=["What improved since my first test?","Is my ApoB still a concern?","Why is my TSH flagged?","Do I have prediabetes?","Should I double my vitamin D?"];
+const starters=()=>V.STARTERS;
 function setChips(list){$("#chips").innerHTML=list.map((c,i)=>`<button type="button" class="chip" data-i="${i}">${esc(c)}</button>`).join("");
   document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>send(list[+b.dataset.i]))}
-function greet(){addMsg("a",`Hi Rami 👋 Your September retest is in, and a lot moved the right way since March. Ask me anything about it, or tap any marker.`);setChips(STARTERS)}
+function greet(){
+  const re=V.MARKERS.filter(m=>m.b!=null),up=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).length,out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;
+  const mon=d=>d.split(" ")[1];
+  const mood=out===0?`Everything is inside the lab range, and ${up} markers moved the right way since ${mon(V.TESTS.a.date)}.`:out>3?`A few markers need attention, and your clinician will go through them with you. ${up} moved the right way since ${mon(V.TESTS.a.date)}.`:`${up} markers moved the right way since ${mon(V.TESTS.a.date)}.`;
+  addMsg("a",`Hi ${V.MEMBER.first} 👋 Your ${mon(V.TESTS.b.date)} retest is in. ${mood} Ask me anything about it, or tap any marker.`);setChips(starters())}
 
 // ---------- checks panel ----------
 function renderChecks(r,q){
@@ -412,7 +445,7 @@ async function liveReply(){
   ctl=new AbortController();let r,data={},timedOut=false;
   // Never wait more than 27s: then this question gets the guided answer, and the chat stays live.
   const guard=setTimeout(()=>{timedOut=true;ctl.abort()},27000);
-  try{r=await fetch("/api/ask-results",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,body:JSON.stringify({messages:turns})});data=await r.json().catch(()=>({}))}
+  try{r=await fetch("/api/ask-results",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,body:JSON.stringify({member:V.id,messages:turns})});data=await r.json().catch(()=>({}))}
   catch(e){if(e&&e.name==="AbortError"&&!timedOut){clearTimeout(guard);ld.stop();return}r=null}
   clearTimeout(guard);
   if(r&&r.ok&&data.answer)await ld.done();else ld.stop();
@@ -424,7 +457,7 @@ async function liveReply(){
   }
   addAnswer(data);renderChecks(data,lastQ);
   turns.push({role:"assistant",content:data.answer});
-  setChips(data.followUps&&data.followUps.length?data.followUps:STARTERS);
+  setChips(data.followUps&&data.followUps.length?data.followUps:starters());
 }
 
 // ---------- guided demo: fixed answers, same checks ----------
@@ -445,8 +478,41 @@ One high TSH can be temporary: a recent illness, the time of the test, or supple
 Fasting glucose moved from 104 to 97 mg/dL, back inside the 70–99 range. Both moved in a good direction. Your clinician will read them with your history.`,followUps:["What improved since my first test?","Is my ApoB still a concern?"]},
   vitd:{markers:["vitd"],notes:["vitd"],scope:"dosing",answer:`I can't change a supplement dose; that is your clinician's call. Here is what the result shows: vitamin D rose from 18 ng/mL, the deficient range, to 34, inside the 30–100 range, on the 2,000 IU daily in your protocol.
 Very high doses over time can be harmful, which is why dose changes go through a clinician. You can raise it at your results review.`,followUps:["What improved since my first test?","Why is my TSH flagged?"]},
-  other:{markers:[],notes:[],scope:"in",answer:"The AI model is busy, so this is the guided version of the demo. It can answer the suggested questions below. Try one, or try again in a minute for live answers.",followUps:STARTERS}
+  other:null
 };
+// Guided answers built from any member's data (used for members other than Rami, and for
+// questions the hand-written answers don't cover). Every number comes from the results.
+const FIND={apob:/apob|statin/,ldl:/\bldl|cholesterol|statin/,hdl:/\bhdl/,tg:/triglycer/,lpa:/lp\(a\)|\blpa\b|lipoprotein/,hba1c:/hba1c|a1c|diabet|sugar/,glucose:/glucose|sugar|diabet/,insulin:/insulin/,alt:/\balt\b|liver/,tsh:/\btsh|thyroid/,ft4:/\bt4\b|thyroid/,testo:/testosterone/,crp:/crp|inflamm/,wbc:/white blood|\bwbc/,vitd:/vitamin d\b|vit d\b/,omega3:/omega/,ferritin:/ferritin|\biron\b/,b12:/\bb12/,egfr:/egfr|kidney/};
+const SW={ok:"in range",watch:"inside the lab range but outside the target",out:"outside the lab range"};
+function describe(m){
+  const s=R.status(m,R.latest(m)),c=R.change(m),tgt=R.targetText(m);
+  if(m.b==null)return `${m.name} was ${m.a} ${m.unit}, measured once (lab range ${R.rangeText(m)}), which is ${SW[s]}.`;
+  const dir=c.dir==="same"?"stayed at":c.dir==="up"?"rose from":"fell from";
+  const how=c.good==null||c.dir==="same"?"":c.good?" That is a good direction.":" That is the wrong direction.";
+  return `${m.name} ${dir} ${c.dir==="same"?m.b:`${m.a} to ${m.b}`} ${m.unit}, which is ${SW[s]} (lab range ${R.rangeText(m)}${tgt?", "+tgt:""}).${how}`;
+}
+function genAnswer(text){
+  const t=text.toLowerCase();
+  const scope=/\bdo i have\b|diagnos|\bam i (diabetic|prediabetic|sick)/.test(t)?"diagnosis":/\bdose\b|double|stop taking|\bstart\b|statin|supplement|medic|prescri/.test(t)?"dosing":"in";
+  const pre=scope==="diagnosis"?"I can't tell you whether you have a condition; only a clinician can diagnose. Here is what your results show.\n":scope==="dosing"?"I can't recommend starting, stopping or changing any medicine or supplement; that is your clinician's call. Here is what your results show.\n":"";
+  let ids=Object.keys(FIND).filter(id=>FIND[id].test(t)&&byId[id]).slice(0,3);
+  if(!ids.length&&/improv|better|progress|changed|worse|worry|anything|overall|how am i|summary/.test(t)){
+    const re=V.MARKERS.filter(m=>m.b!=null);
+    const good=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).slice(0,4);
+    const bad=re.filter(m=>{const c=R.change(m);return c&&c.good===false});
+    const out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out");
+    const lines=[];
+    if(good.length)lines.push("Moved the right way:\n"+good.map(m=>`• ${m.name} ${m.a} → ${m.b} ${m.unit}`).join("\n"));
+    if(bad.length)lines.push("Moved the wrong way:\n"+bad.slice(0,4).map(m=>`• ${m.name} ${m.a} → ${m.b} ${m.unit}`).join("\n"));
+    const wat=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="watch");
+    if(wat.length)lines.push(`Worth watching: ${wat.map(m=>m.name).join(", ")}, inside the lab range but outside the target.`);
+    lines.push(out.length?`${out.length===1?"One marker is":out.length+" markers are"} outside the lab range (${out.slice(0,4).map(m=>m.name).join(", ")}${out.length>4?" and more":""}). The Kinra clinician will review ${out.length===1?"it":"them"} with you.`:"Everything is inside the lab range. Markers marked Watch are inside it but outside the tighter target.");
+    return{answer:pre+lines.join("\n"),markers:[...good,...bad].slice(0,8).map(m=>m.id).concat(wat.map(m=>m.id),out.map(m=>m.id)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,8),notes:[],scope};
+  }
+  if(!ids.length)return{answer:"The AI is busy right now, so this is the guided version. It can answer questions about any marker on the left, or what changed since your first test. Try a suggestion below.",markers:[],notes:[],scope};
+  const first=byId[ids[0]],note=(R.NOTES[first.id]||"").split(/(?<=\.)\s/)[0];
+  return{answer:pre+ids.map(id=>describe(byId[id])).join(" ")+(note?"\n"+note:"")+(scope==="in"?"":"\nYour clinician can take you through it at your results review."),markers:ids,notes:[first.id],scope};
+}
 function route(t){t=t.toLowerCase();
   if(/improv|better|changed|progress/.test(t))return"improved";
   if(/apob|ldl|cholesterol/.test(t))return"apob";
@@ -459,10 +525,10 @@ async function scriptedReply(text,noBubble,fellBack){
   if(!noBubble){const ld=showLoader();await wait(1800);await ld.done()}
   let r;
   if(URGENT.test(text)){r={answer:"This sounds like it could be urgent, and it is not something to work through in an app. If you have chest pain, trouble breathing, fainting, signs of a stroke or thoughts of harming yourself, call 998 for an ambulance in the UAE or go to the nearest emergency department now. If you are elsewhere, call your local emergency number.",markers:[],notes:[],followUps:[],escalate:"urgent",escalateReason:"Possible emergency symptoms in the question. Fixed safety message; the model was not asked.",checks:{scope:"urgent",numbers:{checked:0,matched:0,unmatched:[]}},model:"fixed safety reply"}}
-  else{const s=SCRIPT[route(text)];
+  else{const s=(V.id==="rami"&&SCRIPT[route(text)])||genAnswer(text);
     const out=s.markers.filter(id=>R.status(byId[id],R.latest(byId[id]))==="out");
-    r={...s,escalate:out.length?"clinician":"none",escalateReason:out.length?`${out.map(id=>byId[id].name).join(", ")} is outside the lab range on the latest test.`:"",checks:{scope:s.scope,numbers:R.checkNumbers(s.answer),retried:false},model:fellBack?"guided answer (the AI took too long this time)":"guided demo (scripted answer)"}}
-  addAnswer(r);renderChecks(r,text);setChips(r.followUps&&r.followUps.length?r.followUps:STARTERS);
+    r={...s,escalate:out.length?"clinician":"none",escalateReason:out.length?`${out.map(id=>byId[id].name).join(", ")} is outside the lab range on the latest test.`:"",checks:{scope:s.scope,numbers:V.checkNumbers(s.answer),retried:false},model:fellBack?"guided answer (the AI took too long this time)":"guided demo (scripted answer)"}}
+  addAnswer(r);renderChecks(r,text);setChips(r.followUps&&r.followUps.length?r.followUps:starters().filter(q=>q!==text));
 }
 
 // ---------- send ----------
@@ -477,7 +543,7 @@ $("#f").addEventListener("submit",e=>{e.preventDefault();send($("#q").value)});
 $("#reset").onclick=reset;
 function goScripted(fellBack){live=false;$("#mode").className="mode";$("#mode span").textContent="Guided demo";$("#footMode").textContent=fellBack?"The AI model is busy, so answers are scripted for now. The checks still run on them":"Guided demo: answers are scripted, the checks still run"}
 function goLive(){live=true;$("#mode").className="mode live";$("#mode span").textContent="Live AI";$("#footMode").textContent="Live AI: answers come from a language model limited to these results, then checked in code"}
-renderResults([]);greet();goLive();
+renderPeople();renderSnapshot();renderProto();renderResults([]);greet();goLive();
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>

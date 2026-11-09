@@ -24,17 +24,20 @@ const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || (process.env.GROQ_API_KEY ? 
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GEMINI_MODELS = process.env.RESULTS_GEMINI_MODEL ? [process.env.RESULTS_GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-3.8-flash'];
 const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 9000, GEMINI_TIMEOUT_MS = 9000, TOTAL_BUDGET_MS = 24000; // the page gives up at 27s and shows the guided answer
-const IDS = new Set(D.MARKERS.map(m => m.id));
+const IDS = new Set(D.view().MARKERS.map(m => m.id));
 
 const URGENT = /chest pain|crushing|can'?t breathe|cannot breathe|short(ness)? of breath|faint(ed|ing)?|passed out|collapsed|stroke|face (is )?droop|slurred|numb(ness)? (in|on|down)|severe (pain|headache|bleeding)|vomiting blood|suicid|kill myself|end my life|harm myself|overdose/i;
 const DIAGNOSIS = /\bdo i have\b|\bam i (diabetic|prediabetic|sick|ill)\b|diagnos|\bis (it|this) (cancer|diabetes|hypothyroid|thyroid disease)|what (disease|condition) do i/i;
 const DOSING = /\bdose\b|dosage|\bdouble\b|\btriple\b|how (much|many) .*(take|should)|\bstop taking\b|\bstart taking\b|\bincrease (my|the)\b|\b\d+\s?(mg|mcg|iu)\b|statin|metformin|levothyroxine|medication|medicine|prescri/i;
 
-const RULES = `You are "Ask your results", an assistant inside a preventive-health membership app (Kinra, fictional). You help ONE member understand THEIR OWN blood test results in plain language.
+const rulesCache = {};
+function rulesFor(V) {
+  if (rulesCache[V.id]) return rulesCache[V.id];
+  return (rulesCache[V.id] = `You are "Ask your results", an assistant inside a preventive-health membership app (Kinra, fictional). You help ONE member understand THEIR OWN blood test results in plain language.
 
 You may use ONLY the data below: the member's results, their protocol and the reference notes. Do not use outside medical facts, statistics or numbers that are not in the data.
 
-${D.contextText()}
+${V.contextText()}
 
 Rules:
 - Answer the member's question directly in plain English, 40 to 110 words. No markdown headers, no bold. Short lines starting with "• " are fine.
@@ -52,7 +55,8 @@ Reply with ONLY a JSON object, no other text:
  "notes": [reference note ids you relied on],
  "escalate": "none" | "clinician",
  "escalateReason": string ("" if none),
- "followUps": [two short questions the member might ask next about their results]}`;
+ "followUps": [two short questions the member might ask next about their results]}`);
+}
 
 const SCHEMA = {
   type: 'OBJECT',
@@ -109,7 +113,7 @@ async function k2Resolve(key, log) {
 
 // K2 models can reason first: they may wrap its output in <think>...</think> and
 // <answer>...</answer>. parseLooseJson drops the thinking; the answer tags are removed here.
-async function askK2(history, log, deadline) {
+async function askK2(history, log, deadline, RULES) {
   const key = process.env.K2_API_KEY; if (!key) return null;
   const k = await k2Resolve(key, log); if (!k) return null;
   // Short, grounded answers need little reasoning: low effort keeps K2 to a few seconds.
@@ -131,7 +135,7 @@ async function askK2(history, log, deadline) {
   return null;
 }
 
-async function askGroq(history, log, deadline) {
+async function askGroq(history, log, deadline, RULES) {
   const key = process.env.GROQ_API_KEY; if (!key) return null;
   for (const extras of [{ response_format: { type: 'json_object' }, reasoning_format: 'hidden' }, {}]) {
     const ms = Math.min(CALL_TIMEOUT_MS, deadline - Date.now()); if (ms < 3000) return null;
@@ -146,7 +150,7 @@ async function askGroq(history, log, deadline) {
   return null;
 }
 
-async function askGemini(history, log, deadline) {
+async function askGemini(history, log, deadline, RULES) {
   const key = process.env.GEMINI_API_KEY; if (!key) return null;
   const contents = history.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
   // Alternate models with a short per-call timeout: a stalled or overloaded call is
@@ -167,15 +171,15 @@ async function askGemini(history, log, deadline) {
   }
   return null;
 }
-async function ask(history, log, deadline) {
-  const out = (await askK2(history, log, deadline)) || (await askGroq(history, log, deadline));
+async function ask(history, log, deadline, RULES) {
+  const out = (await askK2(history, log, deadline, RULES)) || (await askGroq(history, log, deadline, RULES));
   if (out) return out;
   // Gemini is the last resort, only when K2 and Groq both failed or are not set (it was the slow path).
-  return askGemini(history, log, deadline);
+  return askGemini(history, log, deadline, RULES);
 }
 
 // ---------- checks ----------
-function clean(out) {
+function clean(out, V) {
   const answer = String(out.answer || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '• ').trim();
   const markers = [...new Set((Array.isArray(out.markers) ? out.markers : []).map(String).filter(id => IDS.has(id)))].slice(0, 8);
   const notes = [...new Set((Array.isArray(out.notes) ? out.notes : []).map(String).filter(id => D.NOTES[id]))].slice(0, 8);
@@ -183,7 +187,7 @@ function clean(out) {
   let escalate = out.escalate === 'clinician' ? 'clinician' : 'none';
   let escalateReason = escalate === 'clinician' ? String(out.escalateReason || '').slice(0, 200) : '';
   // Hard rule, not left to the model: an out-of-range marker in the answer goes to the clinician.
-  const outOfRange = markers.map(id => D.MARKERS.find(m => m.id === id)).filter(m => D.status(m, D.latest(m)) === 'out');
+  const outOfRange = markers.map(id => V.MARKERS.find(m => m.id === id)).filter(m => D.status(m, D.latest(m)) === 'out');
   if (outOfRange.length) {
     escalate = 'clinician';
     if (!escalateReason) escalateReason = `${outOfRange.map(m => m.name).join(', ')} is outside the lab range on the latest test.`;
@@ -212,6 +216,8 @@ module.exports = async (req, res) => {
   while (history.length && history[0].role !== 'user') history.shift();
   if (!history.length || history[history.length - 1].role !== 'user') return res.status(400).json({ error: 'Ask a question about your results.' });
   const question = history[history.length - 1].content;
+  const V = D.view(String(body.member || ''));
+  const RULES = rulesFor(V);
 
   // 1. Urgent symptoms: fixed reply, the model is never asked.
   if (URGENT.test(question)) {
@@ -230,17 +236,17 @@ module.exports = async (req, res) => {
     (scope === 'dosing' ? '\n\n[System note: this asks about a medicine or dose. Do not change or suggest any dose; explain the result and point to the clinician.]' : '') }]);
 
   const deadline = Date.now() + TOTAL_BUDGET_MS, log = [];
-  let raw = await ask(turn, log, deadline);
+  let raw = await ask(turn, log, deadline, RULES);
   if (!raw) { console.log('ask-results failed', log.join(' | ')); return res.status(502).json({ error: 'The assistant could not answer just now. Please try again.', attempts: log }); }
-  let out = clean(raw), numbers = D.checkNumbers(out.answer), retried = false;
+  let out = clean(raw, V), numbers = V.checkNumbers(out.answer), retried = false;
 
   // 2. Numbers that are not in the results: ask once more, naming them.
   if (numbers.unmatched.length && deadline - Date.now() > 7000) {
     retried = true;
     const again = await ask(turn.concat([{ role: 'assistant', content: JSON.stringify(raw) }, { role: 'user',
-      content: `[System check: your answer used numbers that are not in my results: ${numbers.unmatched.join(', ')}. Rewrite the same answer using only numbers from the data, or none.]` }]), log, deadline);
-    if (again) { const o2 = clean(again), n2 = D.checkNumbers(o2.answer); if (n2.unmatched.length <= numbers.unmatched.length) { out = o2; numbers = n2; } }
+      content: `[System check: your answer used numbers that are not in my results: ${numbers.unmatched.join(', ')}. Rewrite the same answer using only numbers from the data, or none.]` }]), log, deadline, RULES);
+    if (again) { const o2 = clean(again, V), n2 = V.checkNumbers(o2.answer); if (n2.unmatched.length <= numbers.unmatched.length) { out = o2; numbers = n2; } }
   }
 
-  return res.status(200).json({ ...out, checks: { scope, numbers, retried }, attempts: log });
+  return res.status(200).json({ ...out, member: V.id, checks: { scope, numbers, retried }, attempts: log });
 };
