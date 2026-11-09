@@ -67,6 +67,9 @@
     },
     "api/tender-memo.js": {
       "maxDuration": 60
+    },
+    "api/ask-results.js": {
+      "maxDuration": 60
     }
   }
 }
