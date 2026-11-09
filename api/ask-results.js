@@ -18,7 +18,7 @@ const D = require('../ask-your-results/data.js');
 
 // K2_BASE_URL / K2_MODEL are optional: without them the official K2 Think endpoints are tried
 // and the model id is read from the endpoint's /models list (cached per warm instance).
-const K2_BASES = process.env.K2_BASE_URL ? [process.env.K2_BASE_URL] : ['https://api.k2think.ai/v1', 'https://build-api.k2think.ai/v1'];
+const K2_BASES = process.env.K2_BASE_URL ? [process.env.K2_BASE_URL] : ['https://api.ifm.ai/v1', 'https://platform.ifm.ai/api/v1', 'https://platform.ifm.ai/v1', 'https://api.platform.ifm.ai/v1', 'https://api.k2think.ai/v1'];
 let k2Found = process.env.K2_MODEL && process.env.K2_BASE_URL ? { base: process.env.K2_BASE_URL, model: process.env.K2_MODEL } : null;
 const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || 13000;
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
@@ -88,14 +88,14 @@ async function k2Resolve(key, log) {
   if (k2Found) return k2Found;
   for (const raw of K2_BASES) {
     const base = String(raw).replace(/\/+$/, '').replace(/\/chat\/completions$/, '');
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 4000);
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 3000);
     try {
       const r = await fetch(base + '/models', { headers: { authorization: `Bearer ${key}` }, signal: ctrl.signal });
       const j = await r.json().catch(() => ({}));
-      const ids = (j.data || []).map(m => m.id).filter(Boolean);
-      log.push(`k2 models ${base.replace('https://', '')} ${r.status} [${ids.slice(0, 6).join(', ')}]`);
+      const ids = (Array.isArray(j.data) ? j.data : Array.isArray(j.models) ? j.models : Array.isArray(j) ? j : []).map(m => typeof m === 'string' ? m : m.id).filter(Boolean);
+      log.push(`k2 models ${base.replace('https://', '')} ${r.status} [${ids.slice(0, 12).join(', ')}]` + (!r.ok ? ' ' + JSON.stringify(j).slice(0, 120) : ''));
       if (r.ok) {
-        const pick = process.env.K2_MODEL || ids.find(id => /k2.?think.?v2/i.test(id) && !/nothink/i.test(id)) || ids.find(id => /k2.?think/i.test(id)) || ids[0];
+        const pick = process.env.K2_MODEL || ids.find(id => /k2.?think/i.test(id) && !/nothink/i.test(id)) || ids.find(id => /k2/i.test(id)) || ids[0];
         if (pick) return (k2Found = { base, model: pick });
       }
     } catch (e) { log.push(`k2 models ${base.replace('https://', '')} ${e.name === 'AbortError' ? 'timeout' : 'unreachable: ' + (e.cause?.code || e.cause?.message || e.message)}`); }
