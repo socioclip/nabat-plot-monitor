@@ -120,7 +120,7 @@ form input{flex:1;min-width:0;font:inherit;padding:8px 6px;border:0;background:t
 .btn{font:inherit;font-weight:700;padding:9px 18px;border-radius:999px;border:0;background:linear-gradient(135deg,var(--accent),var(--me2));color:#fff;cursor:pointer;box-shadow:0 8px 18px -10px var(--accent);transition:transform .15s}
 .btn:hover{transform:translateY(-1px)}
 .btn:disabled{opacity:.6}
-.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:none;font-weight:600;border:1px solid var(--line)}
+.btn.ghost{white-space:nowrap;background:var(--surface);color:var(--ink);box-shadow:none;font-weight:600;border:1px solid var(--line)}
 .btn:focus-visible,.chip:focus-visible,.mk:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 form:focus-within{box-shadow:0 0 0 2px var(--accent)}
 .disc{font-size:11.5px;color:var(--muted);padding:6px 18px 14px;text-align:center}
@@ -193,12 +193,15 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
   .cols{grid-template-columns:minmax(0,1fr);gap:14px}
   .cols>*{order:0}.cols .chat{order:-1}
   .panel{padding:14px;border-radius:20px}
+  .panel.chat{padding:0}
+  .bot span{display:none}
+  .bot b{font-size:17px}
   .snap{padding:14px;border-radius:20px}
   .tiles{gap:8px}.tile{padding:10px;border-radius:14px}.tile .big{font-size:28px}.tile .lbl{font-size:11.5px}
   .chat{height:min(640px,calc(100svh - 24px));border-radius:20px}
   .chathead{padding:12px 14px}
   .bot .av{width:36px;height:36px}
-  #reset{padding:6px 10px!important;font-size:12px!important}
+  #reset{padding:6px 10px!important;font-size:12px!important;white-space:nowrap}
   .msgs{padding:12px 14px}
   .m{max-width:92%;font-size:14.5px}
   /* starter questions scroll sideways instead of stacking */
