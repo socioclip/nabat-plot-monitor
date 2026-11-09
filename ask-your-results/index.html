@@ -69,6 +69,28 @@ h3{font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacin
 .m.a{background:var(--sunk);border-top-left-radius:4px;align-self:flex-start}
 .m.u{background:var(--me);color:var(--me-ink);border-top-right-radius:4px;align-self:flex-end}
 .m.think{color:var(--muted);font-style:italic}
+/* loading card */
+.loader{width:min(400px,92%);background:var(--sunk);border-radius:14px;border-top-left-radius:4px;padding:12px 14px;align-self:flex-start;font-size:13.5px}
+.lhead{display:flex;align-items:center;gap:8px}
+.lhead b{font-weight:600;flex:1}
+.lhead .secs{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bar{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 8px;position:relative}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .4s ease-out;position:relative;overflow:hidden}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:sheen 1.4s linear infinite;transform:translateX(-100%)}
+@keyframes sheen{to{transform:translateX(100%)}}
+.lsteps{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.lsteps li{display:flex;gap:8px;align-items:center;color:var(--muted);transition:color .2s}
+.lsteps li::before{content:"";width:14px;height:14px;flex:none;border-radius:50%;border:1.5px solid var(--line);box-sizing:border-box}
+.lsteps li.on{color:var(--ink)}
+.lsteps li.on::before{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+.lsteps li.done{color:var(--ink)}
+.lsteps li.done::before{content:"✓";border:0;background:var(--ok-soft);color:var(--ok);font-size:9.5px;font-weight:700;display:grid;place-items:center}
+.lnote{margin-top:8px;font-size:12.5px;color:var(--muted);min-height:0}
+.lnote:empty{display:none}
+.skel{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--sunk),var(--line),var(--sunk));background-size:200% 100%;animation:skel 1.2s linear infinite;margin:8px 0}
+@keyframes skel{to{background-position:-200% 0}}
 .m.urgent{background:var(--out-soft);color:var(--ink);border:1px solid var(--out)}
 .m .flag{background:var(--watch-soft);color:var(--watch);border-radius:3px;padding:0 2px;text-decoration:underline dotted}
 .esc{align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--out);background:var(--out-soft);padding:4px 9px;border-radius:6px;max-width:92%}
@@ -240,19 +262,37 @@ function renderChecks(r,q){
 
 // ---------- live ----------
 let lastQ="";
+// Loading card: progress bar, seconds counter and steps that tick off while K2 works.
+const LSTEPS=["Reading your 19 results","Comparing March with September","Writing a plain-language answer","Checking every number against your results"];
+function showLoader(){
+  const d=document.createElement("div");d.className="loader";d.setAttribute("role","status");d.setAttribute("aria-live","polite");
+  d.innerHTML=`<div class="lhead"><span class="spin" aria-hidden="true"></span><b>Preparing your answer</b><span class="secs">0s</span></div><div class="bar" aria-hidden="true"><i></i></div><ol class="lsteps">${LSTEPS.map(t=>`<li>${t}</li>`).join("")}</ol><div class="lnote"></div>`;
+  $("#msgs").appendChild(d);$("#msgs").scrollTop=1e6;
+  const li=[...d.querySelectorAll("li")],bar=d.querySelector(".bar i"),secs=d.querySelector(".secs"),note=d.querySelector(".lnote"),t0=Date.now();
+  // Step i becomes active at at[i] seconds; the bar eases towards 95% and never claims to be done.
+  const at=[0,1.2,2.6,Infinity];
+  const set=k=>li.forEach((el,j)=>{el.className=j<k?"done":j===k?"on":""});
+  const tick=()=>{const t=(Date.now()-t0)/1000;let k=0;while(k<at.length-1&&t>=at[k+1])k++;set(k);
+    bar.style.width=(95*(1-Math.exp(-t/7))).toFixed(1)+"%";secs.textContent=Math.floor(t)+"s";
+    note.textContent=t>=19?"Taking longer than usual. If it doesn't finish in a few seconds, you'll get the guided answer.":t>=10?"K2 is reasoning carefully through your results. A few more seconds…":t>=6?"Answers usually take 5 to 10 seconds.":"";};
+  tick();const iv=setInterval(tick,250);
+  $("#checks").innerHTML=`<div class="check"><div class="k">Running checks</div><div class="skel" style="width:80%"></div><div class="skel" style="width:60%"></div><div class="skel" style="width:70%"></div></div>`;
+  return{async done(){clearInterval(iv);set(3);bar.style.width="100%";await new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:450));set(4);await new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:250));d.remove()},
+         stop(){clearInterval(iv);d.remove()}};
+}
 async function liveReply(){
-  const bubble=addMsg("a think","Reading your results…");
+  const ld=showLoader();
   ctl=new AbortController();let r,data={},timedOut=false;
-  // Keep the member informed, and never wait more than 27s: then show the guided answer.
-  const steps=[[4000,"Comparing your baseline and retest…"],[9000,"Checking every number against your results…"],[16000,"The AI service is busy, still working…"]].map(([ms,t])=>setTimeout(()=>{bubble.textContent=t},ms));
+  // Never wait more than 27s: then this question gets the guided answer, and the chat stays live.
   const guard=setTimeout(()=>{timedOut=true;ctl.abort()},27000);
   try{r=await fetch("/api/ask-results",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,body:JSON.stringify({messages:turns})});data=await r.json().catch(()=>({}))}
-  catch(e){if(e&&e.name==="AbortError"&&!timedOut){bubble.remove();steps.forEach(clearTimeout);clearTimeout(guard);return}r=null}
-  steps.forEach(clearTimeout);clearTimeout(guard);
-  bubble.remove();
+  catch(e){if(e&&e.name==="AbortError"&&!timedOut){clearTimeout(guard);ld.stop();return}r=null}
+  clearTimeout(guard);
+  if(r&&r.ok&&data.answer)await ld.done();else ld.stop();
   if(!r||!r.ok||!data.answer){
     turns.pop();
-    if(!r||[502,503,404,504,429].includes(r.status)){goScripted(true);return scriptedReply(lastQ,true)}
+    if(r&&(r.status===503||r.status===404)){goScripted(true);return scriptedReply(lastQ,true)} // not connected at all
+    if(!r||[502,504,429].includes(r.status))return scriptedReply(lastQ,true,true); // this question only
     addMsg("a",data.error||"Sorry, I lost the connection. Please ask again.");return;
   }
   addAnswer(data);renderChecks(data,lastQ);
@@ -288,13 +328,13 @@ function route(t){t=t.toLowerCase();
   if(/vitamin d|vit d|vitd/.test(t))return"vitd";
   return"other"}
 const wait=ms=>new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
-async function scriptedReply(text,noBubble){
-  if(!noBubble){const b=addMsg("a think","Reading your results…");await wait(500);b.remove()}
+async function scriptedReply(text,noBubble,fellBack){
+  if(!noBubble){const ld=showLoader();await wait(1800);await ld.done()}
   let r;
   if(URGENT.test(text)){r={answer:"This sounds like it could be urgent, and it is not something to work through in an app. If you have chest pain, trouble breathing, fainting, signs of a stroke or thoughts of harming yourself, call 998 for an ambulance in the UAE or go to the nearest emergency department now. If you are elsewhere, call your local emergency number.",markers:[],notes:[],followUps:[],escalate:"urgent",escalateReason:"Possible emergency symptoms in the question. Fixed safety message; the model was not asked.",checks:{scope:"urgent",numbers:{checked:0,matched:0,unmatched:[]}},model:"fixed safety reply"}}
   else{const s=SCRIPT[route(text)];
     const out=s.markers.filter(id=>R.status(byId[id],R.latest(byId[id]))==="out");
-    r={...s,escalate:out.length?"clinician":"none",escalateReason:out.length?`${out.map(id=>byId[id].name).join(", ")} is outside the lab range on the latest test.`:"",checks:{scope:s.scope,numbers:R.checkNumbers(s.answer),retried:false},model:"guided demo (scripted answer)"}}
+    r={...s,escalate:out.length?"clinician":"none",escalateReason:out.length?`${out.map(id=>byId[id].name).join(", ")} is outside the lab range on the latest test.`:"",checks:{scope:s.scope,numbers:R.checkNumbers(s.answer),retried:false},model:fellBack?"guided answer (the AI took too long this time)":"guided demo (scripted answer)"}}
   addAnswer(r);renderChecks(r,text);setChips(r.followUps&&r.followUps.length?r.followUps:STARTERS);
 }
 
