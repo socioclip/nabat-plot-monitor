@@ -77,9 +77,14 @@ async function post(url, headers, body, ms) {
 }
 function parseLooseJson(text) {
   const t = String(text || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```(?:json)?/gi, '').trim();
-  const a = t.indexOf('{'), b = t.lastIndexOf('}');
-  if (a < 0 || b <= a) throw new Error('no json');
-  return JSON.parse(t.slice(a, b + 1));
+  const b = t.lastIndexOf('}');
+  if (b < 0) throw new Error('no json');
+  // Reasoning models may write their thinking before the JSON: take the first '{' from
+  // which the rest parses as an object with an "answer".
+  for (let a = t.indexOf('{'); a >= 0 && a < b; a = t.indexOf('{', a + 1)) {
+    try { const o = JSON.parse(t.slice(a, b + 1)); if (o && typeof o === 'object' && 'answer' in o) return o; } catch {}
+  }
+  throw new Error('no json');
 }
 
 async function k2Resolve(key, log) {
@@ -113,7 +118,7 @@ async function askK2(history, log, deadline) {
     const ms = Math.min(K2_TIMEOUT_MS, deadline - Date.now() - 7000); if (ms < 3000) return null; // leave time for Groq
     const t0 = Date.now();
     const { status, data } = await post(k.base + '/chat/completions', { authorization: `Bearer ${key}` },
-      { model: k.model, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_tokens: 1500, ...extras }, ms);
+      { model: k.model, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_tokens: 3000, ...extras }, ms);
     log.push(`k2 ${k.model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
     if (status === 200) {
       const text = String(data?.choices?.[0]?.message?.content || '').replace(/<\/?answer>/gi, '');
