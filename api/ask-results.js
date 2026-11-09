@@ -8,8 +8,8 @@
 //   4. diagnosis and dose-change questions are labelled and the model is told to decline
 //
 // Providers, in order:
-//   1. K2 Think (MBZUAI): K2_API_KEY. Optional K2_BASE_URL, K2_MODEL (otherwise the
-//      official endpoints are tried and the model id is read from /models).
+//   1. K2 from MBZUAI's Institute of Foundation Models (api.ifm.ai): K2_API_KEY.
+//      Optional K2_BASE_URL, K2_MODEL (otherwise the K2 model is read from /models).
 //   2. Groq (GROQ_API_KEY) as the fallback.
 //   3. Google Gemini (GEMINI_API_KEY) as a last resort if both fail.
 // Optional: RESULTS_GROQ_MODEL, RESULTS_GEMINI_MODEL, K2_TIMEOUT_MS.
@@ -18,7 +18,7 @@ const D = require('../ask-your-results/data.js');
 
 // K2_BASE_URL / K2_MODEL are optional: without them the official K2 Think endpoints are tried
 // and the model id is read from the endpoint's /models list (cached per warm instance).
-const K2_BASES = process.env.K2_BASE_URL ? [process.env.K2_BASE_URL] : ['https://api.ifm.ai/v1', 'https://platform.ifm.ai/api/v1', 'https://platform.ifm.ai/v1', 'https://api.platform.ifm.ai/v1', 'https://api.k2think.ai/v1'];
+const K2_BASES = process.env.K2_BASE_URL ? [process.env.K2_BASE_URL] : ['https://api.ifm.ai/v1'];
 let k2Found = process.env.K2_MODEL && process.env.K2_BASE_URL ? { base: process.env.K2_BASE_URL, model: process.env.K2_MODEL } : null;
 const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || 13000;
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
@@ -95,7 +95,7 @@ async function k2Resolve(key, log) {
       const ids = (Array.isArray(j.data) ? j.data : Array.isArray(j.models) ? j.models : Array.isArray(j) ? j : []).map(m => typeof m === 'string' ? m : m.id).filter(Boolean);
       log.push(`k2 models ${base.replace('https://', '')} ${r.status} [${ids.slice(0, 12).join(', ')}]` + (!r.ok ? ' ' + JSON.stringify(j).slice(0, 120) : ''));
       if (r.ok) {
-        const pick = process.env.K2_MODEL || ids.find(id => /k2.?think/i.test(id) && !/nothink/i.test(id)) || ids.find(id => /k2/i.test(id)) || ids[0];
+        const pick = process.env.K2_MODEL || ids.find(id => /k2/i.test(id) && !/nothink/i.test(id)) || ids[0];
         if (pick) return (k2Found = { base, model: pick });
       }
     } catch (e) { log.push(`k2 models ${base.replace('https://', '')} ${e.name === 'AbortError' ? 'timeout' : 'unreachable: ' + (e.cause?.code || e.cause?.message || e.message)}`); }
@@ -117,7 +117,7 @@ async function askK2(history, log, deadline) {
     log.push(`k2 ${k.model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
     if (status === 200) {
       const text = String(data?.choices?.[0]?.message?.content || '').replace(/<\/?answer>/gi, '');
-      try { const out = parseLooseJson(text); out.model = k.model.split('/').pop() + ' (MBZUAI K2 Think)'; return out; }
+      try { const out = parseLooseJson(text); out.model = k.model.split('/').pop() + ' · MBZUAI IFM'; return out; }
       catch { log.push('k2 unreadable: ' + text.slice(0, 120)); return null; }
     }
     if (status === 404) k2Found = null;
