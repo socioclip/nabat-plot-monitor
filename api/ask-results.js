@@ -20,7 +20,7 @@ const D = require('../ask-your-results/data.js');
 // and the model id is read from the endpoint's /models list (cached per warm instance).
 const K2_BASES = process.env.K2_BASE_URL ? [process.env.K2_BASE_URL] : ['https://api.ifm.ai/v1'];
 let k2Found = process.env.K2_MODEL && process.env.K2_BASE_URL ? { base: process.env.K2_BASE_URL, model: process.env.K2_MODEL } : null;
-const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || 17000;
+const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || (process.env.GROQ_API_KEY ? 17000 : 22000);
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GEMINI_MODELS = process.env.RESULTS_GEMINI_MODEL ? [process.env.RESULTS_GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-3.8-flash'];
 const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 9000, GEMINI_TIMEOUT_MS = 9000, TOTAL_BUDGET_MS = 24000; // the page gives up at 27s and shows the guided answer
@@ -115,7 +115,7 @@ async function askK2(history, log, deadline) {
   // Short, grounded answers need little reasoning: low effort keeps K2 to a few seconds.
   const low = { chat_template_kwargs: { reasoning_effort: 'low' } };
   for (const extras of [{ ...low, response_format: { type: 'json_object' } }, low, {}]) {
-    const ms = Math.min(K2_TIMEOUT_MS, deadline - Date.now() - 7000); if (ms < 3000) return null; // leave time for Groq
+    const ms = Math.min(K2_TIMEOUT_MS, deadline - Date.now() - (process.env.GROQ_API_KEY ? 7000 : 1000)); if (ms < 3000) return null; // leave time for Groq when it is set
     const t0 = Date.now();
     const { status, data } = await post(k.base + '/chat/completions', { authorization: `Bearer ${key}` },
       { model: k.model, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_tokens: 3000, ...extras }, ms);
