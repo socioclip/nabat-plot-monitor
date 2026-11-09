@@ -7,11 +7,17 @@
 //   3. urgent symptoms never reach the model: a fixed safety reply goes back instead
 //   4. diagnosis and dose-change questions are labelled and the model is told to decline
 //
-// Providers: Groq (GROQ_API_KEY, tried first) then Google Gemini (GEMINI_API_KEY).
-// Optional: RESULTS_GROQ_MODEL, RESULTS_GEMINI_MODEL.
+// Providers, in order:
+//   1. K2 Think (MBZUAI) on any OpenAI-compatible host: K2_API_KEY + K2_BASE_URL
+//      (e.g. https://<host>/v1) + K2_MODEL (the model id your host gives).
+//   2. Groq (GROQ_API_KEY) as the fallback.
+//   3. Google Gemini (GEMINI_API_KEY) only when neither K2 nor Groq is configured.
+// Optional: RESULTS_GROQ_MODEL, RESULTS_GEMINI_MODEL, K2_TIMEOUT_MS.
 
 const D = require('../ask-your-results/data.js');
 
+const K2_MODEL = process.env.K2_MODEL || 'MBZUAI-IFM/K2-Think';
+const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || 13000;
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GEMINI_MODELS = process.env.RESULTS_GEMINI_MODEL ? [process.env.RESULTS_GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-3.8-flash'];
 const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 9000, GEMINI_TIMEOUT_MS = 9000, TOTAL_BUDGET_MS = 24000; // the page gives up at 27s and shows the guided answer
@@ -73,6 +79,27 @@ function parseLooseJson(text) {
   return JSON.parse(t.slice(a, b + 1));
 }
 
+// K2 Think is a reasoning model: it may wrap its output in <think>...</think> and
+// <answer>...</answer>. parseLooseJson drops the thinking; the answer tags are removed here.
+async function askK2(history, log, deadline) {
+  const key = process.env.K2_API_KEY, base = String(process.env.K2_BASE_URL || '').replace(/\/+$/, '');
+  if (!key || !base) return null;
+  const url = /\/chat\/completions$/.test(base) ? base : base + '/chat/completions';
+  for (const extras of [{ response_format: { type: 'json_object' } }, {}]) {
+    const ms = Math.min(K2_TIMEOUT_MS, deadline - Date.now() - 7000); if (ms < 3000) return null; // leave time for Groq
+    const t0 = Date.now();
+    const { status, data } = await post(url, { authorization: `Bearer ${key}` },
+      { model: K2_MODEL, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_tokens: 2500, ...extras }, ms);
+    log.push(`k2 ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
+    if (status === 200) {
+      const text = String(data?.choices?.[0]?.message?.content || '').replace(/<\/?answer>/gi, '');
+      try { const out = parseLooseJson(text); out.model = K2_MODEL.split('/').pop() + ' (MBZUAI K2 Think)'; return out; } catch { log.push('k2 unreadable'); return null; }
+    }
+    if (status !== 400 && status !== 422) return null; // busy, slow or bad key: hand over to Groq
+  }
+  return null;
+}
+
 async function askGroq(history, log, deadline) {
   const key = process.env.GROQ_API_KEY; if (!key) return null;
   for (const extras of [{ response_format: { type: 'json_object' }, reasoning_format: 'hidden' }, {}]) {
@@ -110,7 +137,10 @@ async function askGemini(history, log, deadline) {
   return null;
 }
 async function ask(history, log, deadline) {
-  return (await askGroq(history, log, deadline)) || (await askGemini(history, log, deadline));
+  const out = (await askK2(history, log, deadline)) || (await askGroq(history, log, deadline));
+  if (out) return out;
+  // Gemini is the last resort only when no K2 or Groq key is set (it was the slow path).
+  return process.env.K2_API_KEY || process.env.GROQ_API_KEY ? null : askGemini(history, log, deadline);
 }
 
 // ---------- checks ----------
@@ -161,7 +191,7 @@ module.exports = async (req, res) => {
     });
   }
 
-  if (!process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) return res.status(503).json({ error: 'The demo is not connected to an AI model yet.' });
+  if (!process.env.K2_API_KEY && !process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) return res.status(503).json({ error: 'The demo is not connected to an AI model yet.' });
 
   const scope = DIAGNOSIS.test(question) ? 'diagnosis' : DOSING.test(question) ? 'dosing' : 'in';
   const turn = history.slice(0, -1).concat([{ role: 'user', content: question +
