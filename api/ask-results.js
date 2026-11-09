@@ -98,7 +98,7 @@ async function k2Resolve(key, log) {
         const pick = process.env.K2_MODEL || ids.find(id => /k2.?think.?v2/i.test(id) && !/nothink/i.test(id)) || ids.find(id => /k2.?think/i.test(id)) || ids[0];
         if (pick) return (k2Found = { base, model: pick });
       }
-    } catch (e) { log.push(`k2 models ${base.replace('https://', '')} ${e.name === 'AbortError' ? 'timeout' : 'unreachable'}`); }
+    } catch (e) { log.push(`k2 models ${base.replace('https://', '')} ${e.name === 'AbortError' ? 'timeout' : 'unreachable: ' + (e.cause?.code || e.cause?.message || e.message)}`); }
     finally { clearTimeout(t); }
   }
   return null;
