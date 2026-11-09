@@ -8,15 +8,18 @@
 //   4. diagnosis and dose-change questions are labelled and the model is told to decline
 //
 // Providers, in order:
-//   1. K2 Think (MBZUAI) on any OpenAI-compatible host: K2_API_KEY + K2_BASE_URL
-//      (e.g. https://<host>/v1) + K2_MODEL (the model id your host gives).
+//   1. K2 Think (MBZUAI): K2_API_KEY. Optional K2_BASE_URL, K2_MODEL (otherwise the
+//      official endpoints are tried and the model id is read from /models).
 //   2. Groq (GROQ_API_KEY) as the fallback.
 //   3. Google Gemini (GEMINI_API_KEY) only when neither K2 nor Groq is configured.
 // Optional: RESULTS_GROQ_MODEL, RESULTS_GEMINI_MODEL, K2_TIMEOUT_MS.
 
 const D = require('../ask-your-results/data.js');
 
-const K2_MODEL = process.env.K2_MODEL || 'MBZUAI-IFM/K2-Think';
+// K2_BASE_URL / K2_MODEL are optional: without them the official K2 Think endpoints are tried
+// and the model id is read from the endpoint's /models list (cached per warm instance).
+const K2_BASES = process.env.K2_BASE_URL ? [process.env.K2_BASE_URL] : ['https://api.k2think.ai/v1', 'https://build-api.k2think.ai/v1'];
+let k2Found = process.env.K2_MODEL && process.env.K2_BASE_URL ? { base: process.env.K2_BASE_URL, model: process.env.K2_MODEL } : null;
 const K2_TIMEOUT_MS = +process.env.K2_TIMEOUT_MS || 13000;
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GEMINI_MODELS = process.env.RESULTS_GEMINI_MODEL ? [process.env.RESULTS_GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-3.8-flash'];
@@ -81,20 +84,43 @@ function parseLooseJson(text) {
 
 // K2 Think is a reasoning model: it may wrap its output in <think>...</think> and
 // <answer>...</answer>. parseLooseJson drops the thinking; the answer tags are removed here.
+async function k2Resolve(key, log) {
+  if (k2Found) return k2Found;
+  for (const raw of K2_BASES) {
+    const base = String(raw).replace(/\/+$/, '').replace(/\/chat\/completions$/, '');
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 4000);
+    try {
+      const r = await fetch(base + '/models', { headers: { authorization: `Bearer ${key}` }, signal: ctrl.signal });
+      const j = await r.json().catch(() => ({}));
+      const ids = (j.data || []).map(m => m.id).filter(Boolean);
+      log.push(`k2 models ${base.replace('https://', '')} ${r.status} [${ids.slice(0, 6).join(', ')}]`);
+      if (r.ok) {
+        const pick = process.env.K2_MODEL || ids.find(id => /k2.?think.?v2/i.test(id) && !/nothink/i.test(id)) || ids.find(id => /k2.?think/i.test(id)) || ids[0];
+        if (pick) return (k2Found = { base, model: pick });
+      }
+    } catch (e) { log.push(`k2 models ${base.replace('https://', '')} ${e.name === 'AbortError' ? 'timeout' : 'unreachable'}`); }
+    finally { clearTimeout(t); }
+  }
+  return null;
+}
+
+// K2 Think is a reasoning model: it may wrap its output in <think>...</think> and
+// <answer>...</answer>. parseLooseJson drops the thinking; the answer tags are removed here.
 async function askK2(history, log, deadline) {
-  const key = process.env.K2_API_KEY, base = String(process.env.K2_BASE_URL || '').replace(/\/+$/, '');
-  if (!key || !base) return null;
-  const url = /\/chat\/completions$/.test(base) ? base : base + '/chat/completions';
+  const key = process.env.K2_API_KEY; if (!key) return null;
+  const k = await k2Resolve(key, log); if (!k) return null;
   for (const extras of [{ response_format: { type: 'json_object' } }, {}]) {
     const ms = Math.min(K2_TIMEOUT_MS, deadline - Date.now() - 7000); if (ms < 3000) return null; // leave time for Groq
     const t0 = Date.now();
-    const { status, data } = await post(url, { authorization: `Bearer ${key}` },
-      { model: K2_MODEL, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_tokens: 2500, ...extras }, ms);
-    log.push(`k2 ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
+    const { status, data } = await post(k.base + '/chat/completions', { authorization: `Bearer ${key}` },
+      { model: k.model, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_tokens: 2500, ...extras }, ms);
+    log.push(`k2 ${k.model} ${status} ${((Date.now() - t0) / 1000).toFixed(1)}s` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
     if (status === 200) {
       const text = String(data?.choices?.[0]?.message?.content || '').replace(/<\/?answer>/gi, '');
-      try { const out = parseLooseJson(text); out.model = K2_MODEL.split('/').pop() + ' (MBZUAI K2 Think)'; return out; } catch { log.push('k2 unreadable'); return null; }
+      try { const out = parseLooseJson(text); out.model = k.model.split('/').pop() + ' (MBZUAI K2 Think)'; return out; }
+      catch { log.push('k2 unreadable: ' + text.slice(0, 120)); return null; }
     }
+    if (status === 404) k2Found = null;
     if (status !== 400 && status !== 422) return null; // busy, slow or bad key: hand over to Groq
   }
   return null;
@@ -211,5 +237,5 @@ module.exports = async (req, res) => {
     if (again) { const o2 = clean(again), n2 = D.checkNumbers(o2.answer); if (n2.unmatched.length <= numbers.unmatched.length) { out = o2; numbers = n2; } }
   }
 
-  return res.status(200).json({ ...out, checks: { scope, numbers, retried } });
+  return res.status(200).json({ ...out, checks: { scope, numbers, retried }, attempts: log });
 };
