@@ -56,14 +56,17 @@ h3{font-size:12px;font-family:var(--body);text-transform:uppercase;letter-spacin
 .inrange .meter{flex:1;height:8px;border-radius:99px;background:var(--sunk);overflow:hidden;position:relative}
 .inrange .meter i{position:absolute;inset:0 auto 0 0;border-radius:99px}
 .inrange b{color:var(--ink)}
-.pickl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
-.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
-.person{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);text-align:left;min-width:0;transition:border-color .15s,background .15s,transform .15s}
+.memberbar{margin:0 0 18px}
+.pickl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.person{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;box-shadow:var(--shadow);border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);text-align:left;min-width:0;transition:border-color .15s,background .15s,transform .15s}
 .person:hover{transform:translateY(-1px);border-color:var(--accent)}
 .person[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
-.person .pa{width:32px;height:32px;border-radius:11px;color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center;flex:none;font-family:var(--display)}
-.person b{display:block;font-size:13.5px;line-height:1.15}
-.person small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person .pa{width:42px;height:42px;border-radius:14px;color:#fff;font-weight:800;font-size:14px;display:grid;place-items:center;flex:none;font-family:var(--display)}
+.person b{display:block;font-size:15px;line-height:1.2;font-family:var(--display)}
+.person small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person .fl{margin-left:auto;flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+.person .fl.ok{background:var(--ok-soft);color:var(--ok)}.person .fl.out{background:var(--out-soft);color:var(--out)}
 .person:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .switching{animation:fade .35s ease-out}
 @keyframes fade{from{opacity:.25}}
@@ -193,7 +196,7 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
 .foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
 /* tablet: chat full width on top, results and checks side by side */
 @media (max-width:1180px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cols .chat{grid-column:1/-1;order:-1}.arch{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr);gap:18px}}
+@media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr);gap:18px}.people{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* phone: one column; chat first, then results, then checks */
 @media (max-width:720px){
   body{font-size:14.5px}
@@ -201,6 +204,7 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
   h1{font-size:30px}
   .hero p{font-size:15px}
   .eyebrow{font-size:11.5px}
+  .people{display:flex;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 10px;scroll-snap-type:x proximity}.people::-webkit-scrollbar{display:none}.person{flex:none;width:210px;scroll-snap-align:start}
   .cols{grid-template-columns:minmax(0,1fr);gap:14px}
   .cols>*{order:0}.cols .chat{order:-1}
   .panel{padding:14px;border-radius:20px}
@@ -208,7 +212,6 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
   .bot span{display:none}
   .bot b{font-size:17px}
   .snap{padding:14px;border-radius:20px}
-  .people{display:flex;overflow-x:auto;scrollbar-width:none;margin:0 -14px 14px;padding:0 14px}.people::-webkit-scrollbar{display:none}.person{flex:none;width:140px}
   .tiles{gap:8px}.tile{padding:10px;border-radius:14px}.tile .big{font-size:28px}.tile .lbl{font-size:11.5px}
   .chat{height:min(640px,calc(100svh - 24px));border-radius:20px}
   .chathead{padding:12px 14px}
@@ -244,13 +247,16 @@ form:focus-within{box-shadow:0 0 0 2px var(--accent)}
       <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
     </div>
     <div class="snap" aria-label="Choose a member and see their retest at a glance">
-      <div class="pickl">Choose a member</div>
-      <div class="people" id="people" role="group" aria-label="Members"></div>
       <div class="top"><div class="avatar" id="snapAv" aria-hidden="true"></div><div><b id="snapTitle">Retest at a glance</b><span id="snapSub"></span></div></div>
       <div class="tiles" id="tiles"></div>
       <div class="inrange" id="inrange"></div>
     </div>
   </header>
+
+  <section class="memberbar" aria-label="Choose a member">
+    <div class="pickl">👥 Try it as a different member</div>
+    <div class="people" id="people" role="group" aria-label="Members"></div>
+  </section>
 
   <section class="cols">
     <aside class="panel" aria-label="Results">
@@ -360,8 +366,9 @@ function renderSnapshot(){
   $("#inrange").innerHTML=`<span>In range</span><span class="meter"><i style="width:${okA/n*100}%;background:var(--line)"></i><i style="width:${okB/n*100}%;background:linear-gradient(90deg,var(--ok),#3FD39A);opacity:.9"></i></span><span><b>${okA} → ${okB}</b> of ${n}</span>`;
 }
 function renderProto(){$("#protoSet").textContent="Set "+V.PROTOCOL.set;$("#proto").innerHTML=V.PROTOCOL.items.map(i=>`<li>${esc(i)}</li>`).join("")}
+function flagPill(id){const W=R.view(id),n=W.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;return n?`<span class="fl out">${n} flag${n>1?"s":""}</span>`:`<span class="fl ok">✓ clear</span>`}
 function renderPeople(){
-  $("#people").innerHTML=R.MEMBERS.map(p=>`<button type="button" class="person" data-id="${p.id}" aria-pressed="${p.id===V.id}"><span class="pa" style="background:${AV[p.id]||"var(--accent)"}">${esc(p.initials)}</span><span style="min-width:0"><b>${esc(p.first)}, ${p.age}</b><small>${esc(p.tag)}</small></span></button>`).join("");
+  $("#people").innerHTML=R.MEMBERS.map(p=>`<button type="button" class="person" data-id="${p.id}" aria-pressed="${p.id===V.id}"><span class="pa" style="background:${AV[p.id]||"var(--accent)"}">${esc(p.initials)}</span><span style="min-width:0"><b>${esc(p.first)}, ${p.age}</b><small>${esc(p.tag)}</small></span>${flagPill(p.id)}</button>`).join("");
   document.querySelectorAll(".person").forEach(b=>b.onclick=()=>switchMember(b.dataset.id));
 }
 function switchMember(id){
@@ -387,7 +394,7 @@ function setChips(list){$("#chips").innerHTML=list.map((c,i)=>`<button type="but
   document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>send(list[+b.dataset.i]))}
 function greet(){
   const re=V.MARKERS.filter(m=>m.b!=null),up=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).length,out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;
-  const mon=d=>d.split(" ")[1];
+  const FULL={Jan:"January",Feb:"February",Mar:"March",Apr:"April",May:"May",Jun:"June",Jul:"July",Aug:"August",Sep:"September",Oct:"October",Nov:"November",Dec:"December"},mon=d=>FULL[d.split(" ")[1]]||d;
   const mood=out===0?`Everything is inside the lab range, and ${up} markers moved the right way since ${mon(V.TESTS.a.date)}.`:out>3?`A few markers need attention, and your clinician will go through them with you. ${up} moved the right way since ${mon(V.TESTS.a.date)}.`:`${up} markers moved the right way since ${mon(V.TESTS.a.date)}.`;
   addMsg("a",`Hi ${V.MEMBER.first} 👋 Your ${mon(V.TESTS.b.date)} retest is in. ${mood} Ask me anything about it, or tap any marker.`);setChips(starters())}
 
