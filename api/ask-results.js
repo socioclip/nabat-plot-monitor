@@ -14,7 +14,7 @@ const D = require('../ask-your-results/data.js');
 
 const GROQ_MODEL = process.env.RESULTS_GROQ_MODEL || process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 const GEMINI_MODELS = process.env.RESULTS_GEMINI_MODEL ? [process.env.RESULTS_GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-3.8-flash'];
-const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 18000, TOTAL_BUDGET_MS = 50000;
+const MAX_TURNS = 10, MAX_CHARS = 500, CALL_TIMEOUT_MS = 18000, GEMINI_TIMEOUT_MS = 12000, TOTAL_BUDGET_MS = 50000;
 const IDS = new Set(D.MARKERS.map(m => m.id));
 
 const URGENT = /chest pain|crushing|can'?t breathe|cannot breathe|short(ness)? of breath|faint(ed|ing)?|passed out|collapsed|stroke|face (is )?droop|slurred|numb(ness)? (in|on|down)|severe (pain|headache|bleeding)|vomiting blood|suicid|kill myself|end my life|harm myself|overdose/i;
@@ -91,8 +91,13 @@ async function askGroq(history, log, deadline) {
 async function askGemini(history, log, deadline) {
   const key = process.env.GEMINI_API_KEY; if (!key) return null;
   const contents = history.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
-  for (const model of GEMINI_MODELS) {
-    const ms = Math.min(CALL_TIMEOUT_MS, deadline - Date.now()); if (ms < 3000) return null;
+  // Alternate models with a short per-call timeout: a stalled or overloaded call is
+  // abandoned quickly and the other model tried (normal answers take 4-8s).
+  const plan = [...GEMINI_MODELS, ...GEMINI_MODELS, ...GEMINI_MODELS];
+  for (let i = 0; i < plan.length; i++) {
+    const model = plan[i];
+    if (i && /50[34]/.test(log[log.length - 1] || '')) await new Promise(r => setTimeout(r, 600));
+    const ms = Math.min(GEMINI_TIMEOUT_MS, deadline - Date.now()); if (ms < 3000) return null;
     const { status, data } = await post(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'x-goog-api-key': key },
       { systemInstruction: { parts: [{ text: RULES }] }, contents,
         generationConfig: { temperature: 0.2, maxOutputTokens: 900, responseMimeType: 'application/json', responseSchema: SCHEMA, ...(/^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: 'low' } } : {}) } }, ms);
