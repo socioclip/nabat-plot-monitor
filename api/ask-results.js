@@ -79,7 +79,7 @@ async function askGroq(history, log, deadline) {
     const ms = Math.min(CALL_TIMEOUT_MS, deadline - Date.now()); if (ms < 3000) return null;
     const { status, data } = await post('https://api.groq.com/openai/v1/chat/completions', { authorization: `Bearer ${key}` },
       { model: GROQ_MODEL, messages: [{ role: 'system', content: RULES }, ...history], temperature: 0.2, max_completion_tokens: 900, ...extras }, ms);
-    log.push(`groq ${status}`);
+    log.push(`groq ${status}` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
     if (status === 200) {
       try { const out = parseLooseJson(data?.choices?.[0]?.message?.content); out.model = GROQ_MODEL + ' via Groq'; return out; } catch { log.push('groq unreadable'); return null; }
     }
@@ -96,10 +96,10 @@ async function askGemini(history, log, deadline) {
     const { status, data } = await post(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'x-goog-api-key': key },
       { systemInstruction: { parts: [{ text: RULES }] }, contents,
         generationConfig: { temperature: 0.2, maxOutputTokens: 900, responseMimeType: 'application/json', responseSchema: SCHEMA, ...(/^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: 'low' } } : {}) } }, ms);
-    log.push(`${model} ${status}`);
+    log.push(`${model} ${status}` + (status !== 200 && data?.error?.message ? ' ' + String(data.error.message).slice(0, 160) : ''));
     if (status !== 200) continue;
     const text = (data?.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
-    try { const out = JSON.parse(text); out.model = model; return out; } catch { log.push(`${model} unreadable`); }
+    try { const out = JSON.parse(text); out.model = model; return out; } catch { log.push(`${model} unreadable (${data?.candidates?.[0]?.finishReason || '?'}, ${text.length} chars)`); }
   }
   return null;
 }
@@ -164,7 +164,7 @@ module.exports = async (req, res) => {
 
   const deadline = Date.now() + TOTAL_BUDGET_MS, log = [];
   let raw = await ask(turn, log, deadline);
-  if (!raw) { console.log('ask-results failed', log.join(' | ')); return res.status(502).json({ error: 'The assistant could not answer just now. Please try again.' }); }
+  if (!raw) { console.log('ask-results failed', log.join(' | ')); return res.status(502).json({ error: 'The assistant could not answer just now. Please try again.', attempts: log }); }
   let out = clean(raw), numbers = D.checkNumbers(out.answer), retried = false;
 
   // 2. Numbers that are not in the results: ask once more, naming them.
