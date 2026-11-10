@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ask your results · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="A member asks questions about their own blood tests. Answers come only from their results, every number is checked against the data, and out-of-range markers go to a clinician.">
+<meta property="og:title" content="Ask your results · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="A member asks questions about their own blood tests. Answers come only from their results, every number is checked against the data, and out-of-range markers go to a clinician.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/ask-your-results">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/ask-your-results">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Bright, friendly health-app look. Layout: results | conversation | trust checks. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F5F2FB; --line:#ECE7F5;
+  --ink:#1E1A2E; --muted:#6E6886; --accent:#6C4CF5; --accent-2:#FF7A59; --accent-soft:#EEE9FF;
+  --ok:#14965F; --ok-soft:#DDF6EA; --watch:#C77700; --watch-soft:#FFF0D2; --out:#E0444B; --out-soft:#FFE4E4;
+  --me1:#6C4CF5; --me2:#9B6BFF; --me-ink:#FFFFFF;
+  --shadow:0 12px 32px -12px rgba(76,52,160,.18),0 2px 6px rgba(76,52,160,.05);
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif; --body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14111F; --surface:#1E1A2D; --sunk:#262138; --line:#332C4A; --ink:#F1EEFA; --muted:#A79FC2; --accent:#A48BFF; --accent-2:#FF9B7E; --accent-soft:#2D2550;
+  --ok:#5FD39E; --ok-soft:#173A2A; --watch:#F2B550; --watch-soft:#3A2D12; --out:#FF7C80; --out-soft:#40191C; --shadow:0 12px 32px -12px rgba(0,0,0,.5); color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;overflow-x:hidden}
+.wrap{max-width:1340px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 56px}
+.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:14px;font-weight:500}.back:hover{color:var(--ink)}
+h1,h2{font-family:var(--display);font-weight:800;margin:0;text-wrap:balance;letter-spacing:-.02em}
+h1{font-size:clamp(30px,4.2vw,50px);line-height:1.02}
+h1 .hl{color:var(--accent)}
+h2{font-size:26px}
+h3{font-size:12px;font-family:var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:0 0 10px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:5px 12px;border-radius:999px;margin-bottom:12px}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:center;margin-bottom:22px}
+.hero p{margin:12px 0 0;color:var(--muted);max-width:60ch;font-size:16px}
+.mode{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);display:inline-flex;gap:8px;align-items:center;margin-top:16px}
+.mode i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.mode.live i{background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px transparent}}
+.snap{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:18px;box-shadow:var(--shadow)}
+.snap .top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.avatar{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;font-family:var(--display);font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent-2),var(--accent));flex:none;font-size:17px}
+.snap .top b{font-family:var(--display);font-size:20px;display:block;line-height:1.1}
+.snap .top span{font-size:13px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tile{border-radius:18px;padding:12px 12px 10px}
+.tile .big{font-family:var(--display);font-weight:800;font-size:34px;line-height:1}
+.tile .lbl{font-size:12.5px;font-weight:600;margin-top:4px}
+.tile.g{background:var(--ok-soft);color:var(--ok)}.tile.y{background:var(--watch-soft);color:var(--watch)}.tile.r{background:var(--out-soft);color:var(--out)}
+.inrange{margin-top:12px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+.inrange .meter{flex:1;height:8px;border-radius:99px;background:var(--sunk);overflow:hidden;position:relative}
+.inrange .meter i{position:absolute;inset:0 auto 0 0;border-radius:99px}
+.inrange b{color:var(--ink)}
+.memberbar{margin:0 0 18px}
+.pickl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.people{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.person{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;box-shadow:var(--shadow);border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);text-align:left;min-width:0;transition:border-color .15s,background .15s,transform .15s}
+.person:hover{transform:translateY(-1px);border-color:var(--accent)}
+.person[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.person .pa{width:42px;height:42px;border-radius:14px;color:#fff;font-weight:800;font-size:14px;display:grid;place-items:center;flex:none;font-family:var(--display)}
+.person b{display:block;font-size:15px;line-height:1.2;font-family:var(--display)}
+.person small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person .fl{margin-left:auto;flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+.person .fl.ok{background:var(--ok-soft);color:var(--ok)}.person .fl.out{background:var(--out-soft);color:var(--out)}
+.person:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.switching{animation:fade .35s ease-out}
+@keyframes fade{from{opacity:.25}}
+/* columns */
+.cols{display:grid;grid-template-columns:380px minmax(0,1fr) 320px;gap:18px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px;min-width:0;box-shadow:var(--shadow)}
+/* results */
+.rhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
+.rhead b{font-family:var(--display);font-size:20px;font-weight:700}
+.rhead span{font-size:12.5px;color:var(--muted)}
+.tests{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:2px 0 4px}
+.tests b{color:var(--ink);font-weight:600}
+.grp{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:15px;margin:16px 4px 4px}
+.grp .ic{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;font-size:15px}
+.mk{display:block;width:100%;font:inherit;font-size:14px;color:var(--ink);background:none;border:0;border-radius:14px;padding:9px 10px;text-align:left;cursor:pointer;transition:background .15s,transform .15s}
+.mk:hover{background:var(--sunk);transform:translateX(2px)}
+.mk.cited{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.mk .row1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mk .nm{font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mk .vals{font-family:var(--mono);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mk .vals .prev{color:var(--muted)}
+.mk .vals .arr{margin:0 4px;font-weight:700}
+.arr.good{color:var(--ok)}.arr.bad{color:var(--out)}.arr.flat{color:var(--muted)}
+.mk small{display:block;color:var(--muted);font-size:11.5px;margin-top:5px}
+.rbar{position:relative;height:8px;border-radius:99px;background:var(--sunk);margin-top:7px}
+.rbar .band{position:absolute;top:0;bottom:0;background:var(--ok-soft);border-radius:99px}
+.rbar .tgt{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--ok) 28%,transparent);border-radius:99px}
+.rbar .link{position:absolute;top:3px;height:2px;background:var(--muted);opacity:.35}
+.rbar .p0,.rbar .p1{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%)}
+.rbar .p0{background:var(--surface);border:2px solid var(--muted)}
+.rbar .p1{border:2px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.p1.ok{background:var(--ok)}.p1.watch{background:var(--watch)}.p1.out{background:var(--out)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.watch{background:var(--watch-soft);color:var(--watch)}.pill.out{background:var(--out-soft);color:var(--out)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.dot.ok{background:var(--ok)}.dot.watch{background:var(--watch)}.dot.out{background:var(--out)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:14px 4px 0;align-items:center}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend .hol{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted);display:inline-block}
+.proto{margin-top:14px;background:linear-gradient(135deg,var(--accent-soft),var(--sunk));border-radius:18px;padding:12px 14px;font-size:13.5px}
+.proto ul{margin:6px 0 0;padding-left:18px}
+/* chat */
+.chat{display:flex;flex-direction:column;height:760px;padding:0;overflow:hidden}
+.chathead{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:linear-gradient(120deg,var(--accent-soft),transparent 70%)}
+.bot{display:flex;align-items:center;gap:10px}
+.bot .av{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--me2));color:#fff;font-size:19px;box-shadow:0 6px 16px -6px var(--accent)}
+.bot b{font-family:var(--display);font-weight:700;font-size:18px;display:block;line-height:1.1}
+.bot span{font-size:12px;color:var(--muted)}
+.msgs{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.m{max-width:86%;padding:11px 15px;border-radius:20px;font-size:14.5px;white-space:pre-wrap;overflow-wrap:anywhere;animation:pop .25s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}}
+.m.a{background:var(--sunk);border-bottom-left-radius:6px;align-self:flex-start}
+.m.u{background:linear-gradient(135deg,var(--me1),var(--me2));color:var(--me-ink);border-bottom-right-radius:6px;align-self:flex-end;box-shadow:0 8px 18px -10px var(--accent)}
+.m.think{color:var(--muted);font-style:italic}
+.m.urgent{background:var(--out-soft);color:var(--ink);border:1.5px solid var(--out)}
+.m .flag{background:var(--watch-soft);color:var(--watch);border-radius:4px;padding:0 3px;text-decoration:underline dotted}
+.esc{align-self:flex-start;font-size:12.5px;font-weight:600;color:var(--out);background:var(--out-soft);padding:6px 12px;border-radius:999px;max-width:92%;animation:pop .25s ease-out}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 12px}
+.chip{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;border:0;cursor:pointer;text-align:left;transition:transform .15s,box-shadow .15s}
+.chip:hover{transform:translateY(-2px);box-shadow:0 6px 14px -8px rgba(0,0,0,.3)}
+.chip:nth-child(5n+1){background:#EEE9FF;color:#5136D6}.chip:nth-child(5n+2){background:#FFE7DE;color:#C2461F}.chip:nth-child(5n+3){background:#DDF6EA;color:#0F7D4E}.chip:nth-child(5n+4){background:#FFF0D2;color:#9A5C00}.chip:nth-child(5n+5){background:#E2F1FF;color:#1E62B0}
+@media (prefers-color-scheme:dark){.chip{background:var(--sunk)!important;color:var(--ink)!important}}
+form{display:flex;gap:8px;padding:12px 18px;margin:0 12px 4px;background:var(--sunk);border-radius:999px}
+form input{flex:1;min-width:0;font:inherit;padding:8px 6px;border:0;background:transparent;color:var(--ink);outline:none}
+.btn{font:inherit;font-weight:700;padding:9px 18px;border-radius:999px;border:0;background:linear-gradient(135deg,var(--accent),var(--me2));color:#fff;cursor:pointer;box-shadow:0 8px 18px -10px var(--accent);transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.6}
+.btn.ghost{white-space:nowrap;background:var(--surface);color:var(--ink);box-shadow:none;font-weight:600;border:1px solid var(--line)}
+.btn:focus-visible,.chip:focus-visible,.mk:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+form:focus-within{box-shadow:0 0 0 2px var(--accent)}
+.disc{font-size:11.5px;color:var(--muted);padding:6px 18px 14px;text-align:center}
+/* loading card */
+.loader{width:min(400px,92%);background:var(--surface);border:1.5px solid var(--accent-soft);border-radius:20px;border-bottom-left-radius:6px;padding:12px 14px;align-self:flex-start;font-size:13.5px;animation:pop .25s ease-out}
+.lhead{display:flex;align-items:center;gap:8px}
+.lhead b{font-weight:700;flex:1}
+.lhead .secs{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.spin{width:15px;height:15px;border-radius:50%;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bar{height:7px;border-radius:99px;background:var(--sunk);overflow:hidden;margin:10px 0 9px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent-2),var(--accent));border-radius:99px;transition:width .4s ease-out;position:relative;overflow:hidden}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:sheen 1.3s linear infinite;transform:translateX(-100%)}
+@keyframes sheen{to{transform:translateX(100%)}}
+.lsteps{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.lsteps li{display:flex;gap:8px;align-items:center;color:var(--muted);transition:color .2s}
+.lsteps li::before{content:"";width:15px;height:15px;flex:none;border-radius:50%;border:2px solid var(--line);box-sizing:border-box}
+.lsteps li.on{color:var(--ink);font-weight:600}
+.lsteps li.on::before{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+.lsteps li.done{color:var(--ink)}
+.lsteps li.done::before{content:"✓";border:0;background:var(--ok);color:#fff;font-size:9.5px;font-weight:800;display:grid;place-items:center}
+.lnote{margin-top:8px;font-size:12.5px;color:var(--accent);font-weight:500}
+.lnote:empty{display:none}
+.skel{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--sunk),var(--line),var(--sunk));background-size:200% 100%;animation:skel 1.2s linear infinite;margin:10px 0}
+@keyframes skel{to{background-position:-200% 0}}
+/* trust panel */
+.trusthead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.trusthead .av{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--ok-soft);font-size:18px}
+.trusthead b{font-family:var(--display);font-weight:700;font-size:17px;display:block;line-height:1.15}
+.trusthead span{font-size:12px;color:var(--muted)}
+.check{padding:10px 12px;border-radius:16px;background:var(--sunk);margin-bottom:8px;animation:pop .25s ease-out}
+.check .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.check .r{font-size:13.5px;margin-top:4px;display:flex;gap:8px;align-items:flex-start}
+.check .r i{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:800;margin-top:1px}
+.i-ok{background:var(--ok);color:#fff}.i-warn{background:var(--watch);color:#fff}.i-out{background:var(--out);color:#fff}.i-na{background:var(--line);color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tags span{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface)}
+.tags span.m2{background:var(--accent-soft);color:var(--accent)}
+.empty{font-size:13px;color:var(--muted);padding:10px 12px;background:var(--sunk);border-radius:16px}
+.queue{margin-top:14px;background:linear-gradient(135deg,var(--out-soft),var(--watch-soft));border-radius:18px;padding:12px 14px}
+.queue h3{color:var(--out)}
+.queue .empty{background:transparent;padding:0}
+.queue .q{font-size:12.5px;padding:7px 0;border-top:1px solid rgba(0,0,0,.06)}
+.queue .q:first-of-type{border-top:0}
+.queue .q b{font-weight:700}
+/* how it works */
+.arch{margin-top:16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;counter-reset:step}
+.node{border-radius:20px;padding:16px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;box-shadow:var(--shadow);position:relative}
+.node .e{font-size:24px;display:block;margin-bottom:8px}
+.node b{display:block;font-family:var(--display);font-weight:700;font-size:16px;margin-bottom:4px}
+.node span{color:var(--muted)}
+.node::after{counter-increment:step;content:counter(step);position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:800;display:grid;place-items:center}
+.why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.why div{border-radius:20px;padding:16px 18px}
+.why div:nth-child(1){background:var(--accent-soft)}.why div:nth-child(2){background:var(--ok-soft)}.why div:nth-child(3){background:#FFE7DE}
+@media (prefers-color-scheme:dark){.why div:nth-child(3){background:var(--sunk)}}
+.why div b{display:block;font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:4px}
+.why div span{color:var(--muted);font-size:14px}
+.foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
+/* tablet: chat full width on top, results and checks side by side */
+@media (max-width:1180px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cols .chat{grid-column:1/-1;order:-1}.arch{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr);gap:18px}.people{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* phone: one column; chat first, then results, then checks */
+@media (max-width:720px){
+  body{font-size:14.5px}
+  .wrap{padding-top:14px}
+  h1{font-size:30px}
+  .hero p{font-size:15px}
+  .eyebrow{font-size:11.5px}
+  .people{display:flex;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 10px;scroll-snap-type:x proximity}.people::-webkit-scrollbar{display:none}.person{flex:none;width:210px;scroll-snap-align:start}
+  .cols{grid-template-columns:minmax(0,1fr);gap:14px}
+  .cols>*{order:0}.cols .chat{order:-1}
+  .panel{padding:14px;border-radius:20px}
+  .panel.chat{padding:0}
+  .bot span{display:none}
+  .bot b{font-size:17px}
+  .snap{padding:14px;border-radius:20px}
+  .tiles{gap:8px}.tile{padding:10px;border-radius:14px}.tile .big{font-size:28px}.tile .lbl{font-size:11.5px}
+  .chat{height:min(640px,calc(100svh - 24px));border-radius:20px}
+  .chathead{padding:12px 14px}
+  .bot .av{width:36px;height:36px}
+  #reset{padding:6px 10px!important;font-size:12px!important;white-space:nowrap}
+  .msgs{padding:12px 14px}
+  .m{max-width:92%;font-size:14.5px}
+  /* starter questions scroll sideways instead of stacking */
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;white-space:nowrap;scroll-snap-align:start}
+  form{margin:0 10px 2px;padding:8px 8px 8px 14px}
+  form input{font-size:16px} /* stops iOS zooming into the field */
+  .btn{padding:9px 14px}
+  .loader{width:100%}
+  .mk{padding:9px 6px}
+  .mk:hover{transform:none}
+  .why,.arch{grid-template-columns:minmax(0,1fr)}
+  .node{padding:14px}
+}
+@media (max-width:380px){.tile .lbl{font-size:10.5px}.tile .big{font-size:24px}h1{font-size:27px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  <header class="hero">
+    <div>
+      <div class="eyebrow">✨ Live demo · fictional &ldquo;Kinra&rdquo; membership · made-up results</div>
+      <h1>Ask your results. <span class="hl">Get answers you can trust.</span></h1>
+      <p>Ask about your blood tests in plain words. Answers come only from your own results, every number is double-checked, and anything that needs a doctor goes to one.</p>
+      <span class="mode" id="mode"><i></i><span>Connecting…</span></span>
+    </div>
+    <div class="snap" aria-label="Choose a member and see their retest at a glance">
+      <div class="top"><div class="avatar" id="snapAv" aria-hidden="true"></div><div><b id="snapTitle">Retest at a glance</b><span id="snapSub"></span></div></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="inrange" id="inrange"></div>
+    </div>
+  </header>
+
+  <section class="memberbar" aria-label="Choose a member">
+    <div class="pickl">👥 Try it as a different member</div>
+    <div class="people" id="people" role="group" aria-label="Members"></div>
+  </section>
+
+  <section class="cols">
+    <aside class="panel" aria-label="Results">
+      <div class="rhead"><b>Your results</b><span>tap any marker to ask</span></div>
+      <div class="tests"><span><b id="who"></b> · <span id="whoSub"></span></span><span><span id="tA"></span> → <b id="tB"></b></span></div>
+      <div id="results"></div>
+      <div class="legend"><span><i class="hol"></i> March</span><span><i class="dot ok"></i> September</span><span><i style="display:inline-block;width:18px;height:8px;border-radius:9px;background:var(--ok-soft)"></i> healthy range</span></div>
+      <div class="proto"><h3 style="margin:0">🧭 Your protocol</h3><span style="font-size:12px;color:var(--muted)" id="protoSet"></span><ul id="proto"></ul></div>
+    </aside>
+
+    <section class="panel chat" aria-label="Ask your results">
+      <div class="chathead">
+        <div class="bot"><div class="av" aria-hidden="true">✦</div><div><b>Results assistant</b><span>Answers from your results only</span></div></div>
+        <button class="btn ghost" id="reset" type="button" style="padding:6px 12px;font-size:13px">↺ Start over</button>
+      </div>
+      <div class="msgs" id="msgs" aria-live="polite"></div>
+      <div class="chips" id="chips"></div>
+      <form id="f"><input id="q" placeholder="Ask about your results…" autocomplete="off" aria-label="Question" maxlength="400"><button class="btn" id="send">Ask ↑</button></form>
+      <div class="disc">Made-up results for a demo. Explains results; never diagnoses or changes treatment.</div>
+    </section>
+
+    <aside class="panel" aria-label="Checks on the latest answer">
+      <div class="trusthead"><div class="av" aria-hidden="true">🛡️</div><div><b>Why you can trust it</b><span>Checks on the latest answer</span></div></div>
+      <div id="checks"><div class="empty">Ask a question. Every answer is checked, and the checks show up here.</div></div>
+      <div class="queue"><h3 style="margin:0 0 4px">🩺 Clinician review queue</h3><div id="queue"><div class="empty">Nothing flagged yet.</div></div></div>
+    </aside>
+  </section>
+
+  <h2 style="margin-top:34px">How it works</h2>
+  <div class="arch">
+    <div class="node"><span class="e">💬</span><b>Member asks</b><span>Right next to the results. Urgent symptoms are caught first and get a fixed safety message, no AI.</span></div>
+    <div class="node"><span class="e">🧠</span><b>Grounded AI</b><span>Sees only this member's results, protocol and a reviewed reference library, and must name what it used.</span></div>
+    <div class="node"><span class="e">🔢</span><b>Number check</b><span>Every number is matched against the results. A mismatch gets one rewrite, then it is flagged.</span></div>
+    <div class="node"><span class="e">🚧</span><b>Scope rules</b><span>No diagnosis, no starting, stopping or changing doses. Those go to the clinician.</span></div>
+    <div class="node"><span class="e">🩺</span><b>Clinician queue</b><span>Anything about an out-of-range marker is flagged for review, in code, not left to the AI.</span></div>
+  </div>
+  <div class="why">
+    <div><b>Fewer &ldquo;what does this mean?&rdquo; tickets</b><span>Members get answers about their own numbers the moment they open the report, and clinicians see only the questions that need them.</span></div>
+    <div><b>A reason to come back for the retest</b><span>March to September is the story of the membership. Asking about it makes the progress feel real.</span></div>
+    <div><b>Trust you can audit</b><span>Every answer carries its sources and checks, so the clinical team can see what was said and why.</span></div>
+  </div>
+  <div class="foot">Designed and built by Syed Sarfaraz Ahmed · member, results and brand are fictional · <span id="footMode"></span></div>
+</div>
+
+<script src="/ask-your-results/data.js"></script>
+<script>
+(function(){
+const R=window.ASK_RESULTS, $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// The selected member. Everything on the page renders from V.
+const AV={rami:"linear-gradient(135deg,#FF7A59,#6C4CF5)",layla:"linear-gradient(135deg,#FF8FB1,#B05CF0)",ahmed:"linear-gradient(135deg,#F2A93B,#E0444B)",sofia:"linear-gradient(135deg,#3FD39A,#2D8CF0)"};
+let V,byId={};
+function setView(id){V=R.view(id);byId=Object.fromEntries(V.MARKERS.map(m=>[m.id,m]))}
+setView((new URLSearchParams(location.search).get("member")||"rami").toLowerCase());
+const LBL={ok:"In range",watch:"Watch",out:"Out of range"};
+let turns=[],busy=false,live=true,ctl=null,queue=[];
+
+// ---------- results panel ----------
+const ICON={Heart:["❤️","#FFE4E4"],Metabolic:["⚡","#FFF0D2"],Thyroid:["🦋","#E2F1FF"],Hormones:["💪","#EEE9FF"],Inflammation:["🔥","#FFE7DE"],Nutrients:["🥗","#DDF6EA"],Kidney:["💧","#E2F1FF"]};
+// Scale for the range bar: covers the lab range and both values with some room either side.
+function scale(m){
+  const v=[m.a,m.b,m.lo,m.hi,m.optLo,m.optHi].filter(x=>x!=null);
+  let lo=Math.min(...v),hi=Math.max(...v);
+  if(m.lo==null)lo=Math.min(lo,0);
+  if(m.hi==null)hi=Math.max(hi,(m.lo||hi)*1.6);
+  const pad=(hi-lo)*.08;return[lo-pad,hi+pad];
+}
+function rbar(m){
+  const[s0,s1]=scale(m),pct=x=>Math.max(1,Math.min(99,(x-s0)/(s1-s0)*100));
+  const bl=m.lo!=null?pct(m.lo):0,bh=m.hi!=null?pct(m.hi):100;
+  const tl=m.optLo!=null?pct(m.optLo):bl,th=m.optHi!=null?pct(m.optHi):bh;
+  const sb=R.status(m,R.latest(m));
+  let h=`<div class="rbar" aria-hidden="true"><div class="band" style="left:${bl}%;width:${bh-bl}%"></div>`;
+  if(m.optLo!=null||m.optHi!=null)h+=`<div class="tgt" style="left:${tl}%;width:${th-tl}%"></div>`;
+  if(m.b!=null){const a=pct(m.a),b=pct(m.b);h+=`<div class="link" style="left:${Math.min(a,b)}%;width:${Math.abs(b-a)}%"></div><div class="p0" style="left:${a}%"></div><div class="p1 ${sb}" style="left:${b}%"></div>`}
+  else h+=`<div class="p1 ${sb}" style="left:${pct(m.a)}%"></div>`;
+  return h+`</div>`;
+}
+function renderResults(cited){
+  cited=new Set(cited||[]);
+  $("#who").textContent=V.MEMBER.name;$("#whoSub").textContent=`${V.MEMBER.age}`;
+  $("#tA").textContent=V.TESTS.a.date.replace(/^\d+ /,"").replace(" 20"," ’");$("#tB").textContent=V.TESTS.b.date.replace(/^\d+ /,"").replace(" 20"," ’");
+  let html="",g="";
+  for(const m of V.MARKERS){
+    if(m.group!==g){g=m.group;const[e,bg]=ICON[g]||["•","var(--sunk)"];html+=`<div class="grp"><span class="ic" style="background:${bg}">${e}</span>${esc(g)}</div>`}
+    const sb=R.status(m,R.latest(m)),c=R.change(m),tgt=R.targetText(m);
+    const arr=!c?"":c.dir==="same"?`<span class="arr flat">→</span>`:`<span class="arr ${c.good==null?"flat":c.good?"good":"bad"}">${c.dir==="up"?"↑":"↓"}</span>`;
+    html+=`<button type="button" class="mk${cited.has(m.id)?" cited":""}" data-id="${m.id}" title="Ask about ${esc(m.name)}">
+      <span class="row1"><span class="nm">${esc(m.name)}<span class="pill ${sb}">${LBL[sb]}</span></span>
+      <span class="vals">${m.b==null?`<b>${m.a}</b>`:`<span class="prev">${m.a}</span>${arr}<b>${m.b}</b>`}</span></span>
+      ${rbar(m)}
+      <small>${esc(m.unit)} · range ${esc(R.rangeText(m))}${tgt?" · "+esc(tgt):""}${m.once?" · measured once":""}</small></button>`;
+  }
+  $("#results").innerHTML=html;
+  document.querySelectorAll(".mk").forEach(b=>b.onclick=()=>send(`What does my ${byId[b.dataset.id].name} result mean?`));
+}
+// Snapshot tiles in the hero.
+function renderSnapshot(){
+  $("#snapAv").textContent=V.MEMBER.initials;$("#snapAv").style.background=AV[V.id]||"";$("#snapTitle").textContent=`${V.MEMBER.first}'s retest at a glance`;
+  const re=V.MARKERS.filter(m=>m.b!=null);
+  const improved=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).length;
+  const watch=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="watch").length;
+  const out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;
+  const okA=re.filter(m=>R.status(m,m.a)==="ok").length,okB=re.filter(m=>R.status(m,m.b)==="ok").length,n=re.length;
+  $("#snapSub").textContent=`${V.TESTS.a.date} → ${V.TESTS.b.date}`;
+  $("#tiles").innerHTML=`<div class="tile g"><div class="big">${improved}</div><div class="lbl">improved 🎉</div></div><div class="tile y"><div class="big">${watch}</div><div class="lbl">to watch</div></div><div class="tile r"><div class="big">${out}</div><div class="lbl">for the clinician</div></div>`;
+  $("#inrange").innerHTML=`<span>In range</span><span class="meter"><i style="width:${okA/n*100}%;background:var(--line)"></i><i style="width:${okB/n*100}%;background:linear-gradient(90deg,var(--ok),#3FD39A);opacity:.9"></i></span><span><b>${okA} → ${okB}</b> of ${n}</span>`;
+}
+function renderProto(){$("#protoSet").textContent="Set "+V.PROTOCOL.set;$("#proto").innerHTML=V.PROTOCOL.items.map(i=>`<li>${esc(i)}</li>`).join("")}
+function flagPill(id){const W=R.view(id),n=W.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;return n?`<span class="fl out">${n} flag${n>1?"s":""}</span>`:`<span class="fl ok">✓ clear</span>`}
+function renderPeople(){
+  $("#people").innerHTML=R.MEMBERS.map(p=>`<button type="button" class="person" data-id="${p.id}" aria-pressed="${p.id===V.id}"><span class="pa" style="background:${AV[p.id]||"var(--accent)"}">${esc(p.initials)}</span><span style="min-width:0"><b>${esc(p.first)}, ${p.age}</b><small>${esc(p.tag)}</small></span>${flagPill(p.id)}</button>`).join("");
+  document.querySelectorAll(".person").forEach(b=>b.onclick=()=>switchMember(b.dataset.id));
+}
+function switchMember(id){
+  if(id===V.id)return;
+  setView(id);
+  try{const u=new URL(location.href);u.searchParams.set("member",id);history.replaceState(null,"",u)}catch(e){}
+  renderPeople();renderSnapshot();renderProto();reset();
+  document.querySelectorAll(".snap .tiles,.cols").forEach(el=>{el.classList.remove("switching");void el.offsetWidth;el.classList.add("switching")});
+}
+
+// ---------- chat ----------
+function addMsg(cls,text){const d=document.createElement("div");d.className="m "+cls;d.textContent=text;$("#msgs").appendChild(d);$("#msgs").scrollTop=1e6;return d}
+function addAnswer(r){
+  const d=addMsg(r.escalate==="urgent"?"a urgent":"a","");
+  let html=esc(r.answer);
+  for(const u of (r.checks&&r.checks.numbers.unmatched)||[]){const e=esc(u);html=html.split(e).join(`<span class="flag" title="Not found in the results">${e}</span>`)}
+  d.innerHTML=html;
+  if(r.escalate==="clinician"){const e=document.createElement("div");e.className="esc";e.textContent="↳ Flagged for the Kinra clinician to review";$("#msgs").appendChild(e)}
+  $("#msgs").scrollTop=1e6;
+}
+const starters=()=>V.STARTERS;
+function setChips(list){$("#chips").innerHTML=list.map((c,i)=>`<button type="button" class="chip" data-i="${i}">${esc(c)}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>send(list[+b.dataset.i]))}
+function greet(){
+  const re=V.MARKERS.filter(m=>m.b!=null),up=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).length,out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out").length;
+  const FULL={Jan:"January",Feb:"February",Mar:"March",Apr:"April",May:"May",Jun:"June",Jul:"July",Aug:"August",Sep:"September",Oct:"October",Nov:"November",Dec:"December"},mon=d=>FULL[d.split(" ")[1]]||d;
+  const mood=out===0?`Everything is inside the lab range, and ${up} markers moved the right way since ${mon(V.TESTS.a.date)}.`:out>3?`A few markers need attention, and your clinician will go through them with you. ${up} moved the right way since ${mon(V.TESTS.a.date)}.`:`${up} markers moved the right way since ${mon(V.TESTS.a.date)}.`;
+  addMsg("a",`Hi ${V.MEMBER.first} 👋 Your ${mon(V.TESTS.b.date)} retest is in. ${mood} Ask me anything about it, or tap any marker.`);setChips(starters())}
+
+// ---------- checks panel ----------
+function renderChecks(r,q){
+  const ck=r.checks||{numbers:{checked:0,matched:0,unmatched:[]},scope:"in"},n=ck.numbers;
+  const mk=(r.markers||[]).map(id=>`<span class="m2">${esc(byId[id]?byId[id].name:id)}</span>`).join("");
+  const nt=(r.notes||[]).map(id=>`<span>Note: ${esc(byId[id]?byId[id].name:id)}</span>`).join("");
+  const numRow=ck.scope==="urgent"?`<i class="i-na">–</i><span>Not needed: no AI answer</span>`
+    :n.checked===0?`<i class="i-na">–</i><span>No numbers in this answer</span>`
+    :n.unmatched.length?`<i class="i-warn">!</i><span>${n.matched} of ${n.checked} numbers match the results. Not found: <b>${esc(n.unmatched.join(", "))}</b>, highlighted in the answer${ck.retried?" after one rewrite":""}</span>`
+    :`<i class="i-ok">✓</i><span>All ${n.checked} numbers match the results${ck.retried?" (after one rewrite)":""}</span>`;
+  const scopeRow={in:`<i class="i-ok">✓</i><span>Explains results only</span>`,
+    diagnosis:`<i class="i-warn">!</i><span>Asked for a diagnosis. Answer explains the ranges and leaves the diagnosis to the clinician</span>`,
+    dosing:`<i class="i-warn">!</i><span>Asked about a dose. No dose change given; routed to the clinician</span>`,
+    urgent:`<i class="i-out">!</i><span>Possible emergency. Fixed safety message shown; the AI was not asked</span>`}[ck.scope]||"";
+  const escRow=r.escalate==="clinician"?`<i class="i-out">↗</i><span>Sent to clinician review. ${esc(r.escalateReason||"")}</span>`
+    :r.escalate==="urgent"?`<i class="i-out">!</i><span>Urgent route. ${esc(r.escalateReason||"")}</span>`
+    :`<i class="i-ok">✓</i><span>No review needed</span>`;
+  $("#checks").innerHTML=`
+    <div class="check"><div class="k">Sources used</div>${mk||nt?`<div class="tags">${mk}${nt}</div>`:`<div class="r"><i class="i-na">–</i><span>None</span></div>`}</div>
+    <div class="check"><div class="k">Numbers</div><div class="r">${numRow}</div></div>
+    <div class="check"><div class="k">Scope</div><div class="r">${scopeRow}</div></div>
+    <div class="check"><div class="k">Escalation</div><div class="r">${escRow}</div></div>
+    <div class="check"><div class="k">Answered by</div><div class="r"><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${esc(r.model||"")}</span></div></div>`;
+  renderResults(r.markers);
+  if(r.escalate==="clinician"||r.escalate==="urgent"){
+    queue.unshift({q,reason:r.escalateReason||"",urgent:r.escalate==="urgent"});
+    $("#queue").innerHTML=queue.slice(0,5).map(x=>`<div class="q"><b>${x.urgent?"Urgent · ":""}“${esc(x.q.slice(0,70))}”</b><br><span style="color:var(--muted)">${esc(x.reason)}</span></div>`).join("");
+  }
+}
+
+// ---------- live ----------
+let lastQ="";
+// Loading card: progress bar, seconds counter and steps that tick off while K2 works.
+const LSTEPS=["Reading your 19 results","Comparing March with September","Writing a plain-language answer","Checking every number against your results"];
+function showLoader(){
+  const d=document.createElement("div");d.className="loader";d.setAttribute("role","status");d.setAttribute("aria-live","polite");
+  d.innerHTML=`<div class="lhead"><span class="spin" aria-hidden="true"></span><b>Preparing your answer</b><span class="secs">0s</span></div><div class="bar" aria-hidden="true"><i></i></div><ol class="lsteps">${LSTEPS.map(t=>`<li>${t}</li>`).join("")}</ol><div class="lnote"></div>`;
+  $("#msgs").appendChild(d);$("#msgs").scrollTop=1e6;
+  const li=[...d.querySelectorAll("li")],bar=d.querySelector(".bar i"),secs=d.querySelector(".secs"),note=d.querySelector(".lnote"),t0=Date.now();
+  // Step i becomes active at at[i] seconds; the bar eases towards 95% and never claims to be done.
+  const at=[0,1.2,2.6,Infinity];
+  const set=k=>li.forEach((el,j)=>{el.className=j<k?"done":j===k?"on":""});
+  const tick=()=>{const t=(Date.now()-t0)/1000;let k=0;while(k<at.length-1&&t>=at[k+1])k++;set(k);
+    bar.style.width=(95*(1-Math.exp(-t/7))).toFixed(1)+"%";secs.textContent=Math.floor(t)+"s";
+    note.textContent=t>=19?"Taking longer than usual. If it doesn't finish in a few seconds, you'll get the guided answer.":t>=10?"K2 is reasoning carefully through your results. A few more seconds…":t>=6?"Answers usually take 5 to 10 seconds.":"";};
+  tick();const iv=setInterval(tick,250);
+  $("#checks").innerHTML=`<div class="check"><div class="k">Running checks</div><div class="skel" style="width:80%"></div><div class="skel" style="width:60%"></div><div class="skel" style="width:70%"></div></div>`;
+  return{async done(){clearInterval(iv);set(3);bar.style.width="100%";await new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:450));set(4);await new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:250));d.remove()},
+         stop(){clearInterval(iv);d.remove()}};
+}
+async function liveReply(){
+  const ld=showLoader();
+  ctl=new AbortController();let r,data={},timedOut=false;
+  // Never wait more than 27s: then this question gets the guided answer, and the chat stays live.
+  const guard=setTimeout(()=>{timedOut=true;ctl.abort()},27000);
+  try{r=await fetch("/api/ask-results",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,body:JSON.stringify({member:V.id,messages:turns})});data=await r.json().catch(()=>({}))}
+  catch(e){if(e&&e.name==="AbortError"&&!timedOut){clearTimeout(guard);ld.stop();return}r=null}
+  clearTimeout(guard);
+  if(r&&r.ok&&data.answer)await ld.done();else ld.stop();
+  if(!r||!r.ok||!data.answer){
+    turns.pop();
+    if(r&&(r.status===503||r.status===404)){goScripted(true);return scriptedReply(lastQ,true)} // not connected at all
+    if(!r||[502,504,429].includes(r.status))return scriptedReply(lastQ,true,true); // this question only
+    addMsg("a",data.error||"Sorry, I lost the connection. Please ask again.");return;
+  }
+  addAnswer(data);renderChecks(data,lastQ);
+  turns.push({role:"assistant",content:data.answer});
+  setChips(data.followUps&&data.followUps.length?data.followUps:starters());
+}
+
+// ---------- guided demo: fixed answers, same checks ----------
+const URGENT=/chest pain|crushing|can'?t breathe|cannot breathe|short(ness)? of breath|faint(ed|ing)?|passed out|collapsed|stroke|face (is )?droop|slurred|numb(ness)? (in|on|down)|severe (pain|headache|bleeding)|vomiting blood|suicid|kill myself|end my life|harm myself|overdose/i;
+const SCRIPT={
+  improved:{markers:["apob","tg","crp","vitd","glucose","alt","tsh"],notes:[],scope:"in",answer:`Most of your markers moved the right way since March:
+• ApoB 112 → 98 mg/dL, now inside the lab range but above the 90 target
+• Triglycerides 165 → 128, back in range
+• hs-CRP 3.4 → 1.6 mg/L
+• Vitamin D 18 → 34 ng/mL, now in range
+• Fasting glucose 104 → 97 and ALT 46 → 38, both back in range
+One went the other way: TSH rose from 2.1 to 4.6, above the 4.0 top of the range. The Kinra clinician will review it.`,followUps:["Why is my TSH flagged?","Is my ApoB still a concern?"]},
+  apob:{markers:["apob","ldl"],notes:["apob"],scope:"in",answer:`Less than it was. ApoB fell from 112 to 98 mg/dL, a 13% drop, so it is now inside the lab range (up to 100). It is still above the 90 target, so it shows as Watch. LDL followed the same path, 141 to 124.
+ApoB counts the particles that carry cholesterol into artery walls, and lower is generally better. Whether 98 is low enough for you depends on your overall risk, which your clinician judges at your review.`,followUps:["What improved since my first test?","How did my triglycerides change?"]},
+  tsh:{markers:["tsh","ft4"],notes:["tsh","ft4"],scope:"in",answer:`Your TSH went from 2.1 in March to 4.6 in September, above the 4.0 top of the lab range. Your free T4, the hormone the thyroid releases, is 1.1, inside its 0.8–1.8 range.
+One high TSH can be temporary: a recent illness, the time of the test, or supplements such as biotin can raise it. That is why clinicians usually repeat it and read it with free T4 before drawing any conclusion. I have flagged it for the Kinra clinician.`,followUps:["What improved since my first test?","Do I have prediabetes?"]},
+  prediabetes:{markers:["hba1c","glucose"],notes:["hba1c"],scope:"diagnosis",answer:`I can't tell you whether you have a condition; only a clinician can diagnose. What your results show: HbA1c went from 5.8% to 5.6%. Labs commonly treat 5.7 to 6.4% as the prediabetes range, so March was inside it and September is just below it.
+Fasting glucose moved from 104 to 97 mg/dL, back inside the 70–99 range. Both moved in a good direction. Your clinician will read them with your history.`,followUps:["What improved since my first test?","Is my ApoB still a concern?"]},
+  vitd:{markers:["vitd"],notes:["vitd"],scope:"dosing",answer:`I can't change a supplement dose; that is your clinician's call. Here is what the result shows: vitamin D rose from 18 ng/mL, the deficient range, to 34, inside the 30–100 range, on the 2,000 IU daily in your protocol.
+Very high doses over time can be harmful, which is why dose changes go through a clinician. You can raise it at your results review.`,followUps:["What improved since my first test?","Why is my TSH flagged?"]},
+  other:null
+};
+// Guided answers built from any member's data (used for members other than Rami, and for
+// questions the hand-written answers don't cover). Every number comes from the results.
+const FIND={apob:/apob|statin/,ldl:/\bldl|cholesterol|statin/,hdl:/\bhdl/,tg:/triglycer/,lpa:/lp\(a\)|\blpa\b|lipoprotein/,hba1c:/hba1c|a1c|diabet|sugar/,glucose:/glucose|sugar|diabet/,insulin:/insulin/,alt:/\balt\b|liver/,tsh:/\btsh|thyroid/,ft4:/\bt4\b|thyroid/,testo:/testosterone/,crp:/crp|inflamm/,wbc:/white blood|\bwbc/,vitd:/vitamin d\b|vit d\b/,omega3:/omega/,ferritin:/ferritin|\biron\b/,b12:/\bb12/,egfr:/egfr|kidney/};
+const SW={ok:"in range",watch:"inside the lab range but outside the target",out:"outside the lab range"};
+function describe(m){
+  const s=R.status(m,R.latest(m)),c=R.change(m),tgt=R.targetText(m);
+  if(m.b==null)return `${m.name} was ${m.a} ${m.unit}, measured once (lab range ${R.rangeText(m)}), which is ${SW[s]}.`;
+  const dir=c.dir==="same"?"stayed at":c.dir==="up"?"rose from":"fell from";
+  const how=c.good==null||c.dir==="same"?"":c.good?" That is a good direction.":" That is the wrong direction.";
+  return `${m.name} ${dir} ${c.dir==="same"?m.b:`${m.a} to ${m.b}`} ${m.unit}, which is ${SW[s]} (lab range ${R.rangeText(m)}${tgt?", "+tgt:""}).${how}`;
+}
+function genAnswer(text){
+  const t=text.toLowerCase();
+  const scope=/\bdo i have\b|diagnos|\bam i (diabetic|prediabetic|sick)/.test(t)?"diagnosis":/\bdose\b|double|stop taking|\bstart\b|statin|supplement|medic|prescri/.test(t)?"dosing":"in";
+  const pre=scope==="diagnosis"?"I can't tell you whether you have a condition; only a clinician can diagnose. Here is what your results show.\n":scope==="dosing"?"I can't recommend starting, stopping or changing any medicine or supplement; that is your clinician's call. Here is what your results show.\n":"";
+  let ids=Object.keys(FIND).filter(id=>FIND[id].test(t)&&byId[id]).slice(0,3);
+  if(!ids.length&&/improv|better|progress|changed|worse|worry|anything|overall|how am i|summary/.test(t)){
+    const re=V.MARKERS.filter(m=>m.b!=null);
+    const good=re.filter(m=>{const c=R.change(m);return c&&c.good===true}).slice(0,4);
+    const bad=re.filter(m=>{const c=R.change(m);return c&&c.good===false});
+    const out=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="out");
+    const lines=[];
+    if(good.length)lines.push("Moved the right way:\n"+good.map(m=>`• ${m.name} ${m.a} → ${m.b} ${m.unit}`).join("\n"));
+    if(bad.length)lines.push("Moved the wrong way:\n"+bad.slice(0,4).map(m=>`• ${m.name} ${m.a} → ${m.b} ${m.unit}`).join("\n"));
+    const wat=V.MARKERS.filter(m=>R.status(m,R.latest(m))==="watch");
+    if(wat.length)lines.push(`Worth watching: ${wat.map(m=>m.name).join(", ")}, inside the lab range but outside the target.`);
+    lines.push(out.length?`${out.length===1?"One marker is":out.length+" markers are"} outside the lab range (${out.slice(0,4).map(m=>m.name).join(", ")}${out.length>4?" and more":""}). The Kinra clinician will review ${out.length===1?"it":"them"} with you.`:"Everything is inside the lab range. Markers marked Watch are inside it but outside the tighter target.");
+    return{answer:pre+lines.join("\n"),markers:[...good,...bad].slice(0,8).map(m=>m.id).concat(wat.map(m=>m.id),out.map(m=>m.id)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,8),notes:[],scope};
+  }
+  if(!ids.length)return{answer:"The AI is busy right now, so this is the guided version. It can answer questions about any marker on the left, or what changed since your first test. Try a suggestion below.",markers:[],notes:[],scope};
+  const first=byId[ids[0]],note=(R.NOTES[first.id]||"").split(/(?<=\.)\s/)[0];
+  return{answer:pre+ids.map(id=>describe(byId[id])).join(" ")+(note?"\n"+note:"")+(scope==="in"?"":"\nYour clinician can take you through it at your results review."),markers:ids,notes:[first.id],scope};
+}
+function route(t){t=t.toLowerCase();
+  if(/improv|better|changed|progress/.test(t))return"improved";
+  if(/apob|ldl|cholesterol/.test(t))return"apob";
+  if(/tsh|thyroid|t4/.test(t))return"tsh";
+  if(/prediab|diabet|hba1c|sugar|glucose/.test(t))return"prediabetes";
+  if(/vitamin d|vit d|vitd/.test(t))return"vitd";
+  return"other"}
+const wait=ms=>new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
+async function scriptedReply(text,noBubble,fellBack){
+  if(!noBubble){const ld=showLoader();await wait(1800);await ld.done()}
+  let r;
+  if(URGENT.test(text)){r={answer:"This sounds like it could be urgent, and it is not something to work through in an app. If you have chest pain, trouble breathing, fainting, signs of a stroke or thoughts of harming yourself, call 998 for an ambulance in the UAE or go to the nearest emergency department now. If you are elsewhere, call your local emergency number.",markers:[],notes:[],followUps:[],escalate:"urgent",escalateReason:"Possible emergency symptoms in the question. Fixed safety message; the model was not asked.",checks:{scope:"urgent",numbers:{checked:0,matched:0,unmatched:[]}},model:"fixed safety reply"}}
+  else{const s=(V.id==="rami"&&SCRIPT[route(text)])||genAnswer(text);
+    const out=s.markers.filter(id=>R.status(byId[id],R.latest(byId[id]))==="out");
+    r={...s,escalate:out.length?"clinician":"none",escalateReason:out.length?`${out.map(id=>byId[id].name).join(", ")} is outside the lab range on the latest test.`:"",checks:{scope:s.scope,numbers:V.checkNumbers(s.answer),retried:false},model:fellBack?"guided answer (the AI took too long this time)":"guided demo (scripted answer)"}}
+  addAnswer(r);renderChecks(r,text);setChips(r.followUps&&r.followUps.length?r.followUps:starters().filter(q=>q!==text));
+}
+
+// ---------- send ----------
+async function send(text){
+  text=String(text||"").trim();if(!text||busy)return;busy=true;$("#send").disabled=true;setChips([]);
+  addMsg("u",text);lastQ=text;$("#q").value="";
+  try{if(live){turns.push({role:"user",content:text});await liveReply()}else await scriptedReply(text)}
+  finally{busy=false;$("#send").disabled=false}
+}
+function reset(){ctl&&ctl.abort();turns=[];queue=[];$("#msgs").innerHTML="";$("#checks").innerHTML='<div class="empty">Ask a question. The checks run on every answer and show here.</div>';$("#queue").innerHTML='<div class="empty">Nothing flagged yet.</div>';renderResults([]);greet()}
+$("#f").addEventListener("submit",e=>{e.preventDefault();send($("#q").value)});
+$("#reset").onclick=reset;
+function goScripted(fellBack){live=false;$("#mode").className="mode";$("#mode span").textContent="Guided demo";$("#footMode").textContent=fellBack?"The AI model is busy, so answers are scripted for now. The checks still run on them":"Guided demo: answers are scripted, the checks still run"}
+function goLive(){live=true;$("#mode").className="mode live";$("#mode span").textContent="Live AI";$("#footMode").textContent="Live AI: answers come from a language model limited to these results, then checked in code"}
+renderPeople();renderSnapshot();renderProto();renderResults([]);greet();goLive();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
