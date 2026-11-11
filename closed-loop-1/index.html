@@ -506,7 +506,7 @@ function requestMessages(d){
     const body={firstName:firstName(),lang:p.lang,now:{item:o.item,price:"AED "+o.price,normally:"AED "+o.normal,points:p.points>=o.pts?o.pts+" points":""},
       later:d.later?{item:d.later.item,price:d.later.disc+"% off",normally:"AED "+d.later.normal}:null,reasons:d.reasons};
     try{
-      const r=await fetch("/api/closed-loop-1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const r=await fetch("/api/closed-loop",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(Object.assign({mode:"offer"},body))});
       const j=await r.json(); if(seq!==msgSeq) return;
       if(r.ok&&j.now){S.msg={pump:j.pump,now:j.now,later:j.later||""};S.msgSrc="Written by AI · "+(j.model||"language model");}
       else S.msgSrc="Template (AI unavailable just now)";
