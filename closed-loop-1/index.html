@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closed Loop 1 · Syed Sarfaraz Ahmed</title>
+<meta name="description" content="A phygital non-fuel retail demo: the pump recognises the car, AI picks one offer while the customer fuels, a runner brings it to the car, and a holdout group measures what it really earned.">
+<meta property="og:url" content="https://sarfaraz27.vercel.app/closed-loop-1">
+<link rel="canonical" href="https://sarfaraz27.vercel.app/closed-loop-1">
+<meta property="og:title" content="Closed Loop 1 · Fuel + 1 · Syed Sarfaraz Ahmed">
+<meta property="og:description" content="Recognise the car, offer one thing worth having, bring it to the pump before the tank is full, and measure it honestly. A working demo on a fictional station network.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2315171B'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='15' fill='%23F6F4EF'%3ESA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Arabic:wght@400;600&display=swap">
+<style>
+/* Same story layout as Closed Loop: numbered rail, explanation column + what it looks like. Lane colour says whose view it is. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F5F5F3; --line:#E7E5E1;
+  --ink:#1C1A19; --muted:#6B6762;
+  --brand:#C2410C; --brand-soft:#FDEDE4; --brand-ink:#9A3412;
+  --ai:#0F766E; --ai-soft:#DFF2EF;
+  --biz:#6D28D9; --biz-soft:#EFE7FB;
+  --accent:#D97706; --accent-soft:#FEF3DC;
+  --bad:#C62828; --bad-soft:#FBE9E9; --good:#0F7A4D; --good-soft:#E2F4EA;
+  --logo:#1D5FD1; --head:#1D5FD1; --head-soft:#E5EEFC; --head-ink:#1A4FAE;
+  --pump:#0E1726; --pump2:#17243A;
+  --display:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --arabic:"Noto Sans Arabic","Plus Jakarta Sans",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.2vw,44px);line-height:1.08;font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(20px,2.4vw,24px);line-height:1.2;font-weight:800;letter-spacing:-.01em}
+h3{font-size:14.5px;font-weight:600;font-family:var(--body)}
+p{margin:0}
+[dir=rtl]{font-family:var(--arabic)}
+.back{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:18px;margin-bottom:26px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo .mk{width:36px;height:36px;border-radius:11px;background:var(--logo);display:grid;place-items:center}
+.eyebrow{font-size:13px;font-weight:600;color:var(--head-ink)}
+.intro{max-width:800px}
+.intro p.lead{color:var(--muted);margin-top:12px;font-size:16px;max-width:68ch}
+.intro p.lead a{color:var(--head-ink)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:20px;font-size:13.5px;color:var(--muted)}
+.lane{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;justify-self:start}
+.lane::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.lane.cust{background:var(--head-soft);color:var(--head-ink)}
+.lane.ai{background:var(--ai-soft);color:var(--ai)}
+.lane.biz{background:var(--biz-soft);color:var(--biz)}
+/* scene bar */
+.scene{margin-top:28px;background:var(--sunk);border-radius:16px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:14px 18px;align-items:end}
+.scene .t{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.scene .t span{color:var(--muted);font-size:13.5px}
+.who{grid-column:1/-1;font-size:13px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;flex-wrap:wrap;gap:4px 16px}
+.who b{color:var(--ink);font-weight:600}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 4px}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);margin:0 0 6px;cursor:pointer}
+.chk input{accent-color:var(--brand);width:16px;height:16px;margin:0}
+select,input[type=number]{width:100%;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--brand);margin:6px 0 0}
+.val{float:right;font-family:var(--mono);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:700;font-size:14px}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,.pbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* story rail */
+.story{margin-top:36px;position:relative}
+.step{display:grid;grid-template-columns:52px minmax(0,300px) minmax(0,1fr);gap:0 22px;padding-bottom:44px;position:relative}
+.step::before{content:"";position:absolute;left:25px;top:52px;bottom:0;width:2px;background:var(--line)}
+.step:last-child::before{display:none}
+.num{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:22px;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1}
+.step.cust .num{border-color:var(--head);color:var(--head)}
+.step.ai .num{border-color:var(--ai);color:var(--ai)}
+.step.biz .num{border-color:var(--biz);color:var(--biz)}
+.say{padding-top:6px;display:grid;gap:10px;align-content:start}
+.say p{color:var(--muted);font-size:14.5px}
+.say ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:grid;gap:4px}
+.say .result{color:var(--ink);font-size:14px;border-left:2px solid var(--line);padding-left:10px}
+.say .result b{font-family:var(--mono);font-weight:500}
+.show{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0;box-shadow:0 1px 2px rgba(28,26,25,.04)}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+/* pump screen */
+.pumpwrap{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:stretch}
+.pump{background:linear-gradient(180deg,var(--pump2),var(--pump));color:#EAF0FA;border-radius:18px;padding:18px;min-height:250px;display:grid;grid-template-rows:auto 1fr auto;gap:12px;border:6px solid #2A3240;position:relative;overflow:hidden}
+.pump .ph{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#93A4BF;letter-spacing:.04em}
+.pump .greet{font-family:var(--display);font-weight:800;font-size:clamp(24px,3.2vw,32px);line-height:1.15;align-self:center}
+.pump .greet[dir=rtl]{font-family:var(--arabic);text-align:right}
+.pump .sub{font-size:13.5px;color:#B7C4D8;margin-top:6px}
+.pump .pf{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;font-size:12.5px;color:#93A4BF}
+.pump .lit{font-family:var(--mono);font-size:26px;color:#fff}
+.pump .tease{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;font-size:13px;color:#fff}
+.pump.mini{min-height:0;padding:12px;border-width:4px;border-radius:14px;gap:6px}
+.pump.mini .greet{font-size:18px}
+.pump.mini .lit{font-size:18px}
+.cam{background:var(--sunk);border-radius:14px;padding:12px;display:grid;gap:8px;font-size:12.5px;align-content:start}
+.cam .shot{height:92px;border-radius:10px;background:linear-gradient(160deg,#cfd6df,#9aa6b4);position:relative;overflow:hidden}
+.cam .shot .car{position:absolute;left:18%;right:18%;bottom:10px;height:44px;border-radius:12px 12px 6px 6px;background:#f4f4f2;box-shadow:0 2px 0 #7b8794}
+.cam .shot .plate{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;background:#fff;border:1.5px solid #1C1A19;border-radius:4px;font-family:var(--mono);font-size:11px;padding:1px 6px;font-weight:500;z-index:2}
+.cam .shot .box{position:absolute;left:50%;transform:translateX(-50%);bottom:11px;width:92px;height:26px;border:2px solid #22c55e;border-radius:4px;z-index:3}
+.cam .kv2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px}
+.cam .kv2 span:nth-child(odd){color:var(--muted)}
+.cam .kv2 span:nth-child(even){font-family:var(--mono);font-size:12px;text-align:right}
+/* offer table */
+.otab{width:100%;border-collapse:collapse;font-size:13px}
+.otab th{font-family:var(--mono);font-weight:500;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:0 6px 6px;border-bottom:1px solid var(--line)}
+.otab td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.otab td.n,.otab th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.otab tr.pick td{background:var(--ai-soft)}
+.otab tr.pick td:first-child{box-shadow:inset 3px 0 0 var(--ai)}
+.otab tr.blk td{color:var(--muted)}
+.otab .why{font-size:11.5px;color:var(--muted);display:block}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;font-family:var(--body);white-space:nowrap}
+.tag.ok{background:var(--ai);color:#fff}
+.tag.blk{background:var(--bad-soft);color:var(--bad)}
+.tag.low{background:var(--sunk);color:var(--muted)}
+.tag.later{background:var(--biz-soft);color:var(--biz)}
+.whybox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:14px}
+.wb{border-radius:12px;padding:12px 14px;background:var(--sunk);font-size:13px;display:grid;gap:6px;align-content:start}
+.wb h3{font-size:13px}
+.wb ul{margin:0;padding-left:17px;display:grid;gap:3px;color:var(--ink)}
+.wb .src{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.wb .msg{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:13px}
+.wb .msg[dir=rtl]{text-align:right}
+.wb .msg i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:2px}
+/* phone */
+.phone{width:300px;max-width:100%;border:8px solid #1C1A19;border-radius:34px;padding:12px;background:var(--sunk);min-height:520px;display:flex;flex-direction:column}
+.phone .bar{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:2px 8px 8px}
+.scr{display:grid;gap:10px;align-content:start;flex:1}
+.card{background:#fff;border-radius:16px;padding:13px;border:1px solid var(--line)}
+.card .t{font-weight:700;font-size:15px}
+.card .s{font-size:12.5px;color:var(--muted)}
+.card .big{font-family:var(--display);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums}
+.prog{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--head);border-radius:99px;transition:width .25s linear}
+.offer{border:1.5px solid var(--brand);background:var(--brand-soft);animation:rise .4s ease-out}
+.offer .tx{font-size:14px;color:var(--ink);margin:4px 0 10px}
+.offer .tx[dir=rtl]{text-align:right}
+.offer .pr{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.offer .pr b{font-family:var(--display);font-size:22px;font-weight:800}
+.offer .pr s{color:var(--muted);font-size:13px}
+.pbtns{display:grid;gap:6px}
+.pbtn{border-radius:12px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:700;font-size:13.5px;padding:9px 10px}
+.pbtn.alt{background:#fff;color:var(--brand-ink)}
+.pbtn.no{background:transparent;border-color:transparent;color:var(--muted);font-weight:600}
+.later{border:1.5px solid var(--biz);background:var(--biz-soft)}
+.later .tx[dir=rtl]{text-align:right}
+.ok{background:var(--good-soft);border-color:var(--good-soft)}
+.mutedline{font-size:12px;color:var(--muted);text-align:center;margin-top:auto;padding-top:8px}
+/* handheld */
+.hand{width:270px;max-width:100%;border:7px solid #33363b;border-radius:22px;background:#101418;color:#E6EDF3;padding:12px;display:grid;gap:10px;align-content:start;min-height:300px}
+.hand .hb{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:#8B98A5}
+.ticket{background:#1B232C;border-radius:12px;padding:11px;display:grid;gap:6px;font-size:13px}
+.ticket .tp{font-family:var(--display);font-weight:800;font-size:20px;color:#fff}
+.ticket .due{font-family:var(--mono);font-size:12px;color:#FBBF24}
+.ticket.idle{color:#8B98A5;text-align:center;padding:24px 12px}
+.ticket.late{outline:2px solid #F87171}
+.tl{display:grid;gap:6px;font-size:12.5px}
+.tl div{display:flex;gap:8px;align-items:center;color:#5B6875}
+.tl div::before{content:"";width:9px;height:9px;border-radius:50%;border:2px solid currentColor;flex:none}
+.tl div.done{color:#4ADE80}
+.tl div.done::before{background:currentColor}
+.tl div.now{color:#FBBF24}
+.tl div span{margin-left:auto;font-family:var(--mono);font-size:11px}
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.kpi{border-left:2px solid var(--ai);padding:2px 0 2px 10px}
+.kpi b{display:block;font-family:var(--display);font-size:23px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi.b2{border-color:var(--biz)}
+.kpi.br{border-color:var(--brand)}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+.calc.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bars{display:grid;gap:10px;margin-top:14px}
+.barrow{display:grid;grid-template-columns:150px minmax(0,1fr) 84px;gap:10px;align-items:center;font-size:13px}
+.barrow .bt{height:16px;background:var(--sunk);border-radius:3px;position:relative;overflow:hidden}
+.barrow .bt i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.barrow .n{font-family:var(--mono);text-align:right;font-size:12.5px}
+.cmp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.cmpbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted)}
+.cmpbox b{display:block;font-family:var(--display);font-size:22px;font-weight:800;color:var(--ink)}
+.cmpbox.bad b{color:var(--bad);text-decoration:line-through;text-decoration-thickness:2px}
+.verdict{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:12px 14px;margin-top:14px;font-size:14px}
+.verdict .vh{font-weight:800;font-family:var(--display);font-size:16px}
+.verdict.ok{background:var(--good-soft)}
+.verdict.mid{background:var(--accent-soft)}
+.verdict.no{background:var(--bad-soft)}
+.staff{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:grid;gap:10px}
+/* beyond */
+.beyond{margin-top:12px;border-top:1px solid var(--line);padding-top:32px}
+.bgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;margin-top:16px}
+.guard{display:grid;gap:12px;font-size:13.5px}
+.guard b{display:block}
+.guard span{color:var(--muted)}
+.out{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.out .kpi{border-color:var(--biz)}
+.foot{margin-top:32px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@keyframes rise{from{opacity:.3;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-width:900px){
+  .step{grid-template-columns:40px minmax(0,1fr);gap:12px 14px}
+  .step::before{left:19px;top:40px}
+  .num{width:40px;height:40px;font-size:18px}
+  .show{grid-column:2}
+  .scene{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .bgrid,.whybox{grid-template-columns:minmax(0,1fr)}
+  .pumpwrap{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .scene,.calc,.calc.two{grid-template-columns:minmax(0,1fr)}
+  .kpis,.out{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi b{font-size:18px}
+  .cmp{grid-template-columns:minmax(0,1fr)}
+  .barrow{grid-template-columns:96px minmax(0,1fr) 70px}
+  .otab .hide-s{display:none}
+  .phone,.hand{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4.5h-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="#fff"/></svg></span><span>closed <span style="color:var(--logo)">loop 1</span></span></div>
+    <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
+  </div>
+  <header class="intro">
+    <div class="eyebrow">Closed Loop 1 · Fuel + 1, a phygital non-fuel retail demo (Meridian Stations is fictional)</div>
+    <h1>Recognise the car, offer one thing worth having, and prepare it while the customer is fuelling.</h1>
+    <p class="lead">Most drivers fuel and leave without ever entering the shop. Here the pump greets them, AI picks one offer during the four minutes they stand there, a runner brings it to the car, and a holdout group shows what it really earned. It pairs with <a href="/closed-loop">Closed Loop</a>, which fixes what customers complain about.</p>
+    <div class="legend">
+      <span><span class="lane cust">Customer</span>&nbsp; what the driver sees</span>
+      <span><span class="lane ai">AI engine</span>&nbsp; what decides behind the scenes</span>
+      <span><span class="lane biz">Station team</span>&nbsp; the people who make it happen</span>
+    </div>
+  </header>
+
+  <section class="scene" aria-label="Scenario">
+    <div class="t"><h3>The visit</h3><span>Meridian Al Reem, pump 4. Change the driver or the conditions and every step adapts.</span></div>
+    <div><label for="who">Driver</label><select id="who"></select></div>
+    <div><label for="time">Time of visit</label><select id="time">
+      <option value="am">Weekday 07:50</option><option value="mid">Midday 13:10</option><option value="pm">School run 14:40</option><option value="eve">Evening 19:30</option></select></div>
+    <div><label for="temp">Outside <span class="val" id="tempV"></span></label><input type="range" id="temp" min="20" max="46" value="38" step="1"></div>
+    <div>
+      <label class="chk"><input type="checkbox" id="busy"> Shop counter busy (+3 min for made-to-order)</label>
+      <label class="chk"><input type="checkbox" id="soldout"> Croissants sold out</label>
+      <label class="chk"><input type="checkbox" id="optin"> Name on pump screen (driver opted in)</label>
+    </div>
+    <div class="who" id="whoCard"></div>
+  </section>
+
+  <div class="story">
+    <section class="step cust" id="s1">
+      <div class="num">1</div>
+      <div class="say">
+        <span class="lane cust">Customer · arrive</span>
+        <h2>The pump knows the car, so it greets the driver.</h2>
+        <p>A camera reads the plate and matches it to a registered vehicle in the app. The public screen says hello and nothing more. The name appears only if the driver opted in, and offers, points and the car stay on their phone.</p>
+        <p class="result" id="r1"></p>
+      </div>
+      <div class="show"><div class="pumpwrap">
+        <div class="pump" id="pumpBig" aria-live="polite"></div>
+        <div class="cam" id="cam"></div>
+      </div></div>
+    </section>
+
+    <section class="step ai" id="s2">
+      <div class="num">2</div>
+      <div class="say">
+        <span class="lane ai">AI engine · decide</span>
+        <h2>Pick one offer worth interrupting for, or none.</h2>
+        <p>Every possible offer is scored on how likely this driver is to take it right now, what it earns after cost, and how much is lost on people who would have paid full price anyway.</p>
+        <p>Guardrails remove anything that can't reach the car before fuelling ends, is out of stock, or falls below the margin floor. Then a language model writes the words, in the driver's language.</p>
+        <p class="result" id="r2"></p>
+      </div>
+      <div class="show"><div class="panel">
+        <table class="otab" id="otab"></table>
+        <div class="whybox">
+          <div class="wb"><h3>Why this offer</h3><ul id="whyList"></ul></div>
+          <div class="wb"><h3>Messages written for this visit</h3><div id="msgs"></div><div class="src" id="msgSrc"></div></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="step cust" id="s3">
+      <div class="num">3</div>
+      <div class="say">
+        <span class="lane cust">Customer · fuel and add</span>
+        <h2>One tap while fuelling. It's at the window before the nozzle clicks off.</h2>
+        <p>The driver pays for fuel with Mobile Pay. While the tank fills, one offer appears. They can pay with the same payment or with points they have never used. The success screen carries the one thing that can wait, like a service booking.</p>
+        <p>Try it: press <b>Start fuelling</b>. Four minutes run in about fifteen seconds.</p>
+        <p class="result" id="r3"></p>
+      </div>
+      <div class="show"><div class="row">
+        <div class="phone"><div class="bar"><span>Meridian app</span><span id="clock">07:50</span></div><div class="scr" id="phone"></div></div>
+        <div style="flex:1;min-width:220px;display:grid;gap:12px">
+          <div class="pump mini" id="pumpMini"></div>
+          <p class="note" style="margin:0">The pump screen only says something for the road is on the phone. The personal offer never appears on a screen other drivers can see.</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="step biz" id="s4">
+      <div class="num">4</div>
+      <div class="say">
+        <span class="lane biz">Station team · deliver</span>
+        <h2>The shop prepares it, and a runner walks it to pump 4.</h2>
+        <p>The order lands on the shop screen and the forecourt runner's handheld with the pump, the car's colour and the masked plate. The AI only offered it because prep, queue and walking time fit inside the fuelling time.</p>
+        <p>If it runs late anyway, the promise flips: it waits at the counter and the driver gets points back automatically.</p>
+        <label class="chk" style="margin-top:2px"><input type="checkbox" id="delay"> Simulate a late runner</label>
+        <p class="result" id="r4"></p>
+      </div>
+      <div class="show"><div class="row">
+        <div class="hand"><div class="hb"><span>Runner · forecourt</span><span id="hclock">07:50</span></div><div id="ticket"></div></div>
+        <div class="panel" style="flex:1;min-width:250px">
+          <h3>How many runners does a station need?</h3>
+          <div class="staff">
+            <div class="calc">
+              <div><label for="peak">Fuel visits per peak hour</label><input type="number" id="peak" value="70" min="5" max="400"></div>
+              <div><label for="appShare">Paying in the app %</label><input type="number" id="appShare" value="35" min="1" max="100"></div>
+              <div><label for="perRunner">Deliveries a runner can do per hour</label><input type="number" id="perRunner" value="12" min="1" max="40"></div>
+            </div>
+            <div class="kpis" id="staffK"></div>
+            <p class="note" style="margin:0" id="staffNote"></p>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="step ai" id="s5">
+      <div class="num">5</div>
+      <div class="say">
+        <span class="lane ai">AI engine · measure honestly</span>
+        <h2>Did it earn money, or just discount sales that would have happened anyway?</h2>
+        <p>One in ten app-paying drivers never sees an offer. Comparing everyone else with that holdout group separates new sales from people who would have walked in and paid full price.</p>
+        <p>A 4-week pilot at 10 stations, about 150 app-paid fuel visits a day each. Move the sliders to see when it stops paying.</p>
+        <p class="result" id="r5"></p>
+      </div>
+      <div class="show"><div class="panel">
+        <div class="calc">
+          <div><label for="acc">Take the offer <span class="val" id="accV"></span></label><input type="range" id="acc" min="2" max="35" value="18" step="1"></div>
+          <div><label for="base">Holdout who buy anyway <span class="val" id="baseV"></span></label><input type="range" id="base" min="1" max="25" value="8" step="1"></div>
+          <div><label for="cann">Of those, switch to the offer <span class="val" id="cannV"></span></label><input type="range" id="cann" min="0" max="100" value="25" step="5"></div>
+        </div>
+        <div class="bars" id="bars"></div>
+        <div class="cmp" id="cmp"></div>
+        <div id="verdict"></div>
+      </div></div>
+    </section>
+  </div>
+
+  <section class="beyond">
+    <span class="lane biz">Station team · beyond one visit</span>
+    <h2 style="margin-top:10px">Rules that keep it welcome, and what it's worth across a network</h2>
+    <div class="bgrid">
+      <div class="guard">
+        <div><b>Hello in public, everything else in private</b><span>The pump shows a first name only with opt-in. Offers, points and the car stay on the driver's phone.</span></div>
+        <div><b>One offer, or none</b><span>If nothing beats the margin floor and the chance of a yes, the driver just fuels in peace.</span></div>
+        <div><b>Never promise what the station can't do</b><span>Prep time, counter queue and stock are checked live before anything is offered.</span></div>
+        <div><b>Respect a "no thanks"</b><span>The same item isn't offered again for 7 days, and each station has a daily discount budget.</span></div>
+        <div><b>Runners stay safe</b><span>Marked walking lanes only, never between moving cars. The car stays put until the nozzle is back.</span></div>
+        <div><b>Always keep a holdout</b><span>10% of visits get no offer, so the value is measured, not claimed.</span></div>
+      </div>
+      <div class="panel">
+        <div class="calc">
+          <div><label for="nSt">Stations</label><input type="number" id="nSt" value="450" min="1" max="5000"></div>
+          <div><label for="nVis">App-paid fuel visits per station per day</label><input type="number" id="nVis" value="150" min="1" max="3000"></div>
+          <div><label for="nRun">Extra runner staff per station</label><input type="number" id="nRun" value="0.3" min="0" max="10" step="0.1"></div>
+          <div><label for="runCost">Cost per runner per month (AED)</label><input type="number" id="runCost" value="3500" min="0" max="50000"></div>
+        </div>
+        <div class="out" id="netOut"></div>
+        <p class="note">Editable assumptions, to be replaced with real data. Gross profit per visit comes from step 5's honest estimate, not the headline offer sales. 0.3 extra staff matches step 4: runners help at the pumps off-peak. Points paid for offers are points already earned, so they spend an existing liability rather than add discount.</p>
+      </div>
+    </div>
+  </section>
+  <div class="foot">Designed and built by Syed Sarfaraz Ahmed · customers, prices, stations and results are synthetic · Meridian Stations is fictional</div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const aed=x=>"AED "+(Math.round(x*100)/100).toFixed(2);
+const aed0=x=>"AED "+Math.round(x).toLocaleString("en-US");
+const big=x=>{const a=Math.abs(x),s=x<0?"−":"";return s+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e4?Math.round(a/1e3)+"k":Math.round(a).toLocaleString("en-US"))};
+const pc=x=>Math.round(x*100)+"%";
+const mmss=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+
+const FUEL_SEC=240, WALK=60, QUEUE=180, PRICE_L=4.04, LITRES=42, MARGIN_FLOOR=1.5;
+const TIMES={am:{label:"Weekday 07:50",clock:"07:50",min:470},mid:{label:"Midday 13:10",clock:"13:10",min:790},pm:{label:"School run 14:40",clock:"14:40",min:880},eve:{label:"Evening 19:30",clock:"19:30",min:1170}};
+const NOW=[
+  {id:"karak",item:"Karak + croissant",ar:"كرك وكرواسون",cat:"hot",price:5,normal:9,cost:1.6,prep:90,pts:600,needs:"croissant",made:true},
+  {id:"coffee",item:"Any coffee, any size",ar:"أي قهوة بأي حجم",cat:"coffee",price:5,normal:14,cost:1.8,prep:150,pts:1000,made:true},
+  {id:"water",item:"2 × 1.5 L cold water",ar:"عبوتان من الماء البارد 1.5 لتر",cat:"water",price:5,normal:7,cost:2,prep:20,pts:500},
+  {id:"cold",item:"Cold drink + snack",ar:"مشروب بارد ووجبة خفيفة",cat:"cold",price:8,normal:13,cost:3.6,prep:30,pts:800},
+  {id:"kids",item:"Kids' snack box",ar:"علبة سناك للأطفال",cat:"kids",price:10,normal:16,cost:4.8,prep:45,pts:1000}
+];
+const LATER={
+  oil:{item:"Oil change this week",ar:"تغيير الزيت هذا الأسبوع",disc:15,normal:340},
+  wash:{item:"Car wash this week",ar:"غسيل السيارة هذا الأسبوع",disc:30,normal:45}
+};
+const PEOPLE=[
+  {id:"syed",name:"Syed",optin:true,lang:"en",time:"am",car:"2008 Lexus ES 350, silver",plate:"DXB ••992",colour:"silver",tier:"Silver",points:82189,
+   desc:"Weekday commuter. Buys karak about 3 times a month, has never redeemed his points.",
+   aff:{hot:.5,coffee:.32,water:.14,cold:.16,kids:.02},declined:{coffee:"turned down a coffee offer 2 days ago"},
+   hist:{hot:"bought karak 3 times in the last month",coffee:"buys coffee about once a month",water:"rarely buys water here",cold:"rarely buys cold drinks here",kids:"no kids' purchases"},
+   oil:{months:6,km:9800},washDays:24},
+  {id:"priya",name:"Priya",optin:false,lang:"en",time:"pm",car:"2021 family SUV, white",plate:"SHJ ••418",colour:"white",tier:"Gold",points:6400,
+   desc:"Parent on the school run. Usually grabs water and snacks for the kids, not opted in to name greetings.",
+   aff:{hot:.06,coffee:.18,water:.4,cold:.32,kids:.55},declined:{},
+   hist:{hot:"never buys hot drinks here",coffee:"buys coffee now and then",water:"buys water on most afternoon visits",cold:"buys juice and cold drinks often",kids:"bought kids' snacks 4 times last month"},
+   oil:{months:2,km:4100},washDays:5},
+  {id:"khalid",name:"خالد",nameEn:"Khalid",optin:true,lang:"ar",time:"eve",car:"2012 Land Cruiser, black",plate:"AUH ••207",colour:"black",tier:"Silver",points:12900,
+   desc:"Evening driver, app set to Arabic. Buys cold drinks, oil change well overdue.",
+   aff:{hot:.2,coffee:.1,water:.35,cold:.45,kids:.05},declined:{},
+   hist:{hot:"buys karak occasionally",coffee:"rarely buys coffee",water:"buys water on hot days",cold:"buys a cold drink on most evening visits",kids:"no kids' purchases"},
+   oil:{months:9,km:14200},washDays:40},
+  {id:"new",name:null,optin:false,lang:"en",time:"mid",car:"Not registered yet",plate:"DXB ••531",colour:"grey",tier:"New",points:0,
+   desc:"First time paying in the app. No history, so the AI uses what sells at this station at this hour, with less confidence.",
+   aff:null,declined:{},hist:{},oil:null,washDays:null}
+];
+const POP={hot:.22,coffee:.2,water:.22,cold:.2,kids:.06};
+
+const S={who:PEOPLE[0],time:"am",temp:38,busy:false,soldout:false,optin:true,delay:false,
+  sim:{phase:"ready",t:0,accepted:null,paidPoints:false,deliveredAt:null,late:false,laterBooked:false},msg:null,msgKey:"",msgSrc:""};
+
+/* ---------- decision model ---------- */
+function timeFit(cat,t){
+  const m={hot:{am:1.35,mid:.8,pm:.75,eve:.95},coffee:{am:1.3,mid:1,pm:.9,eve:.6},water:{am:.8,mid:1.15,pm:1.15,eve:1},cold:{am:.6,mid:1.2,pm:1.2,eve:1.05},kids:{am:.5,mid:.6,pm:1.6,eve:.6}};
+  return m[cat][t];
+}
+function tempFit(cat,T){
+  if(cat==="water"||cat==="cold") return clamp(.7+(T-28)*.04,.5,1.5);
+  if(cat==="hot"||cat==="coffee") return clamp(1.1-(T-28)*.015,.7,1.25);
+  return 1;
+}
+function decide(){
+  const p=S.who, T=S.temp, t=S.time, rows=[];
+  for(const o of NOW){
+    const aff=p.aff?p.aff[o.cat]:POP[o.cat]*.6;
+    const tf=timeFit(o.cat,t), mf=tempFit(o.cat,T), fat=p.declined[o.cat]?.5:1;
+    const pAcc=clamp(aff*tf*mf*fat*.6,0,.5);
+    const anyway=clamp(.25*aff*tf,0,.5);
+    const margin=o.price-o.cost;
+    const value=pAcc*margin-anyway*(o.normal-o.price)*.5;
+    const ready=o.prep+(S.busy&&o.made?QUEUE:0)+WALK;
+    let block="";
+    if(o.needs==="croissant"&&S.soldout) block="Croissants sold out";
+    else if(ready>FUEL_SEC-20) block="Can't reach the car in time ("+mmss(ready)+")";
+    else if(margin<MARGIN_FLOOR) block="Below the margin floor";
+    rows.push({o,pAcc,anyway,margin,value,ready,block,tf,mf,fat,aff});
+  }
+  const ok=rows.filter(r=>!r.block&&r.value>0.15).sort((a,b)=>b.value-a.value);
+  const pick=ok[0]||null;
+  let later=null;
+  if(p.oil&&(p.oil.months>=6||p.oil.km>=9000)) later={k:"oil",...LATER.oil,why:"Last oil change "+p.oil.months+" months / "+p.oil.km.toLocaleString("en-US")+" km ago"};
+  else if(p.washDays!=null&&p.washDays>=21) later={k:"wash",...LATER.wash,why:"Last car wash "+p.washDays+" days ago"};
+  const reasons=[];
+  if(pick){
+    const r=pick, o=r.o;
+    reasons.push(TIMES[t].label+(r.tf>=1.15?", a peak hour for "+(o.cat==="hot"||o.cat==="coffee"?"hot drinks":o.cat==="kids"?"kids' snacks":"cold drinks"):""));
+    if(r.mf>=1.15) reasons.push(T+"°C outside, cold drinks sell more");
+    else if((o.cat==="hot"||o.cat==="coffee")&&T<=27) reasons.push(T+"°C outside, a good morning for something hot");
+    reasons.push(p.aff?cap(p.hist[o.cat]):"New in the app: using what sells at this station at this hour");
+    reasons.push("Ready at the car in "+mmss(r.ready)+", fuelling takes about "+mmss(FUEL_SEC));
+    if(p.points>=o.pts) reasons.push("Has "+p.points.toLocaleString("en-US")+" unused points, so offer a points option too");
+    const dec=Object.keys(p.declined)[0];
+    if(dec&&dec!==o.cat) reasons.push("Skipped "+(dec==="coffee"?"coffee":dec)+": "+p.declined[dec]);
+  }
+  if(later) reasons.push(later.why+", so save that for the success screen");
+  return {rows,pick,later,reasons};
+}
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):"";
+
+/* ---------- messages: AI with template fallback ---------- */
+function firstName(){const p=S.who;return S.optin&&p.name?p.name:null}
+function template(d){
+  const p=S.who, ar=p.lang==="ar", fn=firstName();
+  const pump=ar?(fn?"أهلاً "+fn:"أهلاً بعودتك"):(fn?"Welcome back, "+fn:"Welcome back");
+  let now="";
+  if(d.pick){const o=d.pick.o;now=ar?(o.ar+" بـ "+o.price+" درهم فقط، نوصلها إلى سيارتك قبل انتهاء التعبئة."):(o.item+" for AED "+o.price+". We'll bring it to your car before you finish fuelling.");}
+  let later="";
+  if(d.later){later=ar?(d.later.ar+" بخصم "+d.later.disc+"٪. احجز موعدك بلمسة واحدة."):(d.later.item+", "+d.later.disc+"% off. Book a slot in one tap.");}
+  return {pump,now,later};
+}
+let msgTimer=null, msgSeq=0;
+function requestMessages(d){
+  const key=[S.who.id,S.optin,d.pick?d.pick.o.id:"-",d.later?d.later.k:"-"].join("|");
+  if(key===S.msgKey) return;
+  S.msgKey=key; S.msg=template(d); S.msgSrc="Template while the AI writes…"; renderMsgs(d); renderPump();
+  if(!d.pick){S.msgSrc="No offer, so nothing to write beyond the greeting.";renderMsgs(d);return;}
+  clearTimeout(msgTimer); const seq=++msgSeq;
+  msgTimer=setTimeout(async()=>{
+    const o=d.pick.o, p=S.who;
+    const body={firstName:firstName(),lang:p.lang,now:{item:o.item,price:"AED "+o.price,normally:"AED "+o.normal,points:p.points>=o.pts?o.pts+" points":""},
+      later:d.later?{item:d.later.item,price:d.later.disc+"% off",normally:"AED "+d.later.normal}:null,reasons:d.reasons};
+    try{
+      const r=await fetch("/api/closed-loop",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(Object.assign({mode:"offer"},body))});
+      const j=await r.json(); if(seq!==msgSeq) return;
+      if(r.ok&&j.now){S.msg={pump:j.pump,now:j.now,later:j.later||""};S.msgSrc="Written by AI · "+(j.model||"language model");}
+      else S.msgSrc="Template (AI unavailable just now)";
+    }catch(e){if(seq!==msgSeq)return;S.msgSrc="Template (AI unavailable just now)";}
+    renderMsgs(D); renderPump(); renderPhone();
+  },500);
+}
+
+/* ---------- rendering ---------- */
+let D=null;
+function renderWho(){
+  const p=S.who;
+  $("#whoCard").innerHTML="<span><b>"+esc(p.nameEn||p.name||"New customer")+"</b> · "+esc(p.desc)+"</span><span>Car: <b>"+esc(p.car)+"</b></span><span>Rewards: <b>"+esc(p.tier)+(p.points?" · "+p.points.toLocaleString("en-US")+" pts":"")+"</b></span>";
+}
+function renderPump(){
+  const p=S.who, ar=p.lang==="ar", sim=S.sim, m=S.msg||template(D);
+  const litres=sim.phase==="fuelling"?(LITRES*sim.t/FUEL_SEC):(sim.phase==="done"?LITRES:0);
+  const greet='<div class="greet"'+(ar?' dir="rtl"':'')+'>'+esc(m.pump)+'</div>';
+  let mid, foot;
+  if(sim.phase==="ready"){
+    mid='<div>'+greet+'<div class="sub">'+(ar?'<span dir="rtl">ادفع من التطبيق أو بالبطاقة</span>':'Special 95 · pay in the app or tap a card')+'</div></div>';
+    foot='<span>Pump 4 · Meridian Al Reem</span><span class="lit">0.00 L</span>';
+  }else if(sim.phase==="fuelling"){
+    mid='<div>'+greet+(D.pick?'<div class="tease" style="margin-top:10px">'+(ar?'<span dir="rtl">شيء للطريق؟ شوف جوالك</span>':'Something for the road? Check your phone.')+'</div>':'<div class="sub">Fuelling</div>')+'</div>';
+    foot='<span>'+aed(litres*PRICE_L)+'</span><span class="lit">'+litres.toFixed(2)+' L</span>';
+  }else{
+    mid='<div><div class="greet">'+(ar?'<span dir="rtl">شكراً، رحلة سعيدة</span>':'Thank you. Drive safe.')+'</div></div>';
+    foot='<span>'+aed(LITRES*PRICE_L)+' paid in the app</span><span class="lit">'+LITRES.toFixed(2)+' L</span>';
+  }
+  const html='<div class="ph"><span>PUMP 4</span><span>SPECIAL 95 · '+PRICE_L.toFixed(2)+'/L</span></div>'+mid+'<div class="pf">'+foot+'</div>';
+  $("#pumpBig").innerHTML=html; $("#pumpMini").innerHTML=html;
+  $("#cam").innerHTML='<div class="shot"><div class="car"></div><div class="plate">'+esc(p.plate)+'</div><div class="box"></div></div>'+
+    '<div class="kv2"><span>Plate read</span><span>'+esc(p.plate)+'</span><span>Match</span><span>'+(p.tier==="New"?"App user, no vehicle yet":"Registered vehicle")+'</span><span>Name on screen</span><span>'+(firstName()?"Yes, opted in":"No")+'</span><span>Stored as</span><span>hashed ID</span></div>';
+  $("#r1").innerHTML=firstName()?"Screen shows <b>"+esc(m.pump)+"</b>. Only the first name, because "+esc(p.nameEn||p.name)+" opted in.":"Screen shows <b>"+esc(m.pump)+"</b>. "+(p.name?"No name: "+esc(p.nameEn||p.name)+" hasn't opted in.":"No name: a new customer.");
+}
+function renderTable(){
+  const d=D;
+  let h='<thead><tr><th>Offer</th><th class="n">Chance</th><th class="n hide-s">Margin</th><th class="n">Value / visit</th><th>Status</th></tr></thead><tbody>';
+  const sorted=[...d.rows].sort((a,b)=>(a.block?1:0)-(b.block?1:0)||b.value-a.value);
+  for(const r of sorted){
+    const pick=d.pick&&d.pick.o.id===r.o.id;
+    const st=r.block?'<span class="tag blk">'+esc(r.block)+'</span>':pick?'<span class="tag ok">Chosen</span>':(r.value<=.15?'<span class="tag low">Not worth it</span>':'<span class="tag low">Lower value</span>');
+    h+='<tr class="'+(pick?"pick":r.block?"blk":"")+'"><td>'+esc(r.o.item)+'<span class="why">AED '+r.o.price+' (normally '+r.o.normal+')'+(r.fat<1?' · recently declined':'')+'</span></td><td class="n">'+pc(r.pAcc)+'</td><td class="n hide-s">'+aed(r.margin)+'</td><td class="n">'+(r.value>=0?"":"−")+aed(Math.abs(r.value)).replace("AED ","")+'</td><td>'+st+'</td></tr>';
+  }
+  if(d.later) h+='<tr><td>'+esc(d.later.item)+'<span class="why">'+d.later.disc+'% off · for the success screen</span></td><td class="n">—</td><td class="n hide-s">—</td><td class="n">—</td><td><span class="tag later">Later</span></td></tr>';
+  h+='</tbody>';
+  $("#otab").innerHTML=h;
+  $("#whyList").innerHTML=d.reasons.length?d.reasons.map(r=>"<li>"+esc(r)+"</li>").join(""):"<li>Nothing clears the bar right now, so no offer. The driver just fuels.</li>";
+  $("#r2").innerHTML=d.pick?"Chosen: <b>"+esc(d.pick.o.item)+"</b> at AED "+d.pick.o.price+", a "+pc(d.pick.pAcc)+" chance of a yes, worth about "+aed(d.pick.value)+" per visit after discounting people who'd buy anyway.":"No offer this time. Nothing clears the guardrails and the value bar, and saying nothing is the right call.";
+}
+function renderMsgs(d){
+  const m=S.msg||template(d), ar=S.who.lang==="ar", dir=ar?' dir="rtl"':'';
+  let h='<div class="msg"'+dir+'><i>PUMP SCREEN</i>'+esc(m.pump)+'</div>';
+  if(d.pick) h+='<div class="msg"'+dir+'><i>PHONE · WHILE FUELLING</i>'+esc(m.now)+'</div>';
+  if(d.later&&m.later) h+='<div class="msg"'+dir+'><i>PHONE · SUCCESS SCREEN</i>'+esc(m.later)+'</div>';
+  $("#msgs").innerHTML=h; $("#msgSrc").textContent=S.msgSrc;
+}
+function phoneClock(){
+  const base=TIMES[S.time].min*60+S.sim.t;
+  const h=Math.floor(base/3600)%24, mi=Math.floor(base/60)%60;
+  return String(h).padStart(2,"0")+":"+String(mi).padStart(2,"0");
+}
+function deliveryTime(){
+  if(!S.sim.accepted) return null;
+  return S.sim.acceptedAt+D.pick.ready+(S.delay?150:0);
+}
+function renderPhone(){
+  const p=S.who, sim=S.sim, d=D, m=S.msg||template(d), ar=p.lang==="ar", dir=ar?' dir="rtl"':'';
+  $("#clock").textContent=phoneClock(); $("#hclock").textContent=phoneClock();
+  let h="";
+  if(sim.phase==="ready"){
+    h+='<div class="card"><div class="s">Meridian Al Reem · pump 4 detected</div><div class="t" style="margin-top:4px">Pay for fuel</div>'+
+       '<div class="s" style="margin-top:8px">Special 95 · fill up · Mobile Pay (Visa ••6411)</div></div>'+
+       '<button class="btn" id="go" type="button" style="width:100%">Start fuelling</button>'+
+       '<div class="mutedline">'+(p.points?p.tier+" · "+p.points.toLocaleString("en-US")+" points":"New member")+'</div>';
+  }else if(sim.phase==="fuelling"){
+    const L=LITRES*sim.t/FUEL_SEC;
+    h+='<div class="card"><div class="s">Fuelling at pump 4</div><div class="big" id="lvBig">'+L.toFixed(1)+' L</div><div class="s" id="lvS">'+aed(L*PRICE_L)+' so far · about '+mmss(FUEL_SEC-sim.t)+' left</div><div class="prog"><i id="lvBar" style="width:'+(100*sim.t/FUEL_SEC)+'%"></i></div></div>';
+    if(d.pick&&sim.t>=18&&sim.accepted===null){
+      const o=d.pick.o;
+      h+='<div class="card offer"><div class="s">Something for the road</div><div class="tx"'+dir+'>'+esc(m.now)+'</div>'+
+         '<div class="pr"><b>AED '+o.price+'</b><s>AED '+o.normal+'</s></div><div class="pbtns">'+
+         '<button class="pbtn" id="buy" type="button">Add · pay with Mobile Pay</button>'+
+         (p.points>=o.pts?'<button class="pbtn alt" id="buyPts" type="button">Use '+o.pts.toLocaleString("en-US")+' points instead</button>':'')+
+         '<button class="pbtn no" id="nope" type="button">No thanks</button></div></div>';
+    }else if(sim.accepted===true){
+      const dt=deliveryTime(), left=dt-sim.t;
+      h+='<div class="card ok"><div class="t">'+esc(d.pick.o.item)+' is on its way</div><div class="s"><span id="lvEta">'+etaText()+'</span> · '+(sim.paidPoints?d.pick.o.pts.toLocaleString("en-US")+" points":"AED "+d.pick.o.price)+'</div></div>';
+    }else if(sim.accepted===false){
+      h+='<div class="card"><div class="s">No problem. We won\'t offer that again this week.</div></div>';
+    }
+  }else{
+    h+='<div class="card ok"><div class="s">Payment successful</div><div class="big">'+aed(LITRES*PRICE_L+(sim.accepted&&!sim.paidPoints?d.pick.o.price:0))+'</div><div class="s">'+LITRES.toFixed(2)+' L Special 95'+(sim.accepted?' + '+esc(d.pick.o.item):'')+' · Mobile Pay</div><div class="s">+'+Math.round(LITRES*PRICE_L*3)+' points earned</div></div>';
+    if(sim.accepted){
+      h+=sim.late?'<div class="card" style="border-color:var(--accent);background:var(--accent-soft)"><div class="t">Sorry, we ran late</div><div class="s">Your '+esc(d.pick.o.item.toLowerCase())+' is ready at the counter, and 200 points are back in your account.</div></div>'
+                 :'<div class="card"><div class="t">Delivered to your window</div><div class="s">'+mmss(FUEL_SEC-sim.deliveredAt)+' before the tank was full. Enjoy.</div></div>';
+    }
+    if(d.later&&m.later){
+      h+='<div class="card later"><div class="s">For this week</div><div class="tx"'+dir+' style="margin:4px 0 10px;font-size:14px">'+esc(m.later)+'</div>'+
+         (sim.laterBooked?'<div class="s" style="color:var(--biz);font-weight:700">Booked: Tuesday 9:00, Al Reem car care</div>':'<div class="pbtns"><button class="pbtn" style="background:var(--biz);border-color:var(--biz)" id="book" type="button">Book Tuesday 9:00</button></div>')+'</div>';
+    }
+    h+='<button class="btn ghost sm" id="again" type="button" style="width:100%">Replay the visit</button>';
+  }
+  $("#phone").innerHTML=h;
+  const on=(id,fn)=>{const el=document.getElementById(id);if(el)el.onclick=fn};
+  on("go",startSim); on("buy",()=>accept(false)); on("buyPts",()=>accept(true)); on("nope",()=>{S.sim.accepted=false;renderAllSim()});
+  on("book",()=>{S.sim.laterBooked=true;renderPhone();renderR3()}); on("again",resetSim);
+  renderR3();
+}
+function etaText(){const s=S.sim;if(s.deliveredAt!=null)return "Delivered to your window";const left=deliveryTime()-s.t;return left>0?"Arriving at pump 4 in about "+mmss(left):"Almost there"}
+function updatePhoneLive(){
+  const sim=S.sim,L=LITRES*sim.t/FUEL_SEC,g=id=>document.getElementById(id);
+  $("#clock").textContent=phoneClock(); $("#hclock").textContent=phoneClock();
+  if(g("lvBig")){g("lvBig").textContent=L.toFixed(1)+" L";g("lvS").textContent=aed(L*PRICE_L)+" so far · about "+mmss(FUEL_SEC-sim.t)+" left";g("lvBar").style.width=(100*sim.t/FUEL_SEC)+"%";}
+  if(g("lvEta")) g("lvEta").textContent=etaText();
+}
+function renderR3(){
+  const sim=S.sim,d=D;
+  let t;
+  if(!d.pick) t="No offer this visit: the driver just fuels and pays.";
+  else if(sim.phase==="ready") t="Press Start fuelling. The offer appears about 20 seconds in.";
+  else if(sim.accepted===null) t="Offer showing: "+esc(d.pick.o.item)+" for AED "+d.pick.o.price+".";
+  else if(sim.accepted===false) t="Declined. The engine remembers and won't repeat it this week.";
+  else t="Added "+(sim.paidPoints?"with points (points that had sat unused)":"to the same Mobile Pay payment")+". "+(sim.phase==="done"&&d.later?(sim.laterBooked?"Service booked from the success screen.":"The success screen offers the "+esc(d.later.item.toLowerCase())+"."):"");
+  $("#r3").innerHTML=t;
+}
+function renderTicket(){
+  const sim=S.sim,d=D,p=S.who;
+  if(!sim.accepted){
+    $("#ticket").innerHTML='<div class="ticket idle">'+(sim.accepted===false?"Offer declined. Nothing to deliver.":"Waiting for orders at the pumps")+'</div>';
+    $("#r4").innerHTML=d.pick?"Prep "+mmss(d.pick.o.prep)+(S.busy&&d.pick.o.made?" + counter queue "+mmss(QUEUE):"")+" + walk "+mmss(WALK)+" = <b>"+mmss(d.pick.ready)+"</b>, inside the "+mmss(FUEL_SEC)+" it takes to fuel.":"Nothing offered, so nothing to deliver.";
+    return;
+  }
+  const o=d.pick.o, at=sim.acceptedAt, prepEnd=at+o.prep+(S.busy&&o.made?QUEUE:0)+(S.delay?150:0), due=at+d.pick.ready, dt=deliveryTime();
+  const st=[["Order received",at],["Shop preparing",at+5],["Runner picked up",prepEnd],[sim.late?"Moved to the counter":"Delivered to pump 4",dt]];
+  const nowT=sim.phase==="done"?Math.max(sim.t,dt):sim.t;
+  let tl=""; st.forEach((s,i)=>{const done=nowT>=s[1], cur=!done&&(i===0||nowT>=st[i-1][1]);tl+='<div class="'+(done?"done":cur?"now":"")+'">'+esc(s[0])+'<span>'+(done?"+"+mmss(s[1]):"")+'</span></div>'});
+  const late=sim.late||(sim.phase==="fuelling"&&sim.t>due&&sim.deliveredAt==null);
+  $("#ticket").innerHTML='<div class="ticket'+(late?" late":"")+'"><div class="tp">Pump 4</div><div>'+esc(p.tier==="New"?"Grey car":p.colour[0].toUpperCase()+p.colour.slice(1)+" "+p.car.split(",")[0].replace(/^\d{4} /,""))+' · '+esc(p.plate)+'</div><div><b>1 × '+esc(o.item)+'</b>'+(sim.paidPoints?" · paid in points":" · paid in app")+'</div><div class="due">Due at the car by '+mmss(due)+' · '+(late?"LATE":"on track")+'</div></div><div class="tl">'+tl+'</div>';
+  $("#r4").innerHTML=sim.late?"Ran late, so the promise switched: <b>ready at the counter, 200 points back</b>, and the miss is logged against that station's prep time.":sim.deliveredAt!=null?"Delivered <b>"+mmss(sim.deliveredAt)+"</b> after fuelling started, "+mmss(FUEL_SEC-sim.deliveredAt)+" before it ended.":"Runner has "+mmss(Math.max(0,due-sim.t))+" to reach the car.";
+}
+function renderStaff(){
+  const peak=+$("#peak").value||0, share=(+$("#appShare").value||0)/100, per=+$("#perRunner").value||1, acc=(+$("#acc").value||0)/100;
+  const orders=peak*share*.9*acc, runners=Math.ceil(orders/per*10)/10;
+  $("#staffK").innerHTML='<div class="kpi b2"><b>'+orders.toFixed(1)+'</b><span>deliveries in the peak hour</span></div><div class="kpi b2"><b>'+(orders/per).toFixed(1)+'</b><span>runners kept busy</span></div><div class="kpi b2"><b>'+Math.max(1,Math.ceil(orders/per))+'</b><span>runners to roster</span></div>';
+  $("#staffNote").textContent=orders/per<=1?"One runner covers the peak. Off-peak, the same person helps at the pumps, the same staffing lever Closed Loop found for queues.":"More than one runner at peak. Cap offers when the runner queue is full rather than promise what can't be delivered.";
+}
+function measure(){
+  const a=(+$("#acc").value)/100, h=(+$("#base").value)/100, c=(+$("#cann").value)/100;
+  const o=D.pick?D.pick.o:NOW[0], m=o.price-o.cost, G=6;
+  const holdGP=h*G, treatGP=a*m+h*(1-c)*G, inc=treatGP-holdGP;
+  const nVis=10*28*150, nH=nVis*.1, nT=nVis*.9;
+  const sdT=Math.sqrt(a*(1-a))*m+Math.sqrt(h*(1-h))*G, sdH=Math.sqrt(h*(1-h))*G;
+  const se=Math.sqrt(sdT*sdT/nT+sdH*sdH/nH), lo=inc-1.96*se, hi=inc+1.96*se;
+  const naive=a*o.price;
+  return {a,h,c,o,m,G,holdGP,treatGP,inc,lo,hi,naive,nVis};
+}
+function renderMeasure(){
+  const r=measure(); window.__inc=r.inc;
+  $("#accV").textContent=pc(r.a); $("#baseV").textContent=pc(r.h); $("#cannV").textContent=pc(r.c);
+  const mx=Math.max(r.treatGP,r.holdGP,.01);
+  $("#bars").innerHTML='<div class="barrow"><span>Got offers (90%)</span><div class="bt"><i style="width:'+(100*r.treatGP/mx)+'%;background:var(--ai)"></i></div><span class="n">'+aed(r.treatGP)+'</span></div>'+
+    '<div class="barrow"><span>Holdout (10%)</span><div class="bt"><i style="width:'+(100*r.holdGP/mx)+'%;background:#9CA3AF"></i></div><span class="n">'+aed(r.holdGP)+'</span></div>'+
+    '<p class="note" style="margin:0">Shop gross profit per fuel visit, '+r.nVis.toLocaleString("en-US")+' pilot visits. Offer: '+esc(r.o.item)+', AED '+r.o.price+', margin '+aed(r.m)+'. A normal shop basket earns AED '+r.G+'.</p>';
+  $("#cmp").innerHTML='<div class="cmpbox bad"><b>'+aed(r.naive)+'</b>Headline: offer sales per visit, the number a dashboard would show</div><div class="cmpbox"><b>'+(r.inc<0?"−":"")+aed(Math.abs(r.inc))+'</b>Honest: extra gross profit per visit vs holdout · 95% range '+(r.lo<0?"−":"")+aed(Math.abs(r.lo)).replace("AED ","")+' to '+(r.hi<0?"−":"")+aed(Math.abs(r.hi)).replace("AED ","")+'</div>';
+  let v;
+  if(r.lo>0) v='<div class="verdict ok"><div><div class="vh">It pays. Roll it out.</div>Each app-paid fuel visit earns about '+aed(r.inc)+' more shop profit than the holdout, and the range stays above zero.</div></div>';
+  else if(r.hi<0) v='<div class="verdict no"><div><div class="vh">It loses money. Stop or reprice.</div>Too many people who would have paid full price are switching to the discount. Raise the offer price or target only light buyers.</div></div>';
+  else v='<div class="verdict mid"><div><div class="vh">Not proven yet. Extend the pilot.</div>The range crosses zero. Run more weeks or more stations before deciding.</div></div>';
+  $("#verdict").innerHTML=v;
+  $("#r5").innerHTML="Honest gain <b>"+(r.inc<0?"−":"")+aed(Math.abs(r.inc))+"</b> per visit, vs a headline of "+aed(r.naive)+". The gap is the discount given to people who'd have bought anyway.";
+  renderNet(); renderStaff();
+}
+function renderNet(){
+  const st=+$("#nSt").value||0, vis=+$("#nVis").value||0, run=+$("#nRun").value||0, rc=+$("#runCost").value||0;
+  const inc=window.__inc||0;
+  const gross=st*vis*365*inc, staff=st*run*rc*12, net=gross-staff;
+  $("#netOut").innerHTML='<div class="kpi"><b>AED '+big(gross)+'</b><span>extra shop gross profit a year</span></div><div class="kpi br"><b>AED '+big(staff)+'</b><span>extra runner cost a year</span></div><div class="kpi'+(net<0?" br":"")+'"><b>AED '+big(net)+'</b><span>net a year</span></div>';
+}
+
+/* ---------- simulation ---------- */
+let raf=null,last=0;
+const SPEED=FUEL_SEC/15; // sim seconds per real second
+function startSim(){S.sim={phase:"fuelling",t:0,accepted:null,paidPoints:false,deliveredAt:null,late:false,laterBooked:false,acceptedAt:0};last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);renderAllSim()}
+function resetSim(){cancelAnimationFrame(raf);S.sim={phase:"ready",t:0,accepted:null,paidPoints:false,deliveredAt:null,late:false,laterBooked:false};renderAllSim()}
+function accept(points){S.sim.accepted=true;S.sim.paidPoints=points;S.sim.acceptedAt=S.sim.t;renderAllSim()}
+let lastDraw=0;
+function tick(now){
+  const dt=Math.min(.1,(now-last)/1000); last=now;
+  const sim=S.sim; sim.t+=dt*SPEED;
+  if(sim.accepted===null&&D.pick&&sim.t>=18&&!sim._shown){sim._shown=true;renderPhone();}
+  if(sim.accepted&&sim.deliveredAt==null&&!sim.late){const d=deliveryTime(); if(sim.t>=d&&d<=FUEL_SEC){sim.deliveredAt=d;renderPhone();}}
+  if(sim.t>=FUEL_SEC){
+    sim.t=FUEL_SEC;
+    if(sim.accepted&&sim.deliveredAt==null) sim.late=true;
+    sim.phase="done"; renderAllSim(); return;
+  }
+  if(now-lastDraw>120){lastDraw=now;renderPump();renderTicket();updatePhoneLive();}
+  raf=requestAnimationFrame(tick);
+}
+function renderAllSim(){renderPump();renderPhone();renderTicket()}
+
+/* ---------- wiring ---------- */
+function recompute(){
+  $("#tempV").textContent=S.temp+"°C";
+  D=decide(); renderWho(); renderTable(); requestMessages(D); renderMsgs(D); renderMeasure(); resetSim();
+}
+$("#who").innerHTML=PEOPLE.map(p=>'<option value="'+p.id+'">'+esc(p.nameEn||p.name||"New customer")+' · '+esc(p.id==="syed"?"weekday commuter":p.id==="priya"?"school-run parent":p.id==="khalid"?"Arabic, service overdue":"first app payment")+'</option>').join("");
+$("#who").onchange=e=>{S.who=PEOPLE.find(p=>p.id===e.target.value);S.time=S.who.time;$("#time").value=S.time;S.optin=S.who.optin&&!!S.who.name;$("#optin").checked=S.optin;$("#optin").disabled=!S.who.name;recompute()};
+$("#time").onchange=e=>{S.time=e.target.value;recompute()};
+$("#temp").oninput=e=>{S.temp=+e.target.value;recompute()};
+$("#busy").onchange=e=>{S.busy=e.target.checked;recompute()};
+$("#soldout").onchange=e=>{S.soldout=e.target.checked;recompute()};
+$("#optin").onchange=e=>{S.optin=e.target.checked;recompute()};
+$("#delay").onchange=e=>{S.delay=e.target.checked;resetSim()};
+["acc","base","cann"].forEach(id=>$("#"+id).oninput=renderMeasure);
+["peak","appShare","perRunner"].forEach(id=>$("#"+id).oninput=renderStaff);
+["nSt","nVis","nRun","runCost"].forEach(id=>$("#"+id).oninput=renderNet);
+$("#optin").checked=true;
+recompute();
+})();
+</script>
+</body>
+</html>
