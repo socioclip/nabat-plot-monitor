@@ -226,6 +226,26 @@ button{font:inherit;cursor:pointer}
   .phone,.hand{width:100%}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+/* Closed Loop series switcher, shared by /closed-loop and /closed-loop-1 */
+.series{display:grid;gap:8px;margin:-8px 0 28px}
+.series .sl{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.series nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;background:var(--sunk);border-radius:14px;padding:5px}
+.series a{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:center;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--muted);border:1px solid transparent}
+.series a .ix{grid-row:span 2;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:13px;border:1.5px solid currentColor}
+.series a b{font-size:14px;color:var(--ink);font-weight:700}
+.series a span.d{font-size:12.5px;line-height:1.35}
+.series a:hover{background:rgba(255,255,255,.6)}
+.series a[aria-current=page]{background:#fff;border-color:var(--line);box-shadow:0 1px 3px rgba(28,26,25,.08);color:var(--ink)}
+.series a[aria-current=page] .ix{background:var(--logo);border-color:var(--logo);color:#fff}
+.series a[aria-current=page] span.d{color:var(--muted)}
+.series a:focus-visible,.nextdemo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nextdemo{margin-top:40px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 18px;align-items:center;padding:20px 22px;border-radius:16px;background:var(--head-soft);text-decoration:none;color:var(--ink);border:1px solid transparent}
+.nextdemo:hover{border-color:var(--head)}
+.nextdemo .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--head-ink)}
+.nextdemo h2{margin:2px 0 4px}
+.nextdemo p{color:var(--muted);font-size:14px;max-width:62ch}
+.nextdemo .go{grid-row:1/span 3;grid-column:2;width:48px;height:48px;border-radius:50%;background:var(--logo);display:grid;place-items:center}
+@media (max-width:560px){.series nav{grid-template-columns:minmax(0,1fr)}.nextdemo{grid-template-columns:minmax(0,1fr)}.nextdemo .go{grid-row:auto;grid-column:auto;width:40px;height:40px}}
 </style>
 </head>
 <body>
@@ -234,10 +254,11 @@ button{font:inherit;cursor:pointer}
     <div class="logo"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v4.5h-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="#fff"/></svg></span><span>closed <span style="color:var(--logo)">loop 1</span></span></div>
     <a class="back" href="/#work">&larr; Sarfaraz&rsquo;s work</a>
   </div>
+  <div class="series"><span class="sl">Closed Loop series · two demos</span><nav aria-label="Closed Loop demos"><a href="/closed-loop-1" aria-current="page"><span class="ix">1</span><b>Closed Loop 1 · Grow non-fuel revenue (NFR)</b><span class="d">Recognise the car, offer one thing, prepare it while they fuel</span></a><a href="/closed-loop-fix"><span class="ix">2</span><b>Closed Loop · Fix</b><span class="d">Listen to complaints, fix the cause, tell customers what changed</span></a></nav></div>
   <header class="intro">
     <div class="eyebrow">Closed Loop 1 · Fuel + 1, a phygital non-fuel retail demo (Meridian Stations is fictional)</div>
     <h1>Recognise the car, offer one thing worth having, and prepare it while the customer is fuelling.</h1>
-    <p class="lead">Most drivers fuel and leave without ever entering the shop. Here the pump greets them, AI picks one offer during the four minutes they stand there, a runner brings it to the car, and a holdout group shows what it really earned. It pairs with <a href="/closed-loop">Closed Loop</a>, which fixes what customers complain about.</p>
+    <p class="lead">Most drivers fuel and leave without ever entering the shop. Here the pump greets them, AI picks one offer during the four minutes they stand there, a runner brings it to the car, and a holdout group shows what it really earned. It pairs with <a href="/closed-loop-fix">Closed Loop</a>, which fixes what customers complain about.</p>
     <div class="legend">
       <span><span class="lane cust">Customer</span>&nbsp; what the driver sees</span>
       <span><span class="lane ai">AI engine</span>&nbsp; what decides behind the scenes</span>
@@ -383,6 +404,7 @@ button{font:inherit;cursor:pointer}
       </div>
     </div>
   </section>
+  <a class="nextdemo" href="/closed-loop-fix"><span class="k">Also in the series · Fix</span><h2>Closed Loop: fix what bothers customers</h2><p>Follow complaints from the comment to the fix to the reply, with a pilot that proves the fix worked before it's rolled out.</p><span class="go"><svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></a>
   <div class="foot">Designed and built by Syed Sarfaraz Ahmed · customers, prices, stations and results are synthetic · Meridian Stations is fictional</div>
 </div>
 
