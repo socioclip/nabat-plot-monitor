@@ -3,6 +3,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/closed-loop",
+      "destination": "/closed-loop-1",
+      "permanent": false
+    },
+    {
       "source": "/nabat",
       "destination": "/plant-monitor",
       "permanent": true
